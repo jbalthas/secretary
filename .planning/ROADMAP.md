@@ -33,7 +33,7 @@
 **Plans:** 4 plans
 - [x] 01-01-PLAN.md — FastAPI health endpoint + async SQLite (WAL) + Alembic (INFRA-02, INFRA-06)
 - [x] 01-02-PLAN.md — Pi provisioning script (uv/Python 3.12) + placeholder React app (INFRA-01)
-- [ ] 01-PLAN-tailscale-nginx-systemd.md — Tailscale HTTPS + systemd service + nginx reverse proxy (INFRA-03, INFRA-04, INFRA-05)
+- [x] 01-03-PLAN.md — Tailscale HTTPS + systemd service + nginx reverse proxy (INFRA-03, INFRA-04, INFRA-05)
 - [ ] 01-PLAN-bootstrap-smoketest.md — End-to-end bootstrap script + reboot/remote smoke test (INFRA-07)
 **UI hint**: no
 
@@ -112,7 +112,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/4 | Planned | - |
+| 1. Foundation | 3/4 | In progress | - |
 | 2. Tasks & Agenda | 0/? | Not started | - |
 | 3. Pushover Reminders | 0/? | Not started | - |
 | 4. Calendar Sync | 0/? | Not started | - |

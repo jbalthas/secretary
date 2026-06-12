@@ -8,7 +8,7 @@ progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 4
-  completed_plans: 2
+  completed_plans: 3
 ---
 
 # Project State
@@ -17,7 +17,7 @@ progress:
 Phase 1 — Foundation (Pi setup, FastAPI, nginx, Tailscale)
 
 ## Current Plan
-Plan 3 of 4 (01-03 next)
+Plan 4 of 4 (01-04 next)
 
 ## Status
 in-progress
@@ -69,5 +69,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-06-12 — Wave 1 complete. 01-01 (FastAPI backend skeleton) + 01-02 (Pi provisioning + React placeholder) both done.
-Next action: Execute 01-03 (Tailscale + systemd + nginx)
+Last session: 2026-06-12 — Wave 2 complete. 01-03 (Tailscale + systemd + nginx) done.
+Next action: Execute 01-04 (bootstrap orchestration)
