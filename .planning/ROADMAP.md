@@ -30,7 +30,11 @@
 2. Rebooting the Pi causes the service to come back up within 60 seconds without manual intervention.
 3. nginx serves the (placeholder) React app over HTTPS at the Tailscale hostname.
 4. A fresh Pi can be bootstrapped end-to-end by running the setup script with minimal manual steps.
-**Plans**: TBD
+**Plans:** 4 plans
+- [ ] 01-PLAN-backend-skeleton.md — FastAPI health endpoint + async SQLite (WAL) + Alembic (INFRA-02, INFRA-06)
+- [ ] 01-PLAN-pi-provisioning-frontend.md — Pi provisioning script (uv/Python 3.12) + placeholder React app (INFRA-01)
+- [ ] 01-PLAN-tailscale-nginx-systemd.md — Tailscale HTTPS + systemd service + nginx reverse proxy (INFRA-03, INFRA-04, INFRA-05)
+- [ ] 01-PLAN-bootstrap-smoketest.md — End-to-end bootstrap script + reboot/remote smoke test (INFRA-07)
 **UI hint**: no
 
 ---
@@ -108,7 +112,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/? | Not started | - |
+| 1. Foundation | 0/4 | Planned | - |
 | 2. Tasks & Agenda | 0/? | Not started | - |
 | 3. Pushover Reminders | 0/? | Not started | - |
 | 4. Calendar Sync | 0/? | Not started | - |
