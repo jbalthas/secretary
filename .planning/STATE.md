@@ -4,7 +4,7 @@
 Phase 1 — Foundation (Pi setup, FastAPI, nginx, Tailscale)
 
 ## Current Plan
-Plan 2 of 4 (01-02 next)
+Plan 3 of 4 (01-03 next)
 
 ## Status
 in-progress
@@ -32,8 +32,10 @@ in-progress
 - pychromecast: use static DHCP reservation + `known_hosts=[<ip>]` to bypass mDNS issues post-reboot
 - gTTS requires internet — cache by text hash; pre-generate static MP3s for common phrases as fallback
 - systemd: `After=network-online.target time-sync.target tailscaled.service`
+<<<<<<< HEAD
 - [01-01] uv as package manager with hatchling build backend; packages=["app"] for editable install
 - [01-01] Alembic env.py derives sync URL by stripping +aiosqlite from settings.database_url
+- [01-02] @vitejs/plugin-react ^6 required for Vite 8 (v4 peer constraint excludes Vite 8)
 
 ### Open Questions (Live Verification Required)
 - Does `tailscale funnel 443` reach IFTTT's servers? (Phase 6 fallback: router port-forward)
@@ -50,5 +52,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-06-12 — Executed 01-01 (FastAPI backend skeleton). 3 tasks, 13 files created.
-Next action: Execute 01-02 (Pi provisioning / frontend)
+Last session: 2026-06-12 — Wave 1 complete. 01-01 (FastAPI backend skeleton) + 01-02 (Pi provisioning + React placeholder) both done.
+Next action: Execute 01-03 (Tailscale + systemd + nginx)

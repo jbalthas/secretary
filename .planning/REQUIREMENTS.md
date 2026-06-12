@@ -4,7 +4,7 @@
 
 ### Infrastructure (INFRA)
 
-- [ ] **INFRA-01**: Pi 5 is configured with Raspberry Pi OS Bookworm 64-bit, uv, Python 3.12, and project virtualenv
+- [x] **INFRA-01**: Pi 5 is configured with Raspberry Pi OS Bookworm 64-bit, uv, Python 3.12, and project virtualenv
 - [x] **INFRA-02**: FastAPI service runs and returns 200 on `GET /api/v1/health`
 - [ ] **INFRA-03**: Service runs as a systemd unit with `Restart=always`, starts on boot after network and Tailscale
 - [ ] **INFRA-04**: nginx reverse proxies to FastAPI, serves React static files, and terminates HTTPS via Tailscale cert
@@ -67,7 +67,7 @@
 
 | REQ-ID | Phase | Status |
 |--------|-------|--------|
-| INFRA-01 | Phase 1 — Foundation | Pending |
+| INFRA-01 | Phase 1 — Foundation | Complete |
 | INFRA-02 | Phase 1 — Foundation | Complete |
 | INFRA-03 | Phase 1 — Foundation | Pending |
 | INFRA-04 | Phase 1 — Foundation | Pending |
