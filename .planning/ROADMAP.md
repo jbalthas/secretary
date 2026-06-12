@@ -1,0 +1,116 @@
+# Roadmap — My Secretary
+
+## Overview
+
+6 phases | 27 requirements | Infrastructure → Task UI → Reminders → Calendar Sync → Routines/Brief → Google Home TTS
+
+---
+
+## Phase Summary Table
+
+| # | Phase | Goal | Requirements | Criteria |
+|---|-------|------|--------------|----------|
+| 1 | Foundation | Pi is fully configured, reachable remotely, backend running | INFRA-01–07 | 4 |
+| 2 | Tasks & Agenda | User can manage tasks and see today's merged agenda | TASK-01–07, CAL-05 | 5 |
+| 3 | Pushover Reminders | Task reminders and APScheduler fire reliably to phone | NOTIF-01, NOTIF-02 | 3 |
+| 4 | Calendar Sync | Google Calendar events sync into the app automatically | CAL-01–04 | 4 |
+| 5 | Daily Brief & Routines | Morning brief fires proactively; custom routines persist | CAL-06, CAL-07 | 3 |
+| 6 | Google Home TTS | Reminders and brief also announce on Google Home speaker | NOTIF-03–06 | 4 |
+
+---
+
+## Phase Details
+
+### Phase 1: Foundation
+**Goal:** The Pi is fully provisioned, the backend is reachable over Tailscale from any device, and the service survives reboots.
+**Requirements:** INFRA-01, INFRA-02, INFRA-03, INFRA-04, INFRA-05, INFRA-06, INFRA-07
+**Gate test:** `curl https://secretary.ts.net/api/v1/health` returns HTTP 200 from a phone on LTE (not home Wi-Fi).
+**Success Criteria:**
+1. Health endpoint returns 200 from a phone on a mobile network via Tailscale.
+2. Rebooting the Pi causes the service to come back up within 60 seconds without manual intervention.
+3. nginx serves the (placeholder) React app over HTTPS at the Tailscale hostname.
+4. A fresh Pi can be bootstrapped end-to-end by running the setup script with minimal manual steps.
+**Plans**: TBD
+**UI hint**: no
+
+---
+
+### Phase 2: Tasks & Agenda
+**Goal:** User can create, edit, complete, and delete tasks from the web UI, and see today's tasks merged with any placeholder calendar events.
+**Requirements:** TASK-01, TASK-02, TASK-03, TASK-04, TASK-05, TASK-06, TASK-07, CAL-05
+**Gate test:** On a phone browser, create a task with a due date, mark it complete, then verify the today's agenda view shows and hides it correctly.
+**Success Criteria:**
+1. User can create a task with title, description, due date, and priority from the web UI on a phone browser.
+2. User can edit any field of a task, mark it complete, and delete it.
+3. User can set a reminder time on a task (notification delivery validated in Phase 3).
+4. User can create a recurring task (daily, weekly, or custom cron) and see it re-appear after completion.
+5. Task list can be filtered by pending/completed and sorted by due date or priority.
+**Plans**: TBD
+**UI hint**: yes
+
+---
+
+### Phase 3: Pushover Reminders
+**Goal:** Task reminders fire as Pushover push notifications at the scheduled time, reliably, including after Pi reboots.
+**Requirements:** NOTIF-01, NOTIF-02
+**Gate test:** Create a task with a reminder 2 minutes in the future, reboot the Pi, confirm the Pushover notification arrives at the correct time.
+**Success Criteria:**
+1. A Pushover notification arrives on the user's phone within 60 seconds of a task's reminder time.
+2. Reminders scheduled before a Pi reboot still fire correctly after the Pi comes back up.
+3. No duplicate notifications fire when the service restarts (APScheduler dedup guard in place).
+**Plans**: TBD
+**UI hint**: no
+
+---
+
+### Phase 4: Calendar Sync
+**Goal:** Google Calendar events sync into the app automatically; OAuth tokens stay alive; the user is alerted if tokens expire.
+**Requirements:** CAL-01, CAL-02, CAL-03, CAL-04
+**Gate test:** Create a Google Calendar event on a phone, wait 5 minutes, confirm the event appears in the app's agenda view without any manual refresh.
+**Success Criteria:**
+1. User completes the Google OAuth flow in the web UI and the app stores and auto-refreshes the token.
+2. A new Google Calendar event appears in the app within 5 minutes of creation.
+3. If Google returns HTTP 410 (sync token invalid), the app performs a full re-sync without user intervention.
+4. If the OAuth token is revoked, the user receives a Pushover alert within the next sync cycle.
+**Plans**: TBD
+**UI hint**: yes
+
+---
+
+### Phase 5: Daily Brief & Routines
+**Goal:** A morning brief fires automatically at a configurable time with today's agenda; users can define custom recurring routines that survive reboots.
+**Requirements:** CAL-06, CAL-07
+**Gate test:** Set the daily brief time to 2 minutes from now; confirm a Pushover notification arrives with today's task and event summary.
+**Success Criteria:**
+1. A Pushover notification with today's agenda summary arrives at the user-configured brief time (default 8am).
+2. The brief time is configurable from the web UI without editing config files.
+3. User can create, edit, and delete custom recurring routines (name, cron schedule, action); routines persist and fire correctly after a Pi reboot.
+**Plans**: TBD
+**UI hint**: yes
+
+---
+
+### Phase 6: Google Home TTS
+**Goal:** Reminders and the daily brief announce on the Google Home speaker in addition to Pushover; user can trigger ad-hoc TTS from the web UI; Google Home morning routine can trigger the brief.
+**Requirements:** NOTIF-03, NOTIF-04, NOTIF-05, NOTIF-06
+**Gate test:** Trigger `POST /api/v1/tts` with a test message and hear it play on the Google Home speaker within 10 seconds.
+**Success Criteria:**
+1. Submitting a message via the web UI causes the Google Home speaker to speak that message aloud.
+2. When a task reminder fires, the announcement plays on Google Home in addition to the Pushover notification.
+3. The daily brief plays on Google Home at brief time in addition to the Pushover notification.
+4. Triggering the Google Home morning routine calls the Pi webhook and causes the daily brief to fire.
+**Plans**: TBD
+**UI hint**: yes
+
+---
+
+## Progress
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 1. Foundation | 0/? | Not started | - |
+| 2. Tasks & Agenda | 0/? | Not started | - |
+| 3. Pushover Reminders | 0/? | Not started | - |
+| 4. Calendar Sync | 0/? | Not started | - |
+| 5. Daily Brief & Routines | 0/? | Not started | - |
+| 6. Google Home TTS | 0/? | Not started | - |

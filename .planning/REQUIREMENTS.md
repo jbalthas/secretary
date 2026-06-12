@@ -67,10 +67,30 @@
 
 | REQ-ID | Phase | Status |
 |--------|-------|--------|
-| INFRA-01 through INFRA-07 | Phase 1 | — |
-| TASK-01 through TASK-07 | Phase 2 | — |
-| CAL-01 through CAL-04 | Phase 4 | — |
-| CAL-05 | Phase 2 | — |
-| CAL-06, CAL-07 | Phase 5 | — |
-| NOTIF-01, NOTIF-02 | Phase 3 | — |
-| NOTIF-03 through NOTIF-06 | Phase 7 | — |
+| INFRA-01 | Phase 1 — Foundation | Pending |
+| INFRA-02 | Phase 1 — Foundation | Pending |
+| INFRA-03 | Phase 1 — Foundation | Pending |
+| INFRA-04 | Phase 1 — Foundation | Pending |
+| INFRA-05 | Phase 1 — Foundation | Pending |
+| INFRA-06 | Phase 1 — Foundation | Pending |
+| INFRA-07 | Phase 1 — Foundation | Pending |
+| TASK-01 | Phase 2 — Tasks & Agenda | Pending |
+| TASK-02 | Phase 2 — Tasks & Agenda | Pending |
+| TASK-03 | Phase 2 — Tasks & Agenda | Pending |
+| TASK-04 | Phase 2 — Tasks & Agenda | Pending |
+| TASK-05 | Phase 2 — Tasks & Agenda | Pending |
+| TASK-06 | Phase 2 — Tasks & Agenda | Pending |
+| TASK-07 | Phase 2 — Tasks & Agenda | Pending |
+| CAL-05 | Phase 2 — Tasks & Agenda | Pending |
+| NOTIF-01 | Phase 3 — Pushover Reminders | Pending |
+| NOTIF-02 | Phase 3 — Pushover Reminders | Pending |
+| CAL-01 | Phase 4 — Calendar Sync | Pending |
+| CAL-02 | Phase 4 — Calendar Sync | Pending |
+| CAL-03 | Phase 4 — Calendar Sync | Pending |
+| CAL-04 | Phase 4 — Calendar Sync | Pending |
+| CAL-06 | Phase 5 — Daily Brief & Routines | Pending |
+| CAL-07 | Phase 5 — Daily Brief & Routines | Pending |
+| NOTIF-03 | Phase 6 — Google Home TTS | Pending |
+| NOTIF-04 | Phase 6 — Google Home TTS | Pending |
+| NOTIF-05 | Phase 6 — Google Home TTS | Pending |
+| NOTIF-06 | Phase 6 — Google Home TTS | Pending |
