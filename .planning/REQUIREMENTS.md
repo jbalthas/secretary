@@ -5,11 +5,11 @@
 ### Infrastructure (INFRA)
 
 - [ ] **INFRA-01**: Pi 5 is configured with Raspberry Pi OS Bookworm 64-bit, uv, Python 3.12, and project virtualenv
-- [ ] **INFRA-02**: FastAPI service runs and returns 200 on `GET /api/v1/health`
+- [x] **INFRA-02**: FastAPI service runs and returns 200 on `GET /api/v1/health`
 - [ ] **INFRA-03**: Service runs as a systemd unit with `Restart=always`, starts on boot after network and Tailscale
 - [ ] **INFRA-04**: nginx reverse proxies to FastAPI, serves React static files, and terminates HTTPS via Tailscale cert
 - [ ] **INFRA-05**: User can access the web UI from any device via Tailscale (e.g. `https://secretary.ts.net`)
-- [ ] **INFRA-06**: Alembic migrations are wired up; SQLite uses WAL mode from first init
+- [x] **INFRA-06**: Alembic migrations are wired up; SQLite uses WAL mode from first init
 - [ ] **INFRA-07**: Setup script exists to bootstrap a fresh Pi end-to-end with minimal manual steps
 
 ### Tasks (TASK)
@@ -68,11 +68,11 @@
 | REQ-ID | Phase | Status |
 |--------|-------|--------|
 | INFRA-01 | Phase 1 — Foundation | Pending |
-| INFRA-02 | Phase 1 — Foundation | Pending |
+| INFRA-02 | Phase 1 — Foundation | Complete |
 | INFRA-03 | Phase 1 — Foundation | Pending |
 | INFRA-04 | Phase 1 — Foundation | Pending |
 | INFRA-05 | Phase 1 — Foundation | Pending |
-| INFRA-06 | Phase 1 — Foundation | Pending |
+| INFRA-06 | Phase 1 — Foundation | Complete |
 | INFRA-07 | Phase 1 — Foundation | Pending |
 | TASK-01 | Phase 2 — Tasks & Agenda | Pending |
 | TASK-02 | Phase 2 — Tasks & Agenda | Pending |

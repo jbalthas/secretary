@@ -1,10 +1,13 @@
 # Project State
 
 ## Current Phase
-Phase 0 — Not started
+Phase 1 — Foundation (Pi setup, FastAPI, nginx, Tailscale)
+
+## Current Plan
+Plan 2 of 4 (01-02 next)
 
 ## Status
-initialized
+in-progress
 
 ## Last Updated
 2026-06-12
@@ -29,6 +32,8 @@ initialized
 - pychromecast: use static DHCP reservation + `known_hosts=[<ip>]` to bypass mDNS issues post-reboot
 - gTTS requires internet — cache by text hash; pre-generate static MP3s for common phrases as fallback
 - systemd: `After=network-online.target time-sync.target tailscaled.service`
+- [01-01] uv as package manager with hatchling build backend; packages=["app"] for editable install
+- [01-01] Alembic env.py derives sync URL by stripping +aiosqlite from settings.database_url
 
 ### Open Questions (Live Verification Required)
 - Does `tailscale funnel 443` reach IFTTT's servers? (Phase 6 fallback: router port-forward)
@@ -45,5 +50,5 @@ None
 
 ## Session Continuity
 
-Last session: Project initialization — requirements, research, roadmap created.
-Next action: `/gsd:plan-phase 1`
+Last session: 2026-06-12 — Executed 01-01 (FastAPI backend skeleton). 3 tasks, 13 files created.
+Next action: Execute 01-02 (Pi provisioning / frontend)
