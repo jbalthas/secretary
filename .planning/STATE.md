@@ -1,10 +1,13 @@
 # Project State
 
 ## Current Phase
-Phase 0 — Not started
+Phase 1 — Foundation (Pi setup, FastAPI, nginx, Tailscale)
+
+## Current Plan
+Plan 3 of 4
 
 ## Status
-initialized
+in-progress
 
 ## Last Updated
 2026-06-12
@@ -29,6 +32,7 @@ initialized
 - pychromecast: use static DHCP reservation + `known_hosts=[<ip>]` to bypass mDNS issues post-reboot
 - gTTS requires internet — cache by text hash; pre-generate static MP3s for common phrases as fallback
 - systemd: `After=network-online.target time-sync.target tailscaled.service`
+- @vitejs/plugin-react ^6 required for Vite 8 (v4 peer constraint excludes Vite 8)
 
 ### Open Questions (Live Verification Required)
 - Does `tailscale funnel 443` reach IFTTT's servers? (Phase 6 fallback: router port-forward)
@@ -45,5 +49,6 @@ None
 
 ## Session Continuity
 
-Last session: Project initialization — requirements, research, roadmap created.
-Next action: `/gsd:plan-phase 1`
+Last session: 2026-06-12 — Completed 01-02 (Pi provisioning + React placeholder app).
+Stopped at: Completed 01-02-PLAN.md
+Next action: Execute 01-03 (Tailscale + systemd + nginx)
