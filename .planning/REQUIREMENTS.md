@@ -25,9 +25,9 @@
 ### Scheduling & Calendar (CAL)
 
 - [x] **CAL-01**: User completes Google OAuth flow in the web UI; tokens are stored and auto-refreshed
-- [x] **CAL-02**: App syncs Google Calendar events incrementally every 5 minutes (syncToken strategy)
-- [x] **CAL-03**: On HTTP 410 from Google, app falls back to a full re-sync automatically
-- [x] **CAL-04**: App sends a Pushover alert if the Google OAuth token is revoked (`invalid_grant`)
+- [ ] **CAL-02**: App syncs Google Calendar events incrementally every 5 minutes (syncToken strategy)
+- [ ] **CAL-03**: On HTTP 410 from Google, app falls back to a full re-sync automatically
+- [ ] **CAL-04**: App sends a Pushover alert if the Google OAuth token is revoked (`invalid_grant`)
 - [x] **CAL-05**: Today's agenda view shows tasks (with due dates) and calendar events merged and sorted by time
 - [ ] **CAL-06**: Daily brief fires at a user-configurable time (default 8am); delivered as a Pushover notification with today's agenda summary
 - [ ] **CAL-07**: User can define custom recurring routines (name, cron schedule, action); routines persist across reboots via APScheduler SQLAlchemyJobStore
@@ -85,9 +85,9 @@
 | NOTIF-01 | Phase 3 — Pushover Reminders | Complete |
 | NOTIF-02 | Phase 5 — Daily Brief & Routines | Pending |
 | CAL-01 | Phase 4 — Calendar Sync | Complete |
-| CAL-02 | Phase 4 — Calendar Sync | Complete |
-| CAL-03 | Phase 4 — Calendar Sync | Complete |
-| CAL-04 | Phase 4 — Calendar Sync | Complete |
+| CAL-02 | Phase 4 — Calendar Sync | Pending |
+| CAL-03 | Phase 4 — Calendar Sync | Pending |
+| CAL-04 | Phase 4 — Calendar Sync | Pending |
 | CAL-06 | Phase 5 — Daily Brief & Routines | Pending |
 | CAL-07 | Phase 5 — Daily Brief & Routines | Pending |
 | NOTIF-03 | Phase 6 — Google Home TTS | Pending |
