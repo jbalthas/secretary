@@ -23,9 +23,9 @@ export interface TaskCreate {
 }
 
 export interface AgendaItem {
-  id: number;
+  id: string;
   title: string;
-  time?: string;
-  priority?: Priority;
+  time: string | null;
+  priority: Priority | null;
   isEvent: boolean;
 }
