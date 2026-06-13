@@ -3,23 +3,23 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-06-13T21:25:00.000Z"
+last_updated: "2026-06-13T03:20:15.421Z"
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 16
-  completed_plans: 14
+  completed_plans: 11
 ---
 
 # Project State
 
 ## Current Phase
 
-Phase 04 — calendar-sync
+Phase 03 — pushover-reminders
 
 ## Current Plan
 
-Plan 3 of 4 complete (04-03 done)
+Plan 3 of 3 complete (03-03 done)
 
 ## Status
 
@@ -61,9 +61,6 @@ in-progress
 - [Phase 03-02]: Deferred PushoverClient import in _send_reminder prevents circular import at scheduler module load
 - [03-03]: update_task checks task.completed after DB refresh to branch between remove_reminder and upsert_reminder
 - [03-03]: Monkeypatch at app.routers.tasks.<helper> (not app.scheduler) for router-level test isolation
-- [Phase 04]: callback returns 200 JSON instead of RedirectResponse to avoid TestClient follow_redirects=True 404
-- [04-03]: datetime.fromisoformat with Z→+00:00 replacement used instead of python-dateutil (not installed)
-- [04-03]: fake_credentials_json fixture patches app.services.sync._Session to use test DB for sync_calendar test isolation
 
 ### Open Questions (Live Verification Required)
 
@@ -83,5 +80,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-06-13T21:25:00.000Z
-Next action: Completed 04-03 (calendar sync engine + events/today endpoint); Phase 04 Plan 04 remaining
+Last session: 2026-06-13T03:11:32.266Z
+Next action: Completed 03-03 (task reminder lifecycle wiring); Phase 03 plans complete
