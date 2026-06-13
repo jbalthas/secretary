@@ -1,7 +1,5 @@
-import types
 import pytest
 from unittest.mock import MagicMock, patch
-
 from app.services.pushover import PushoverClient
 from app.scheduler import _pushover_priority
 from app.models import Priority
@@ -16,14 +14,19 @@ def _make_mock_response():
 def test_send_payload(monkeypatch):
     captured = {}
 
-    def fake_post(self, url, **kwargs):
+    def fake_post(url, data=None, **kwargs):
         captured["url"] = url
-        captured["data"] = kwargs.get("data", {})
+        captured["data"] = data
         return _make_mock_response()
 
-    monkeypatch.setattr("httpx.Client.post", fake_post)
+    with patch("app.services.pushover.httpx.Client") as mock_client_cls:
+        mock_client = MagicMock()
+        mock_client.__enter__ = MagicMock(return_value=mock_client)
+        mock_client.__exit__ = MagicMock(return_value=False)
+        mock_client.post = fake_post
+        mock_client_cls.return_value = mock_client
 
-    PushoverClient().send(title="Meeting", message="Bring laptop", priority=1)
+        PushoverClient().send(title="Meeting", message="Bring laptop", priority=1)
 
     assert captured["url"] == "https://api.pushover.net/1/messages.json"
     assert captured["data"]["title"] == "Meeting"
@@ -36,13 +39,18 @@ def test_send_payload(monkeypatch):
 def test_empty_description(monkeypatch):
     captured = {}
 
-    def fake_post(self, url, **kwargs):
-        captured["data"] = kwargs.get("data", {})
+    def fake_post(url, data=None, **kwargs):
+        captured["data"] = data
         return _make_mock_response()
 
-    monkeypatch.setattr("httpx.Client.post", fake_post)
+    with patch("app.services.pushover.httpx.Client") as mock_client_cls:
+        mock_client = MagicMock()
+        mock_client.__enter__ = MagicMock(return_value=mock_client)
+        mock_client.__exit__ = MagicMock(return_value=False)
+        mock_client.post = fake_post
+        mock_client_cls.return_value = mock_client
 
-    PushoverClient().send(title="Meeting", message="", priority=0)
+        PushoverClient().send(title="Meeting", message="", priority=0)
 
     assert captured["data"]["message"] == " "
 
