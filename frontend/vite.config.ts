@@ -5,4 +5,9 @@ export default defineConfig({
   plugins: [react()],
   build: { outDir: "dist" },
   test: { environment: "jsdom" },
+  server: {
+    proxy: {
+      "/api": "http://127.0.0.1:8000",
+    },
+  },
 });
