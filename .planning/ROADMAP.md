@@ -67,7 +67,10 @@
 1. A Pushover notification arrives on the user's phone within 60 seconds of a task's reminder time.
 2. Reminders scheduled before a Pi reboot still fire correctly after the Pi comes back up.
 3. No duplicate notifications fire when the service restarts (APScheduler dedup guard in place).
-**Plans**: TBD
+**Plans:** 3 plans
+- [ ] 03-01-PLAN.md — Wave 0: Pushover config + failing scheduler/Pushover unit tests (NOTIF-01, NOTIF-02)
+- [ ] 03-02-PLAN.md — PushoverClient + APScheduler singleton + lifespan wiring (NOTIF-01, NOTIF-02)
+- [ ] 03-03-PLAN.md — Task router reminder integration + lifecycle tests (NOTIF-01)
 **UI hint**: no
 
 ---
