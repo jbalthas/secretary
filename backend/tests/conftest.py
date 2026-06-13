@@ -35,3 +35,41 @@ def create_test_db():
         await engine.dispose()
 
     asyncio.get_event_loop_policy().get_event_loop().run_until_complete(_teardown())
+
+
+@pytest.fixture
+def fake_credentials_json():
+    import json
+    return json.dumps({
+        "token": "ya29.fake-access-token",
+        "refresh_token": "1//fake-refresh-token",
+        "token_uri": "https://oauth2.googleapis.com/token",
+        "client_id": "fake-client-id.apps.googleusercontent.com",
+        "client_secret": "fake-client-secret",
+        "scopes": ["https://www.googleapis.com/auth/calendar.readonly"],
+    })
+
+
+def make_google_event(
+    event_id="evt1",
+    summary="Test Event",
+    status="confirmed",
+    start_dt="2026-06-12T09:00:00Z",
+    end_dt="2026-06-12T10:00:00Z",
+    all_day_date=None,
+):
+    if all_day_date:
+        return {
+            "id": event_id,
+            "status": status,
+            "summary": summary,
+            "start": {"date": all_day_date},
+            "end": {"date": all_day_date},
+        }
+    return {
+        "id": event_id,
+        "status": status,
+        "summary": summary,
+        "start": {"dateTime": start_dt},
+        "end": {"dateTime": end_dt},
+    }
