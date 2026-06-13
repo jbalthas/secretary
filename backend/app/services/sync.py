@@ -65,15 +65,13 @@ def _upsert(session, values: dict) -> None:
 
 
 def _full_sync(service, session) -> str:
+    # No timeMin — required to get nextSyncToken from Google.
+    # Past events are pruned after insert instead.
     page_token = None
     next_sync_token = None
+    today = _today_min_rfc3339()
     while True:
-        kwargs = {
-            "calendarId": "primary",
-            "timeMin": _today_min_rfc3339(),
-            "singleEvents": True,
-            "orderBy": "startTime",
-        }
+        kwargs = {"calendarId": "primary", "singleEvents": True}
         if page_token:
             kwargs["pageToken"] = page_token
         result = service.events().list(**kwargs).execute()
@@ -88,8 +86,20 @@ def _full_sync(service, session) -> str:
         if not page_token:
             next_sync_token = result.get("nextSyncToken")
             break
-    # Prune cancelled rows
+    # Prune past and cancelled events
     session.execute(delete(CalendarEvent).where(CalendarEvent.cancelled == True))
+    session.execute(
+        delete(CalendarEvent).where(
+            CalendarEvent.all_day == True,
+            CalendarEvent.start_date < today[:10],
+        )
+    )
+    session.execute(
+        delete(CalendarEvent).where(
+            CalendarEvent.all_day == False,
+            CalendarEvent.start_dt < today,
+        )
+    )
     return next_sync_token
 
 
