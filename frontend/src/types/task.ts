@@ -1,0 +1,31 @@
+export type Priority = "high" | "medium" | "low";
+
+export interface Task {
+  id: number;
+  title: string;
+  description?: string;
+  priority: Priority;
+  due_date?: string;
+  reminder_at?: string;
+  recurrence_cron?: string;
+  completed: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TaskCreate {
+  title: string;
+  description?: string;
+  priority?: Priority;
+  due_date?: string;
+  reminder_at?: string;
+  recurrence_cron?: string;
+}
+
+export interface AgendaItem {
+  id: number;
+  title: string;
+  time?: string;
+  priority?: Priority;
+  isEvent: boolean;
+}
