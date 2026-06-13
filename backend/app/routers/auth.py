@@ -3,7 +3,7 @@ import base64
 import secrets
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse  # noqa: F401 — used below
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_session
@@ -63,4 +63,4 @@ async def google_callback(
 
     await session.commit()
 
-    return {"connected": True, "redirect": "/settings?connected=true"}
+    return RedirectResponse(url="/settings?connected=true", status_code=302)
