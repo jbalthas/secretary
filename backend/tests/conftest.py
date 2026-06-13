@@ -40,7 +40,11 @@ def create_test_db():
 @pytest.fixture
 def fake_credentials_json():
     import json
-    return json.dumps({
+    from unittest.mock import patch
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+
+    creds = json.dumps({
         "token": "ya29.fake-access-token",
         "refresh_token": "1//fake-refresh-token",
         "token_uri": "https://oauth2.googleapis.com/token",
@@ -48,6 +52,34 @@ def fake_credentials_json():
         "client_secret": "fake-client-secret",
         "scopes": ["https://www.googleapis.com/auth/calendar.readonly"],
     })
+
+    # Set up a sync session on the same test DB so sync_calendar can read credentials
+    sync_test_url = TEST_DB_URL.replace("+aiosqlite", "")
+    sync_engine = create_engine(sync_test_url)
+    Base.metadata.create_all(sync_engine)
+    TestSyncSession = sessionmaker(sync_engine)
+
+    from app.models.calendar import CalendarSync
+    with TestSyncSession() as s:
+        row = s.get(CalendarSync, 1)
+        if row is None:
+            row = CalendarSync(id=1, credentials_json=creds, sync_token=None)
+            s.add(row)
+        else:
+            row.credentials_json = creds
+            row.sync_token = None
+        s.commit()
+
+    with patch("app.services.sync._Session", TestSyncSession):
+        yield creds
+
+    # Clean up CalendarSync row after test
+    with TestSyncSession() as s:
+        row = s.get(CalendarSync, 1)
+        if row:
+            s.delete(row)
+            s.commit()
+    sync_engine.dispose()
 
 
 def make_google_event(
