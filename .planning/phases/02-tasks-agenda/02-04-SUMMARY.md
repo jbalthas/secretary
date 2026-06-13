@@ -26,7 +26,7 @@ decisions:
 metrics:
   duration: "~20min"
   completed_date: "2026-06-13"
-  tasks_completed: 2
+  tasks_completed: 3
   files_changed: 5
 ---
 
@@ -50,9 +50,9 @@ Full task CRUD UX on the Tasks page: compact rows with optimistic checkbox, FAB,
 - `npx tsc --noEmit` passes
 - `npm run build` exits 0 (244KB JS bundle)
 
-## Task 3: Human Checkpoint (pending)
+## Task 3: Human Checkpoint — APPROVED
 
-Phone browser verification of full CRUD flow required. See plan for steps.
+Phone browser verification completed. User confirmed: task creation via FAB, edit via row tap, optimistic checkbox completion, Completed tab filter, delete with confirm dialog, sort toggle — all working correctly.
 
 ## Deviations from Plan
 
