@@ -6,6 +6,7 @@ from app.db import get_session
 from app.models import Task
 from app.schemas.task import TaskCreate, TaskUpdate, TaskRead
 from app.config import settings
+from app.scheduler import upsert_reminder, remove_reminder
 
 router = APIRouter(prefix=f"{settings.api_prefix}/tasks", tags=["tasks"])
 
@@ -22,6 +23,7 @@ async def create_task(body: TaskCreate, session: AsyncSession = Depends(get_sess
     session.add(task)
     await session.commit()
     await session.refresh(task)
+    upsert_reminder(task)
     return task
 
 
@@ -34,6 +36,10 @@ async def update_task(task_id: int, body: TaskUpdate, session: AsyncSession = De
         setattr(task, k, v)
     await session.commit()
     await session.refresh(task)
+    if task.completed:
+        remove_reminder(task.id)
+    else:
+        upsert_reminder(task)
     return task
 
 
@@ -44,3 +50,4 @@ async def delete_task(task_id: int, session: AsyncSession = Depends(get_session)
         raise HTTPException(404)
     await session.delete(task)
     await session.commit()
+    remove_reminder(task_id)

@@ -15,11 +15,11 @@ progress:
 
 ## Current Phase
 
-Phase 02 — tasks-agenda
+Phase 03 — pushover-reminders
 
 ## Current Plan
 
-Plan 5 of 5 complete (02-05 done)
+Plan 3 of 3 complete (03-03 done)
 
 ## Status
 
@@ -35,7 +35,7 @@ in-progress
 
 **Core value:** One place to manage your schedule and tasks — reachable from any device, voice-controllable via Google Home, and proactive enough to push reminders before you have to think about them.
 
-**Current focus:** Phase 02 — tasks-agenda
+**Current focus:** Phase 03 — pushover-reminders
 
 ---
 
@@ -59,6 +59,8 @@ in-progress
 - [02-05]: buildAgenda accepts injectable `now` for deterministic tests; all-day = T00:00:00; PLACEHOLDER_EVENTS named export for Phase 4 swap
 - [Phase 03-02]: Sync httpx.Client in PushoverClient.send — APScheduler 3.x runs jobs in thread pool, not async
 - [Phase 03-02]: Deferred PushoverClient import in _send_reminder prevents circular import at scheduler module load
+- [03-03]: update_task checks task.completed after DB refresh to branch between remove_reminder and upsert_reminder
+- [03-03]: Monkeypatch at app.routers.tasks.<helper> (not app.scheduler) for router-level test isolation
 
 ### Open Questions (Live Verification Required)
 
@@ -78,5 +80,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-06-13T02:27:42.031Z
-Next action: Completed 02-05 (Today agenda view); Phase 02 plans complete
+Last session: 2026-06-12T00:00:00Z
+Next action: Completed 03-03 (task reminder lifecycle wiring); Phase 03 plans complete

@@ -12,7 +12,7 @@
 |---|-------|------|--------------|----------|
 | 1 | Foundation | Pi is fully configured, reachable remotely, backend running | INFRA-01–07 | 4 |
 | 2 | Tasks & Agenda | 5/5 | Complete   | 2026-06-13 |
-| 3 | Pushover Reminders | Task reminders and APScheduler fire reliably to phone | NOTIF-01, NOTIF-02 | 3 |
+| 3 | Pushover Reminders | 3/3 | Complete   | 2026-06-13 |
 | 4 | Calendar Sync | Google Calendar events sync into the app automatically | CAL-01–04 | 4 |
 | 5 | Daily Brief & Routines | Morning brief fires proactively; custom routines persist | CAL-06, CAL-07 | 3 |
 | 6 | Google Home TTS | Reminders and brief also announce on Google Home speaker | NOTIF-03–06 | 4 |
@@ -67,10 +67,10 @@
 1. A Pushover notification arrives on the user's phone within 60 seconds of a task's reminder time.
 2. Reminders scheduled before a Pi reboot still fire correctly after the Pi comes back up.
 3. No duplicate notifications fire when the service restarts (APScheduler dedup guard in place).
-**Plans:** 3 plans
-- [ ] 03-01-PLAN.md — Wave 0: Pushover config + failing scheduler/Pushover unit tests (NOTIF-01, NOTIF-02)
-- [ ] 03-02-PLAN.md — PushoverClient + APScheduler singleton + lifespan wiring (NOTIF-01, NOTIF-02)
-- [ ] 03-03-PLAN.md — Task router reminder integration + lifecycle tests (NOTIF-01)
+**Plans:** 3/3 plans complete
+- [x] 03-01-PLAN.md — Wave 0: Pushover config + failing scheduler/Pushover unit tests (NOTIF-01, NOTIF-02)
+- [x] 03-02-PLAN.md — PushoverClient + APScheduler singleton + lifespan wiring (NOTIF-01, NOTIF-02)
+- [x] 03-03-PLAN.md — Task router reminder integration + lifecycle tests (NOTIF-01)
 **UI hint**: no
 
 ---
