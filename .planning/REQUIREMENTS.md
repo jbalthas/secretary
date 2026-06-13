@@ -24,7 +24,7 @@
 
 ### Scheduling & Calendar (CAL)
 
-- [ ] **CAL-01**: User completes Google OAuth flow in the web UI; tokens are stored and auto-refreshed
+- [x] **CAL-01**: User completes Google OAuth flow in the web UI; tokens are stored and auto-refreshed
 - [ ] **CAL-02**: App syncs Google Calendar events incrementally every 5 minutes (syncToken strategy)
 - [ ] **CAL-03**: On HTTP 410 from Google, app falls back to a full re-sync automatically
 - [ ] **CAL-04**: App sends a Pushover alert if the Google OAuth token is revoked (`invalid_grant`)
@@ -84,7 +84,7 @@
 | CAL-05 | Phase 2 — Tasks & Agenda | Complete |
 | NOTIF-01 | Phase 3 — Pushover Reminders | Complete |
 | NOTIF-02 | Phase 5 — Daily Brief & Routines | Pending |
-| CAL-01 | Phase 4 — Calendar Sync | Pending |
+| CAL-01 | Phase 4 — Calendar Sync | Complete |
 | CAL-02 | Phase 4 — Calendar Sync | Pending |
 | CAL-03 | Phase 4 — Calendar Sync | Pending |
 | CAL-04 | Phase 4 — Calendar Sync | Pending |

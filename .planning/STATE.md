@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-06-13T02:35:33.153Z"
+last_updated: "2026-06-13T03:31:29.187Z"
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 12
-  completed_plans: 11
+  completed_plans: 12
 ---
 
 # Project State
@@ -61,6 +61,7 @@ in-progress
 - [Phase 03-02]: Deferred PushoverClient import in _send_reminder prevents circular import at scheduler module load
 - [03-03]: update_task checks task.completed after DB refresh to branch between remove_reminder and upsert_reminder
 - [03-03]: Monkeypatch at app.routers.tasks.<helper> (not app.scheduler) for router-level test isolation
+- [Phase 04]: callback returns 200 JSON instead of RedirectResponse to avoid TestClient follow_redirects=True 404
 
 ### Open Questions (Live Verification Required)
 
@@ -80,5 +81,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-06-12T00:00:00Z
+Last session: 2026-06-13T03:31:25.133Z
 Next action: Completed 03-03 (task reminder lifecycle wiring); Phase 03 plans complete
