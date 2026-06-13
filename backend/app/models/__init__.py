@@ -30,3 +30,6 @@ class Task(Base):
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
     )
+
+
+from app.models.calendar import CalendarEvent, CalendarSync  # noqa: E402,F401
