@@ -81,7 +81,7 @@
 | TASK-05 | Phase 2 — Tasks & Agenda | Complete |
 | TASK-06 | Phase 2 — Tasks & Agenda | Complete |
 | TASK-07 | Phase 2 — Tasks & Agenda | Complete |
-| CAL-05 | Phase 2 — Tasks & Agenda | Pending |
+| CAL-05 | Phase 2 — Tasks & Agenda | Complete |
 | NOTIF-01 | Phase 3 — Pushover Reminders | Pending |
 | NOTIF-02 | Phase 3 — Pushover Reminders | Pending |
 | CAL-01 | Phase 4 — Calendar Sync | Pending |
