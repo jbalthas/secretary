@@ -35,7 +35,7 @@
 ### Notifications & Google Home (NOTIF)
 
 - [x] **NOTIF-01**: Task reminders deliver a Pushover push notification to user's phone at the scheduled time
-- [x] **NOTIF-02**: Daily brief delivers a Pushover push notification with agenda content
+- [ ] **NOTIF-02**: Daily brief delivers a Pushover push notification with agenda content
 - [ ] **NOTIF-03**: User can trigger a TTS announcement on their Google Home from the web UI (`POST /api/v1/tts`)
 - [ ] **NOTIF-04**: Task reminders also announce on Google Home via pychromecast + gTTS (in addition to Pushover)
 - [ ] **NOTIF-05**: Daily brief announces on Google Home at brief time (in addition to Pushover)
@@ -83,7 +83,7 @@
 | TASK-07 | Phase 2 — Tasks & Agenda | Complete |
 | CAL-05 | Phase 2 — Tasks & Agenda | Complete |
 | NOTIF-01 | Phase 3 — Pushover Reminders | Complete |
-| NOTIF-02 | Phase 3 — Pushover Reminders | Complete |
+| NOTIF-02 | Phase 5 — Daily Brief & Routines | Pending |
 | CAL-01 | Phase 4 — Calendar Sync | Pending |
 | CAL-02 | Phase 4 — Calendar Sync | Pending |
 | CAL-03 | Phase 4 — Calendar Sync | Pending |
