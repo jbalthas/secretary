@@ -7,6 +7,9 @@ class Settings(BaseSettings):
     api_prefix: str = "/api/v1"
     pushover_api_token: str = ""
     pushover_user_key: str = ""
+    google_client_secrets_json: str = ""
+    google_oauth_redirect_uri: str = "https://secretary.ts.net/auth/google/callback"
+    google_session_secret: str = "dev-insecure-change-me"
 
 
 settings = Settings()
