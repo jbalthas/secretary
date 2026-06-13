@@ -14,13 +14,13 @@
 
 ### Tasks (TASK)
 
-- [ ] **TASK-01**: User can create a task with title, optional description, optional due date, and priority (high/medium/low)
-- [ ] **TASK-02**: User can edit any field of an existing task
-- [ ] **TASK-03**: User can mark a task complete
-- [ ] **TASK-04**: User can delete a task
-- [ ] **TASK-05**: User can attach a reminder time to a task; reminder fires a Pushover notification at that time
-- [ ] **TASK-06**: User can create a recurring task (daily, weekly, or custom cron expression)
-- [ ] **TASK-07**: Task list is filterable by status (pending / completed) and sortable by due date and priority
+- [x] **TASK-01**: User can create a task with title, optional description, optional due date, and priority (high/medium/low)
+- [x] **TASK-02**: User can edit any field of an existing task
+- [x] **TASK-03**: User can mark a task complete
+- [x] **TASK-04**: User can delete a task
+- [x] **TASK-05**: User can attach a reminder time to a task; reminder fires a Pushover notification at that time
+- [x] **TASK-06**: User can create a recurring task (daily, weekly, or custom cron expression)
+- [x] **TASK-07**: Task list is filterable by status (pending / completed) and sortable by due date and priority
 
 ### Scheduling & Calendar (CAL)
 
@@ -74,13 +74,13 @@
 | INFRA-05 | Phase 1 — Foundation | Done (01-03) |
 | INFRA-06 | Phase 1 — Foundation | Complete |
 | INFRA-07 | Phase 1 — Foundation | Pending |
-| TASK-01 | Phase 2 — Tasks & Agenda | Pending |
-| TASK-02 | Phase 2 — Tasks & Agenda | Pending |
-| TASK-03 | Phase 2 — Tasks & Agenda | Pending |
-| TASK-04 | Phase 2 — Tasks & Agenda | Pending |
-| TASK-05 | Phase 2 — Tasks & Agenda | Pending |
-| TASK-06 | Phase 2 — Tasks & Agenda | Pending |
-| TASK-07 | Phase 2 — Tasks & Agenda | Pending |
+| TASK-01 | Phase 2 — Tasks & Agenda | Complete |
+| TASK-02 | Phase 2 — Tasks & Agenda | Complete |
+| TASK-03 | Phase 2 — Tasks & Agenda | Complete |
+| TASK-04 | Phase 2 — Tasks & Agenda | Complete |
+| TASK-05 | Phase 2 — Tasks & Agenda | Complete |
+| TASK-06 | Phase 2 — Tasks & Agenda | Complete |
+| TASK-07 | Phase 2 — Tasks & Agenda | Complete |
 | CAL-05 | Phase 2 — Tasks & Agenda | Pending |
 | NOTIF-01 | Phase 3 — Pushover Reminders | Pending |
 | NOTIF-02 | Phase 3 — Pushover Reminders | Pending |
