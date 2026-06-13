@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-06-13T00:24:12.277Z"
+last_updated: "2026-06-13T00:24:53.041Z"
 progress:
   total_phases: 6
   completed_phases: 0
@@ -54,6 +54,7 @@ in-progress
 - [01-01] Alembic env.py derives sync URL by stripping +aiosqlite from settings.database_url
 - [01-02] @vitejs/plugin-react ^6 required for Vite 8 (v4 peer constraint excludes Vite 8)
 - [Phase 02-tasks-agenda]: Sync TestClient (not async) for test stubs — mirrors existing test_health.py pattern
+- [Phase 02-tasks-agenda]: exclude_unset=True on PATCH prevents partial updates from resetting unset optional fields
 
 ### Open Questions (Live Verification Required)
 
@@ -73,5 +74,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-06-13T00:24:08.848Z
+Last session: 2026-06-13T00:24:49.610Z
 Next action: Execute 01-04 (bootstrap orchestration)
