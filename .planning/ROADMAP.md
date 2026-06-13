@@ -91,13 +91,17 @@
 
 ### Phase 5: Daily Brief & Routines
 **Goal:** A morning brief fires automatically at a configurable time with today's agenda; users can define custom recurring routines that survive reboots.
-**Requirements:** CAL-06, CAL-07
+**Requirements:** CAL-06, CAL-07, NOTIF-02
 **Gate test:** Set the daily brief time to 2 minutes from now; confirm a Pushover notification arrives with today's task and event summary.
 **Success Criteria:**
 1. A Pushover notification with today's agenda summary arrives at the user-configured brief time (default 8am).
 2. The brief time is configurable from the web UI without editing config files.
 3. User can create, edit, and delete custom recurring routines (name, cron schedule, action); routines persist and fire correctly after a Pi reboot.
-**Plans**: TBD
+**Plans:** 4 plans
+- [ ] 05-01-PLAN.md — Wave 0 test scaffold: failing brief/settings/routines tests (CAL-06, CAL-07, NOTIF-02)
+- [ ] 05-02-PLAN.md — Daily brief backend: AppSettings, brief builder, scheduler, brief-time router, startup (CAL-06, NOTIF-02)
+- [ ] 05-03-PLAN.md — Routines backend: Routine model, scheduler helpers, CRUD router with cron validation (CAL-07)
+- [ ] 05-04-PLAN.md — Settings page UI: brief time picker + routines manager (CAL-06, CAL-07)
 **UI hint**: yes
 
 ---
