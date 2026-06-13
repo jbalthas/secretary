@@ -18,7 +18,7 @@ created: 2026-06-13
 
 Two UI surfaces added to the existing Settings page:
 
-1. **Brief time picker** — user sets what hour the daily brief fires (default 08:00). A single `<input type="time">` field inside a Settings card, with a "Save" button.
+1. **Brief time picker** — user sets what hour the daily brief fires (default 08:00). A single `<input type="time">` field inside a Settings card, with a "Save Brief Time" button.
 2. **Routines manager** — list of custom recurring routines (name + cron schedule + action label). User can create, edit, and delete routines. Uses the existing drawer pattern from Tasks.
 
 Both surfaces live under `/settings` to keep the nav unchanged.
@@ -55,7 +55,7 @@ Declared values (must be multiples of 4):
 
 Exceptions:
 - Touch targets: minimum 44px height on all tappable rows (matches existing `.task-row { min-height: 48px }` — use 48px)
-- Bottom nav clearance: `paddingBottom: 56px` on page container (already set by `<div style={{ paddingBottom: 56 }}>` in App.tsx)
+- Bottom nav clearance: `paddingBottom: 56px` on page container — inherited from `<div style={{ paddingBottom: 56 }}>` in App.tsx; this is an existing codebase constant, NOT a spacing token. Do not use 56px elsewhere.
 
 ---
 
@@ -89,7 +89,7 @@ Notes (from styles.css):
 Source: `frontend/src/styles.css` `:root` block.
 
 Accent reserved for:
-- "Save brief time" button (filled)
+- "Save Brief Time" button (filled)
 - "Add Routine" FAB (filled, same `.fab` class)
 - Active bottom nav tab indicator
 - Focus-visible outline (`*:focus-visible { outline: 2px solid var(--accent) }`)
@@ -137,6 +137,8 @@ The Phase 5 Settings additions appear below the existing "Google Calendar" secti
 
 Brief time input: use `<input type="time">` styled with `.drawer-field input` styles (background `var(--bg)`, border `1px solid var(--border)`, border-radius 6px, color `var(--text)`, padding `8px 10px`, font-size 16px). Display current saved value on load.
 
+The Routines section is the primary visual anchor on the Settings page after Phase 5 additions; the Daily Brief card is secondary.
+
 ---
 
 ## Interaction States
@@ -146,9 +148,9 @@ Brief time input: use `<input type="time">` styled with `.drawer-field input` st
 | State | Behavior |
 |-------|----------|
 | Loading | Show "Loading…" at 14px `var(--text-secondary)` — matches Settings.tsx null check |
-| Idle | Time input shows current brief time; "Save" button enabled |
-| Saving | "Save" button shows "Saving…" and `opacity: 0.6; cursor: not-allowed` — matches `busy` pattern in Settings.tsx |
-| Saved | Button returns to "Save"; no toast (keep it simple) |
+| Idle | Time input shows current brief time; "Save Brief Time" button enabled |
+| Saving | "Save Brief Time" button shows "Saving…" and `opacity: 0.6; cursor: not-allowed` — matches `busy` pattern in Settings.tsx |
+| Saved | Button returns to "Save Brief Time"; no toast (keep it simple) |
 | Error | Inline error text below input: `font-size: 12px; color: var(--destructive)` — matches `.task-row-error` |
 
 ### Routine Drawer
@@ -177,17 +179,17 @@ Brief time input: use `<input type="time">` styled with `.drawer-field input` st
 |---------|------|
 | Brief section label | DAILY BRIEF |
 | Brief time field label | Brief time |
-| Brief save CTA | Save |
+| Brief save CTA | Save Brief Time |
 | Brief saving state | Saving… |
 | Routines section label | ROUTINES |
 | Add routine CTA | + Add Routine |
 | Routine drawer title (create) | Add Routine |
 | Routine drawer title (edit) | Edit Routine |
 | Routine save CTA | Save Routine |
-| Routine delete action | Delete |
+| Routine delete action | Delete Routine |
 | Delete confirm heading | Delete routine? |
 | Delete confirm body | This routine will stop firing and cannot be recovered. |
-| Delete confirm button | Delete |
+| Delete confirm button | Delete Routine |
 | Delete cancel button | Cancel |
 | Empty state heading | No routines yet |
 | Empty state body | Add a routine to automate recurring actions. |
