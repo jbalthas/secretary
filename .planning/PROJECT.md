@@ -31,7 +31,7 @@ One place to manage your schedule and tasks — reachable from any device, voice
 
 ### Validated
 
-(None yet — ship to validate)
+- Pushover notifications for task reminders fire reliably and survive Pi reboots (Validated in Phase 3: pushover-reminders — NOTIF-01 complete, reboot gate pending human test)
 
 ### Active
 
