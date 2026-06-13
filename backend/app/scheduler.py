@@ -43,3 +43,15 @@ def remove_reminder(task_id: int) -> None:
         scheduler.remove_job(f"reminder_task_{task_id}")
     except Exception:
         pass
+
+
+def schedule_calendar_sync() -> None:
+    from apscheduler.triggers.interval import IntervalTrigger
+    from app.services.sync import sync_calendar
+    scheduler.add_job(
+        sync_calendar,
+        IntervalTrigger(minutes=5),
+        id="calendar_sync",
+        replace_existing=True,
+        misfire_grace_time=300,
+    )

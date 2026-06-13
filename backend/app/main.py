@@ -1,14 +1,21 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from starlette.concurrency import run_in_threadpool
 from starlette.middleware.sessions import SessionMiddleware
 from app.config import settings
 from app.routers import tasks, auth, calendar_status, events
-from app.scheduler import scheduler
+from app.scheduler import scheduler, schedule_calendar_sync
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     scheduler.start()
+    schedule_calendar_sync()
+    try:
+        from app.services.sync import sync_calendar
+        await run_in_threadpool(sync_calendar)
+    except Exception:
+        pass
     yield
     scheduler.shutdown()
 
