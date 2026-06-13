@@ -49,7 +49,12 @@
 3. User can set a reminder time on a task (notification delivery validated in Phase 3).
 4. User can create a recurring task (daily, weekly, or custom cron) and see it re-appear after completion.
 5. Task list can be filtered by pending/completed and sorted by due date or priority.
-**Plans**: TBD
+**Plans:** 5 plans
+- [ ] 02-01-PLAN.md — Test scaffold + Vite proxy + Task TS contract (Wave 0)
+- [ ] 02-02-PLAN.md — Backend: Task model, migration, CRUD router (Wave 1)
+- [ ] 02-03-PLAN.md — Frontend SPA shell: router, bottom nav, useTasks, theme (Wave 1)
+- [ ] 02-04-PLAN.md — Tasks page: rows, drawer form, FAB, filter/sort (Wave 2)
+- [ ] 02-05-PLAN.md — Today agenda: merge logic + view (Wave 2)
 **UI hint**: yes
 
 ---
@@ -113,7 +118,7 @@
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/4 | In progress | - |
-| 2. Tasks & Agenda | 0/? | Not started | - |
+| 2. Tasks & Agenda | 0/5 | Not started | - |
 | 3. Pushover Reminders | 0/? | Not started | - |
 | 4. Calendar Sync | 0/? | Not started | - |
 | 5. Daily Brief & Routines | 0/? | Not started | - |
