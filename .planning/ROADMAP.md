@@ -13,7 +13,7 @@
 | 1 | Foundation | Pi is fully configured, reachable remotely, backend running | INFRA-01–07 | 4 |
 | 2 | Tasks & Agenda | 5/5 | Complete   | 2026-06-13 |
 | 3 | Pushover Reminders | 3/3 | Complete   | 2026-06-13 |
-| 4 | Calendar Sync | Google Calendar events sync into the app automatically | CAL-01–04 | 4 |
+| 4 | Calendar Sync | 3/4 | In Progress|  |
 | 5 | Daily Brief & Routines | Morning brief fires proactively; custom routines persist | CAL-06, CAL-07 | 3 |
 | 6 | Google Home TTS | Reminders and brief also announce on Google Home speaker | NOTIF-03–06 | 4 |
 
