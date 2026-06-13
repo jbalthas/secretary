@@ -20,7 +20,7 @@
 - [ ] **TASK-04**: User can delete a task
 - [ ] **TASK-05**: User can attach a reminder time to a task; reminder fires a Pushover notification at that time
 - [ ] **TASK-06**: User can create a recurring task (daily, weekly, or custom cron expression)
-- [ ] **TASK-07**: Task list is filterable by status (pending / completed) and sortable by due date and priority
+- [x] **TASK-07**: Task list is filterable by status (pending / completed) and sortable by due date and priority
 
 ### Scheduling & Calendar (CAL)
 
@@ -28,7 +28,7 @@
 - [ ] **CAL-02**: App syncs Google Calendar events incrementally every 5 minutes (syncToken strategy)
 - [ ] **CAL-03**: On HTTP 410 from Google, app falls back to a full re-sync automatically
 - [ ] **CAL-04**: App sends a Pushover alert if the Google OAuth token is revoked (`invalid_grant`)
-- [ ] **CAL-05**: Today's agenda view shows tasks (with due dates) and calendar events merged and sorted by time
+- [x] **CAL-05**: Today's agenda view shows tasks (with due dates) and calendar events merged and sorted by time
 - [ ] **CAL-06**: Daily brief fires at a user-configurable time (default 8am); delivered as a Pushover notification with today's agenda summary
 - [ ] **CAL-07**: User can define custom recurring routines (name, cron schedule, action); routines persist across reboots via APScheduler SQLAlchemyJobStore
 
@@ -80,8 +80,8 @@
 | TASK-04 | Phase 2 — Tasks & Agenda | Pending |
 | TASK-05 | Phase 2 — Tasks & Agenda | Pending |
 | TASK-06 | Phase 2 — Tasks & Agenda | Pending |
-| TASK-07 | Phase 2 — Tasks & Agenda | Pending |
-| CAL-05 | Phase 2 — Tasks & Agenda | Pending |
+| TASK-07 | Phase 2 — Tasks & Agenda | Complete |
+| CAL-05 | Phase 2 — Tasks & Agenda | Complete |
 | NOTIF-01 | Phase 3 — Pushover Reminders | Pending |
 | NOTIF-02 | Phase 3 — Pushover Reminders | Pending |
 | CAL-01 | Phase 4 — Calendar Sync | Pending |
