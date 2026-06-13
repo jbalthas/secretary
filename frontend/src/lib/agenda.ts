@@ -6,7 +6,7 @@ export const PLACEHOLDER_EVENTS: AgendaItem[] = [
 ];
 
 export function buildAgenda(tasks: Task[], now: Date = new Date()): AgendaItem[] {
-  const today = now.toISOString().slice(0, 10);
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 
   const todayTasks = tasks.filter(
     (t) => !t.completed && t.due_date && t.due_date.slice(0, 10) === today
