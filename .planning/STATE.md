@@ -15,11 +15,11 @@ progress:
 
 ## Current Phase
 
-Phase 03 — pushover-reminders
+Phase 05 — daily-brief-routines
 
 ## Current Plan
 
-Plan 3 of 3 complete (03-03 done)
+Plan 1 of 3 complete (05-01 done)
 
 ## Status
 
@@ -27,7 +27,7 @@ in-progress
 
 ## Last Updated
 
-2026-06-12
+2026-06-13
 
 ---
 
@@ -80,5 +80,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-06-13T03:11:32.266Z
-Next action: Completed 03-03 (task reminder lifecycle wiring); Phase 03 plans complete
+Last session: 2026-06-13T00:15:00Z
+Next action: Completed 05-01 (test scaffold RED files for brief, settings, routines); ready for Plan 02
