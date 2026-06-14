@@ -32,6 +32,7 @@ One place to manage your schedule and tasks — reachable from any device, voice
 ### Validated
 
 - Pushover notifications for task reminders fire reliably and survive Pi reboots (Validated in Phase 3: pushover-reminders — NOTIF-01 complete, reboot gate pending human test)
+- Daily brief fires at a UI-configurable time with today's agenda, and custom recurring routines (cron) persist across reboots (Validated in Phase 5: daily-brief-routines — CAL-06, CAL-07, NOTIF-02; golden-path human UAT passed)
 
 ### Active
 
@@ -42,7 +43,7 @@ One place to manage your schedule and tasks — reachable from any device, voice
 - [ ] SQLite schema for tasks, events, routines
 - [ ] Google Calendar OAuth + bidirectional sync
 - [ ] Task CRUD via web UI and API
-- [ ] Recurring routines (daily brief, custom schedules)
+- [x] Recurring routines (daily brief, custom schedules) — Phase 5
 - [ ] Pushover notifications for reminders and events
 - [ ] IFTTT webhook → Pi API for "add task" voice commands
 - [ ] Pi → Google Home TTS announcements for reminders
@@ -82,4 +83,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-12 after initialization*
+*Last updated: 2026-06-14 after Phase 5 (daily-brief-routines) completion*
