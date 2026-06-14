@@ -111,7 +111,11 @@
 2. When a task reminder fires, the announcement plays on Google Home in addition to the Pushover notification.
 3. The daily brief plays on Google Home at brief time in addition to the Pushover notification.
 4. Triggering the Google Home morning routine calls the Pi webhook and causes the daily brief to fire.
-**Plans**: TBD
+**Plans:** 4 plans
+- [ ] 06-01-PLAN.md — Wave 0: config + tts_enabled migration + .env/.gitignore + all failing tests (NOTIF-03, NOTIF-04, NOTIF-05, NOTIF-06)
+- [ ] 06-02-PLAN.md — TTSClient service + StaticFiles mount + /tts, /settings/tts, /webhooks/brief router (NOTIF-03, NOTIF-06)
+- [ ] 06-03-PLAN.md — build_brief_speech + reminder/brief TTS hooks (best-effort, tts_enabled-gated) (NOTIF-04, NOTIF-05)
+- [ ] 06-04-PLAN.md — Frontend Google Home card + useGoogleHome hook + hardware gate checkpoint (NOTIF-03)
 **UI hint**: yes
 
 ---
