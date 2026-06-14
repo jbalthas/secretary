@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-06-14T19:21:51.941Z"
+last_updated: "2026-06-14T19:26:54.923Z"
 progress:
   total_phases: 6
   completed_phases: 2
@@ -61,8 +61,6 @@ in-progress
 - [Phase 03-02]: Deferred PushoverClient import in _send_reminder prevents circular import at scheduler module load
 - [03-03]: update_task checks task.completed after DB refresh to branch between remove_reminder and upsert_reminder
 - [03-03]: Monkeypatch at app.routers.tasks.<helper> (not app.scheduler) for router-level test isolation
-- [Phase 05-03]: Cron validation at Pydantic schema layer via field_validator so FastAPI auto-returns 422 without try/except in endpoint
-- [Phase 05-03]: schedule_routine binds send_daily_brief directly; Phase 6 will branch on routine.action
 
 ### Open Questions (Live Verification Required)
 
@@ -82,5 +80,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-06-14T19:21:45.838Z
+Last session: 2026-06-14T19:26:54.919Z
 Next action: Completed 03-03 (task reminder lifecycle wiring); Phase 03 plans complete
