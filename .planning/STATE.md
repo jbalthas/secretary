@@ -3,23 +3,23 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-06-13T03:20:15.421Z"
+last_updated: "2026-06-14T19:21:51.941Z"
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 16
-  completed_plans: 11
+  completed_plans: 15
 ---
 
 # Project State
 
 ## Current Phase
 
-Phase 05 — daily-brief-routines
+Phase 03 — pushover-reminders
 
 ## Current Plan
 
-Plan 2 of 3 complete (05-02 done)
+Plan 3 of 3 complete (03-03 done)
 
 ## Status
 
@@ -27,7 +27,7 @@ in-progress
 
 ## Last Updated
 
-2026-06-13
+2026-06-12
 
 ---
 
@@ -61,8 +61,8 @@ in-progress
 - [Phase 03-02]: Deferred PushoverClient import in _send_reminder prevents circular import at scheduler module load
 - [03-03]: update_task checks task.completed after DB refresh to branch between remove_reminder and upsert_reminder
 - [03-03]: Monkeypatch at app.routers.tasks.<helper> (not app.scheduler) for router-level test isolation
-- [05-02]: SQLite strips timezone info — use naive datetime.now() for today-range queries in brief.py
-- [05-02]: PushoverClient imported at module level in brief.py to enable patch("app.services.brief.PushoverClient")
+- [Phase 05-03]: Cron validation at Pydantic schema layer via field_validator so FastAPI auto-returns 422 without try/except in endpoint
+- [Phase 05-03]: schedule_routine binds send_daily_brief directly; Phase 6 will branch on routine.action
 
 ### Open Questions (Live Verification Required)
 
@@ -82,5 +82,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-06-13T00:00:00Z
-Next action: Completed 05-02 (daily brief service, settings router, scheduler wiring); ready for Plan 03
+Last session: 2026-06-14T19:21:45.838Z
+Next action: Completed 03-03 (task reminder lifecycle wiring); Phase 03 plans complete
