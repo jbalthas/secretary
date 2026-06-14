@@ -32,4 +32,11 @@ class Task(Base):
     )
 
 
+class AppSettings(Base):
+    __tablename__ = "app_settings"
+    id: Mapped[int] = mapped_column(primary_key=True, default=1)
+    brief_hour: Mapped[int] = mapped_column(default=8)
+    brief_minute: Mapped[int] = mapped_column(default=0)
+
+
 from app.models.calendar import CalendarEvent, CalendarSync  # noqa: E402,F401
