@@ -3,8 +3,8 @@ from fastapi import FastAPI
 from starlette.concurrency import run_in_threadpool
 from starlette.middleware.sessions import SessionMiddleware
 from app.config import settings
-from app.routers import tasks, auth, calendar_status, events
-from app.scheduler import scheduler, schedule_calendar_sync
+from app.routers import tasks, auth, calendar_status, events, settings as settings_router
+from app.scheduler import scheduler, schedule_calendar_sync, schedule_daily_brief
 
 
 @asynccontextmanager
@@ -16,6 +16,21 @@ async def lifespan(app: FastAPI):
         await run_in_threadpool(sync_calendar)
     except Exception:
         pass
+    try:
+        from sqlalchemy import create_engine
+        from sqlalchemy.orm import sessionmaker
+        from app.config import settings as cfg_settings
+        from app.models import AppSettings
+        _url = cfg_settings.database_url.replace("+aiosqlite", "")
+        _eng = create_engine(_url)
+        with sessionmaker(_eng)() as s:
+            row = s.get(AppSettings, 1)
+        hour = row.brief_hour if row else 8
+        minute = row.brief_minute if row else 0
+        schedule_daily_brief(hour, minute)
+        _eng.dispose()
+    except Exception:
+        schedule_daily_brief(8, 0)
     yield
     scheduler.shutdown()
 
@@ -28,6 +43,7 @@ app.include_router(tasks.router)
 app.include_router(auth.router)
 app.include_router(calendar_status.router)
 app.include_router(events.router)
+app.include_router(settings_router.router)
 
 
 @app.get(f"{settings.api_prefix}/health")
