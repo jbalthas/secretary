@@ -45,6 +45,18 @@ def remove_reminder(task_id: int) -> None:
         pass
 
 
+def schedule_daily_brief(hour: int, minute: int) -> None:
+    from apscheduler.triggers.cron import CronTrigger
+    from app.services.brief import send_daily_brief
+    scheduler.add_job(
+        send_daily_brief,
+        CronTrigger(hour=hour, minute=minute, timezone=settings.timezone),
+        id="daily_brief",
+        replace_existing=True,
+        misfire_grace_time=None,
+    )
+
+
 def schedule_calendar_sync() -> None:
     from apscheduler.triggers.interval import IntervalTrigger
     from app.services.sync import sync_calendar

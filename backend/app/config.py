@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     google_client_secrets_json: str = ""
     google_oauth_redirect_uri: str = "https://secretary.ts.net/auth/google/callback"
     google_session_secret: str = "dev-insecure-change-me"
+    timezone: str = "Europe/London"
 
 
 settings = Settings()

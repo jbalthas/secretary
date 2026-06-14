@@ -30,7 +30,7 @@
 - [x] **CAL-04**: App sends a Pushover alert if the Google OAuth token is revoked (`invalid_grant`)
 - [x] **CAL-05**: Today's agenda view shows tasks (with due dates) and calendar events merged and sorted by time
 - [x] **CAL-06**: Daily brief fires at a user-configurable time (default 8am); delivered as a Pushover notification with today's agenda summary
-- [x] **CAL-07**: User can define custom recurring routines (name, cron schedule, action); routines persist across reboots via APScheduler SQLAlchemyJobStore
+- [ ] **CAL-07**: User can define custom recurring routines (name, cron schedule, action); routines persist across reboots via APScheduler SQLAlchemyJobStore
 
 ### Notifications & Google Home (NOTIF)
 
@@ -89,7 +89,7 @@
 | CAL-03 | Phase 4 — Calendar Sync | Complete |
 | CAL-04 | Phase 4 — Calendar Sync | Complete |
 | CAL-06 | Phase 5 — Daily Brief & Routines | Complete |
-| CAL-07 | Phase 5 — Daily Brief & Routines | Complete |
+| CAL-07 | Phase 5 — Daily Brief & Routines | Pending |
 | NOTIF-03 | Phase 6 — Google Home TTS | Pending |
 | NOTIF-04 | Phase 6 — Google Home TTS | Pending |
 | NOTIF-05 | Phase 6 — Google Home TTS | Pending |
