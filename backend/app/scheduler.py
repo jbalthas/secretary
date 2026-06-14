@@ -57,6 +57,26 @@ def schedule_daily_brief(hour: int, minute: int) -> None:
     )
 
 
+def schedule_routine(routine) -> None:
+    from apscheduler.triggers.cron import CronTrigger
+    from app.services.brief import send_daily_brief
+    trigger = CronTrigger.from_crontab(routine.cron, timezone=settings.timezone)
+    scheduler.add_job(
+        send_daily_brief,
+        trigger,
+        id=f"routine_{routine.id}",
+        replace_existing=True,
+        misfire_grace_time=None,
+    )
+
+
+def remove_routine(routine_id: int) -> None:
+    try:
+        scheduler.remove_job(f"routine_{routine_id}")
+    except Exception:
+        pass
+
+
 def schedule_calendar_sync() -> None:
     from apscheduler.triggers.interval import IntervalTrigger
     from app.services.sync import sync_calendar

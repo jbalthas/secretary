@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from starlette.concurrency import run_in_threadpool
 from starlette.middleware.sessions import SessionMiddleware
 from app.config import settings
-from app.routers import tasks, auth, calendar_status, events, settings as settings_router
+from app.routers import tasks, auth, calendar_status, events, settings as settings_router, routines
 from app.scheduler import scheduler, schedule_calendar_sync, schedule_daily_brief
 
 
@@ -44,6 +44,7 @@ app.include_router(auth.router)
 app.include_router(calendar_status.router)
 app.include_router(events.router)
 app.include_router(settings_router.router)
+app.include_router(routines.router)
 
 
 @app.get(f"{settings.api_prefix}/health")

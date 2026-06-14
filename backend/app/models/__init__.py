@@ -39,4 +39,20 @@ class AppSettings(Base):
     brief_minute: Mapped[int] = mapped_column(default=0)
 
 
+class RoutineAction(str, enum.Enum):
+    send_daily_brief = "send_daily_brief"
+
+
+class Routine(Base):
+    __tablename__ = "routines"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(80), nullable=False)
+    cron: Mapped[str] = mapped_column(String(100), nullable=False)
+    action: Mapped[RoutineAction] = mapped_column(SAEnum(RoutineAction), nullable=False)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+
+
 from app.models.calendar import CalendarEvent, CalendarSync  # noqa: E402,F401
