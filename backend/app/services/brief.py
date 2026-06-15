@@ -5,7 +5,7 @@ from sqlalchemy.orm import sessionmaker
 from app.config import settings as app_settings
 from app.services.pushover import PushoverClient
 from app.services.tts import TTSClient
-from app.services.tts_settings import get_tts_enabled
+import app.services.tts_settings as _tts_settings
 
 _sync_url = app_settings.database_url.replace("+aiosqlite", "")
 _engine = create_engine(_sync_url)
@@ -124,7 +124,11 @@ def send_daily_brief() -> None:
         body = "Could not load agenda."
     PushoverClient().send(title="Good morning", message=body, priority=0)
     try:
-        if get_tts_enabled():
-            TTSClient().speak(build_brief_speech())
+        if _tts_settings.get_tts_enabled():
+            try:
+                speech = build_brief_speech()
+            except Exception:
+                speech = "Good morning."
+            TTSClient().speak(speech)
     except Exception:
         logging.getLogger(__name__).exception("TTS brief failed")

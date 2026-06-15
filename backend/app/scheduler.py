@@ -1,6 +1,10 @@
+import logging
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from app.config import settings
+from app.services.pushover import PushoverClient
+from app.services.tts import TTSClient
+import app.services.tts_settings as _tts_settings
 
 _sync_url = settings.database_url.replace("+aiosqlite", "")
 
@@ -15,8 +19,15 @@ def _pushover_priority(priority) -> int:
 
 
 def _send_reminder(title: str, body: str, priority: int) -> None:
-    from app.services.pushover import PushoverClient
     PushoverClient().send(title=title, message=body, priority=priority)
+    try:
+        if _tts_settings.get_tts_enabled():
+            spoken = f"Reminder: {title}"
+            if body:
+                spoken += f". {body}"
+            TTSClient().speak(spoken)
+    except Exception:
+        logging.getLogger(__name__).exception("TTS reminder failed")
 
 
 def upsert_reminder(task) -> None:
