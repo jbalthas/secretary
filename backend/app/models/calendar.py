@@ -21,3 +21,4 @@ class CalendarEvent(Base):
     all_day: Mapped[bool] = mapped_column(Boolean, default=False)
     start_date: Mapped[str | None] = mapped_column(String(10), nullable=True)
     cancelled: Mapped[bool] = mapped_column(Boolean, default=False)
+    done: Mapped[bool] = mapped_column(Boolean, default=False)
