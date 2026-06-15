@@ -4,7 +4,7 @@ export function buildAgenda(tasks: Task[], events: CalendarEvent[], now: Date = 
   const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 
   const todayTasks = tasks.filter(
-    (t) => !t.completed && t.due_date && t.due_date.slice(0, 10) === today
+    (t) => t.due_date && t.due_date.slice(0, 10) === today
   );
 
   const allDayItems: AgendaItem[] = [];
@@ -19,6 +19,8 @@ export function buildAgenda(tasks: Task[], events: CalendarEvent[], now: Date = 
       time,
       priority: t.priority,
       isEvent: false,
+      completed: t.completed,
+      taskId: t.id,
     };
     if (isAllDay) {
       allDayItems.push(item);
@@ -39,6 +41,8 @@ export function buildAgenda(tasks: Task[], events: CalendarEvent[], now: Date = 
       time,
       priority: null,
       isEvent: true,
+      completed: e.done,
+      googleId: e.google_id,
     };
     if (e.all_day) {
       allDayItems.push(item);

@@ -2,14 +2,23 @@ import { useTasks } from "../hooks/useTasks";
 import { useCalendarEvents } from "../hooks/useCalendarEvents";
 import { buildAgenda } from "../lib/agenda";
 import AgendaItem from "../components/AgendaItem";
+import type { AgendaItem as AgendaItemType } from "../types/task";
 
 export default function Today() {
-  const { tasks } = useTasks();
-  const { events } = useCalendarEvents();
+  const { tasks, patchTask } = useTasks();
+  const { events, patchEvent } = useCalendarEvents();
   const agenda = buildAgenda(tasks, events);
 
   const allDayItems = agenda.filter((i) => i.time === null);
   const timedItems = agenda.filter((i) => i.time !== null);
+
+  async function handleToggle(item: AgendaItemType, completed: boolean) {
+    if (item.isEvent && item.googleId) {
+      await patchEvent(item.googleId, completed);
+    } else if (item.taskId != null) {
+      await patchTask(item.taskId, { completed });
+    }
+  }
 
   return (
     <div className="page">
@@ -56,12 +65,12 @@ export default function Today() {
                 All day
               </p>
               {allDayItems.map((item) => (
-                <AgendaItem key={item.id} item={item} />
+                <AgendaItem key={item.id} item={item} onToggle={handleToggle} />
               ))}
             </section>
           )}
           {timedItems.map((item) => (
-            <AgendaItem key={item.id} item={item} />
+            <AgendaItem key={item.id} item={item} onToggle={handleToggle} />
           ))}
         </>
       )}

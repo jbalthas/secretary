@@ -28,6 +28,9 @@ export interface AgendaItem {
   time: string | null;
   priority: Priority | null;
   isEvent: boolean;
+  completed: boolean;
+  taskId?: number;
+  googleId?: string;
 }
 
 export interface CalendarEvent {
@@ -37,4 +40,5 @@ export interface CalendarEvent {
   end_dt: string | null;
   all_day: boolean;
   start_date: string | null;
+  done: boolean;
 }

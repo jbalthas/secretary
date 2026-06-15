@@ -25,6 +25,7 @@ function makeEvent(overrides: Partial<CalendarEvent>): CalendarEvent {
     end_dt: null,
     all_day: false,
     start_date: null,
+    done: false,
     ...overrides,
   };
 }
@@ -73,10 +74,40 @@ describe("buildAgenda", () => {
     expect(item?.time).toBeNull();
   });
 
-  it("excludes completed tasks", () => {
+  it("includes completed tasks due today with completed === true", () => {
     const done = makeTask({ id: 5, title: "Done task", due_date: `${TODAY}T10:00:00Z`, completed: true });
     const result = buildAgenda([done], [], NOW);
-    expect(result.every((i) => i.title !== "Done task")).toBe(true);
+    const item = result.find((i) => i.title === "Done task");
+    expect(item).toBeDefined();
+    expect(item?.completed).toBe(true);
+  });
+
+  it("not-completed task has completed === false and taskId set", () => {
+    const task = makeTask({ id: 9, title: "Active task", due_date: `${TODAY}T10:00:00Z`, completed: false });
+    const result = buildAgenda([task], [], NOW);
+    const item = result.find((i) => i.id === "task-9");
+    expect(item).toBeDefined();
+    expect(item?.completed).toBe(false);
+    expect(item?.taskId).toBe(9);
+    expect(item?.googleId).toBeUndefined();
+  });
+
+  it("calendar event with done:true has completed === true and googleId set", () => {
+    const evt = makeEvent({ google_id: "evt-done", title: "Done Event", start_dt: `${TODAY}T10:00:00Z`, done: true });
+    const result = buildAgenda([], [evt], NOW);
+    const item = result.find((i) => i.id === "event-evt-done");
+    expect(item).toBeDefined();
+    expect(item?.completed).toBe(true);
+    expect(item?.googleId).toBe("evt-done");
+    expect(item?.taskId).toBeUndefined();
+  });
+
+  it("calendar event with done:false has completed === false", () => {
+    const evt = makeEvent({ google_id: "evt-not-done", title: "Active Event", start_dt: `${TODAY}T10:00:00Z`, done: false });
+    const result = buildAgenda([], [evt], NOW);
+    const item = result.find((i) => i.id === "event-evt-not-done");
+    expect(item).toBeDefined();
+    expect(item?.completed).toBe(false);
   });
 
   it("excludes tasks not due today", () => {
