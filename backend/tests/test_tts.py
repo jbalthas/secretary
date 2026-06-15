@@ -48,7 +48,8 @@ def test_tts_endpoint_calls_speak():
     Plan 02 must import TTSClient at module top of app/routers/tts.py so that
     patching app.routers.tts.TTSClient replaces the class used at call time.
     """
-    with patch("app.routers.tts.TTSClient") as MockTTS:
+    with patch("app.routers.tts.TTSClient") as MockTTS, \
+         patch("app.services.tts_settings.get_tts_enabled", return_value=True):
         mock_instance = MagicMock()
         MockTTS.return_value = mock_instance
 
@@ -61,7 +62,8 @@ def test_tts_endpoint_calls_speak():
 def test_tts_endpoint_enabled():
     """NOTIF-03: tts_enabled=True (default) → POST /api/v1/tts returns 200/202
     and status is not 'disabled'."""
-    with patch("app.routers.tts.TTSClient") as MockTTS:
+    with patch("app.routers.tts.TTSClient") as MockTTS, \
+         patch("app.services.tts_settings.get_tts_enabled", return_value=True):
         MockTTS.return_value = MagicMock()
         r = client.post("/api/v1/tts", json={"text": "hello"})
 
