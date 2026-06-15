@@ -118,6 +118,16 @@
 - [ ] 06-04-PLAN.md — Frontend Google Home card + useGoogleHome hook + hardware gate checkpoint (NOTIF-03)
 **UI hint**: yes
 
+### Phase 7: Outlook Calendar ICS feed integration
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 6
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 7 to break down)
+
 ---
 
 ## Progress

@@ -41,6 +41,10 @@ in-progress
 
 ## Accumulated Context
 
+### Roadmap Evolution
+
+- Phase 7 added: Outlook Calendar ICS feed integration
+
 ### Decisions Made
 
 - APScheduler 3.x (not 4.x alpha) — SQLAlchemyJobStore for persistence, AsyncIOScheduler for FastAPI event loop compatibility
