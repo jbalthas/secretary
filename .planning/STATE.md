@@ -18,7 +18,7 @@ progress:
 Phase: Not started (defining requirements)
 Plan: —
 Status: Defining requirements
-Last activity: 2026-06-15 — Milestone v2.0 (Ingest, Organize, Guide) started
+Last activity: 2026-06-15 - Completed quick task 260615-bi1: Cross out / mark-done activities on the Today tab
 
 ---
 
@@ -75,6 +75,12 @@ Last activity: 2026-06-15 — Milestone v2.0 (Ingest, Organize, Guide) started
 ### Blockers
 
 None
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260615-bi1 | Cross out / mark-done activities on the Today tab (tasks persist complete; events get a UI-only server-side done flag) | 2026-06-15 | b445a83 | [260615-bi1-cross-out-mark-done-activities-on-the-to](./quick/260615-bi1-cross-out-mark-done-activities-on-the-to/) |
 
 ### Todos
 
