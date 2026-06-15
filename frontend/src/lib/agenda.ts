@@ -1,11 +1,6 @@
-import type { AgendaItem, Task } from "../types/task";
+import type { AgendaItem, CalendarEvent, Task } from "../types/task";
 
-export const PLACEHOLDER_EVENTS: AgendaItem[] = [
-  { id: "evt-1", title: "Team standup", time: "09:00", priority: null, isEvent: true },
-  { id: "evt-2", title: "Lunch", time: "12:00", priority: null, isEvent: true },
-];
-
-export function buildAgenda(tasks: Task[], now: Date = new Date()): AgendaItem[] {
+export function buildAgenda(tasks: Task[], events: CalendarEvent[], now: Date = new Date()): AgendaItem[] {
   const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 
   const todayTasks = tasks.filter(
@@ -13,7 +8,7 @@ export function buildAgenda(tasks: Task[], now: Date = new Date()): AgendaItem[]
   );
 
   const allDayItems: AgendaItem[] = [];
-  const timedTaskItems: AgendaItem[] = [];
+  const timedItems: AgendaItem[] = [];
 
   for (const t of todayTasks) {
     const isAllDay = t.due_date!.includes("T00:00:00");
@@ -28,11 +23,31 @@ export function buildAgenda(tasks: Task[], now: Date = new Date()): AgendaItem[]
     if (isAllDay) {
       allDayItems.push(item);
     } else {
-      timedTaskItems.push(item);
+      timedItems.push(item);
     }
   }
 
-  const timed = [...timedTaskItems, ...PLACEHOLDER_EVENTS].sort((a, b) =>
+  const todayEvents = events.filter((e) =>
+    e.all_day ? e.start_date === today : e.start_dt?.slice(0, 10) === today
+  );
+
+  for (const e of todayEvents) {
+    const time = e.all_day ? null : (e.start_dt ? e.start_dt.slice(11, 16) : null);
+    const item: AgendaItem = {
+      id: `event-${e.google_id}`,
+      title: e.title || "(No title)",
+      time,
+      priority: null,
+      isEvent: true,
+    };
+    if (e.all_day) {
+      allDayItems.push(item);
+    } else {
+      timedItems.push(item);
+    }
+  }
+
+  const timed = timedItems.sort((a, b) =>
     (a.time ?? "").localeCompare(b.time ?? "")
   );
 

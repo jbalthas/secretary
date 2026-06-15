@@ -29,3 +29,12 @@ export interface AgendaItem {
   priority: Priority | null;
   isEvent: boolean;
 }
+
+export interface CalendarEvent {
+  google_id: string;
+  title: string;
+  start_dt: string | null;
+  end_dt: string | null;
+  all_day: boolean;
+  start_date: string | null;
+}
