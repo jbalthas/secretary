@@ -1,7 +1,7 @@
 # Stack Research
 
 **Project:** My Secretary (self-hosted personal assistant, Raspberry Pi 5)
-**Researched:** 2026-06-12
+**Researched:** 2026-06-12 (v1) / 2026-06-15 (v2.0 addendum)
 
 ---
 
@@ -80,6 +80,168 @@ uv pip install fastapi[standard] sqlalchemy[asyncio] aiosqlite alembic apschedul
 
 ---
 
+## v2.0 Stack Addendum — Ingest, Organize, Guide
+
+> Everything below is additive to the v1 stack. The base stack (FastAPI, SQLAlchemy 2.0,
+> Alembic, Pydantic v2, React 19 + Vite 8) is already in place and must not be replaced.
+> No server-side LLM SDK is added in v2.0 — the LLM runs externally; the secretary only
+> receives a structured JSON payload.
+
+### (1) Import Contract — Versioned JSON Schema + Validation
+
+**Decision: Reuse Pydantic v2. Do NOT add jsonschema.**
+
+Pydantic v2 is already present (bundled with FastAPI). It covers every need for the import
+contract without an additional dependency:
+
+- `model_json_schema()` on a Pydantic `BaseModel` emits a JSON Schema Draft 2020-12
+  document. Publish this as a static artifact (e.g., `GET /api/v1/ingest/schema`) so the
+  user can paste it into any LLM's context.
+- `model_validate_json()` / `model_validate()` validates the incoming payload against the
+  Pydantic model at the endpoint, raising structured `ValidationError` with field-level
+  messages that the UI can display.
+- Versioning strategy: embed a `schema_version: Literal["1"]` field (a plain `str` literal)
+  at the top level of the payload model. When v2 of the schema ships, fork to a
+  `Literal["2"]` model and use a `Union` discriminated on `schema_version`. Pydantic v2's
+  discriminated unions handle this cleanly without extra libraries. Bake the version field
+  in from day one — retrofitting it later is painful.
+
+**What NOT to add:** `jsonschema` (PyPI, 4.26.0) — it validates data against a raw JSON
+Schema dict. Since Pydantic v2 both defines and validates the schema in a single model
+class, `jsonschema` would be redundant and add ~6MB of dependencies. Similarly, do not add
+`pydantic-discriminated` (third-party) — Pydantic v2 natively supports discriminated unions
+via `Annotated[Union[...], Field(discriminator="schema_version")]`.
+
+**What NOT to add:** Any Anthropic or OpenAI SDK — the LLM is external to the server.
+
+**Confidence:** HIGH — Pydantic v2 JSON schema generation and discriminated unions are
+official, documented, stable features. Verified against pydantic.dev docs.
+
+### (2) Goals Entity — SQLAlchemy Model + Alembic Migration
+
+**Decision: Reuse SQLAlchemy 2.0 + Alembic. No new dependencies.**
+
+The Goals entity is a standard SQLAlchemy `DeclarativeBase` model alongside the existing
+Task/Routine/CalendarEvent models. Key design decisions:
+
+- **Goal → Task relationship:** `Task` gains a nullable `goal_id: Mapped[Optional[int]]`
+  FK column pointing to `goals.id`. One goal can have many tasks. Use `lazy="selectin"`
+  on the `relationship()` because async SQLAlchemy prohibits lazy-loading in an async
+  context without `AsyncAttrs` or explicit `selectin` strategy.
+- **Goal → Routine relationship:** Same FK pattern on `Routine.goal_id`. Routines support
+  habits (daily workout, reading) that serve a goal.
+- **Progress:** Progress is derived, not stored — compute it from the ratio of completed
+  tasks linked to the goal. No separate progress table needed at this scale.
+- **Migration:** Every new column and table goes through Alembic (`alembic revision
+  --autogenerate`). Do NOT use `Base.metadata.create_all()` — existing policy.
+- **Migration steps for v2.0:** (a) `goals` table, (b) `ADD COLUMN goal_id` on `tasks`,
+  (c) `ADD COLUMN goal_id` on `routines`. Three separate migration files for rollback
+  clarity.
+
+**What NOT to add:** No separate graph or adjacency-list library for goal hierarchies —
+a single `parent_goal_id` self-referential FK on `goals` covers the simple case if needed
+later. Do not add it now; YAGNI.
+
+**Confidence:** HIGH — SQLAlchemy 2.0 async M:1 relationships with `selectin` loading are
+officially documented and stable. Alembic migration pattern is already used in the project.
+
+### (3) Day Auto-Organize / Time-Blocking Planner
+
+**Decision: Hand-rolled greedy interval-fill algorithm. No new scheduling library.**
+
+The planner has a specific, bounded shape: calendar events are fixed blocks; tasks need to
+be inserted into free slots; the result is a proposed schedule (list of time-blocks), not
+committed until the user approves. This does not require a library:
+
+**Algorithm (pure Python, O(n log n)):**
+
+1. Load today's `CalendarEvent` rows from the DB (already synced, already sorted by
+   `start_time`).
+2. Build a sorted list of free intervals between events, bounded by a configurable day
+   window (e.g., 08:00–20:00).
+3. For each pending task with an estimated duration (from the Goal/Ingest payload), greedily
+   assign it to the earliest free slot that fits.
+4. Return a `ProposedSchedule` Pydantic model — a list of `TimeBlock` items (each tagged
+   as `calendar_event`, `task`, or `free`) — without writing anything to the DB.
+5. `POST /api/v1/schedule/approve` commits approved blocks (e.g., sets `task.scheduled_at`).
+
+**Why not a library:**
+
+- `PuLP` (linear programming): Solves optimal scheduling but is an ~8MB dependency with a
+  C extension. Overkill — we do not need optimality, just a reasonable greedy fill.
+- `timeboard`: Business calendar library focused on workshifts/payroll schedules. Wrong
+  abstraction for free-slot insertion.
+- `APScheduler`: Already present but for cron/reminder jobs, not day-planning.
+- `ortools` (Google OR-Tools): Heavy C++ backed library. Massively overkill for one user's
+  daily schedule.
+
+**New field on Task required:** `estimated_minutes: Optional[int]` — added via Alembic
+migration. Without duration estimates, the planner cannot place tasks. The ingest payload
+should carry this field for tasks originating from LLM output.
+
+**Confidence:** HIGH for hand-rolled approach — greedy interval-fill is a classic
+O(n log n) algorithm with no external dependencies. The complexity here is product
+design (handling overlaps, priorities, buffer time), not algorithmic difficulty.
+
+### (4) Frontend Ingest Preview/Confirm UI
+
+**Decision: Reuse React 19 + existing patterns. No new frontend library needed.**
+
+The ingest UI has three states: (a) input (paste textarea + file upload), (b) preview
+(structured diff view of what will be created), (c) confirm (POST to ingest endpoint).
+
+**Input:** A `<textarea>` for paste and an `<input type="file" accept=".json">` with a
+`FileReader` callback. Both funnel into the same `handlePayload(jsonString)` function.
+No library needed — the File API is native.
+
+**Validation feedback:** Call `POST /api/v1/ingest/validate` (dry-run, no DB writes) and
+display the FastAPI/Pydantic `ValidationError` detail array as inline field errors. React
+state is sufficient for this; no form library is needed given the UI is a single-page
+wizard.
+
+**Preview rendering:** Render the validated payload as a structured list: goals to create,
+tasks to create (grouped by goal), routines to create. Use existing inline-style component
+pattern from the project. No diff library needed — this is a "new items preview", not a
+code diff.
+
+**Confirm:** A single `POST /api/v1/ingest/confirm` with the validated payload. Disable
+the button during submission. Show success/error result. React `useState` + `fetch` is
+sufficient.
+
+**Day-organize proposal view:** Display `ProposedSchedule` time-blocks in a vertical
+timeline (divs with proportional heights, like the existing agenda view). An approve/reject
+per-block interaction or a single "approve all" button. No calendar component library
+needed for this scope.
+
+**What NOT to add:**
+- `react-hook-form` or `formik` — single-purpose wizard, not a form-heavy app.
+- `react-query` or `tanstack-query` — the existing `fetch`-based hooks are sufficient;
+  adding a data-fetching library mid-project for two new endpoints is not worth the churn.
+- `react-dropzone` — the native `<input type="file">` plus a `dragover`/`drop` handler on
+  a `<div>` is 20 lines and has no dependency weight.
+- Any date-picker component — task scheduling for the day plan uses the proposed slots from
+  the backend, not user-picked times.
+- Any LLM client library — the LLM is external; the UI only handles the emitted payload.
+
+**Confidence:** HIGH — all patterns are standard React 19, native browser APIs, and
+existing project conventions. No novel frontend territory.
+
+---
+
+## v2.0 Installation Delta
+
+No new Python packages are required. The existing `uv pip install` command covers all
+v2.0 needs because Pydantic v2, SQLAlchemy 2.0, and Alembic are already installed.
+
+The only code additions are:
+- New Pydantic models (ingest contract, `ProposedSchedule`, `TimeBlock`)
+- New SQLAlchemy models (`Goal`)
+- New Alembic migration files (3 migrations)
+- New FastAPI routes (`/ingest/*`, `/schedule/*`, `/goals/*`)
+- New React components (IngestWizard, ProposedScheduleView, GoalList)
+
+---
+
 ## Alternatives Considered
 
 | Category | Recommended | Alternative | Why Not |
@@ -101,6 +263,30 @@ uv pip install fastapi[standard] sqlalchemy[asyncio] aiosqlite alembic apschedul
 | Frontend | React + Vite | SvelteKit | Would work fine, but React has better ecosystem for UI component libraries if needed later |
 | Python env | uv | pip + venv | pip is slower; uv is now the standard recommendation for new Python projects |
 | Python env | uv | Poetry | Poetry is slower than uv and adds lockfile complexity with no clear benefit here |
+| JSON validation | Pydantic v2 (existing) | jsonschema 4.26.0 | Redundant — Pydantic v2 already validates and generates schema; jsonschema adds ~6MB for no benefit |
+| JSON validation | Pydantic v2 (existing) | cerberus | Unmaintained since 2022; inferior to Pydantic v2 in every dimension |
+| Day planner | Hand-rolled greedy | PuLP (LP solver) | 8MB C-extension dependency; optimal scheduling not needed for single-user day planning |
+| Day planner | Hand-rolled greedy | ortools | Heavy C++ library; massive overkill |
+| Day planner | Hand-rolled greedy | timeboard | Wrong abstraction (business calendar/workshifts, not free-slot insertion) |
+| Frontend ingest | Native File API + textarea | react-dropzone | 20 lines of native code replaces the library for this use case |
+| Frontend ingest | Existing fetch hooks | tanstack-query | Mid-project introduction for two endpoints adds churn without benefit |
+| Server-side LLM | (none — external flow) | anthropic SDK | No server-side LLM in v2.0; user pastes LLM output into the secretary |
+
+---
+
+## What NOT to Add (Explicit v2.0 Blocklist)
+
+| Avoid | Why |
+|-------|-----|
+| `anthropic` / `openai` Python SDK | LLM is external in v2.0; server never calls an LLM |
+| `jsonschema` (PyPI) | Pydantic v2 covers schema generation and validation already |
+| `PuLP` | LP solver is architectural overkill for greedy day planning |
+| `ortools` | C++ solver, 50MB+, completely unnecessary |
+| `react-hook-form` / `formik` | Single-page wizard; React state is sufficient |
+| `tanstack-query` | Mid-project addition for two endpoints; existing fetch pattern is fine |
+| `react-dropzone` | Native File API is sufficient |
+| APScheduler 4.x | Alpha; explicitly not production-ready |
+| Any goal "scoring" ML library | No ML in v2.0; progress is task-completion ratio |
 
 ---
 
@@ -144,6 +330,10 @@ Alternatively, `uv python install 3.12` installs a standalone Python 3.12 binary
 | nginx on Pi 5 | HIGH | Battle-tested; no Pi 5 specific concerns |
 | Tailscale | HIGH | Widely used on Pi OS; install script official |
 | uv for Python env | HIGH | Current standard recommendation; Astral-maintained |
+| Pydantic v2 for import contract | HIGH | model_json_schema + discriminated unions are official, stable v2 features; JSON Schema Draft 2020-12 compliant |
+| SQLAlchemy M:1 Goals→Task/Routine | HIGH | Standard relationship pattern in SA 2.0 docs; selectin loading is the correct async strategy |
+| Hand-rolled interval fill planner | HIGH | O(n log n) greedy algorithm; no novel CS; the complexity is product design, not implementation |
+| Native File API for ingest UI | HIGH | Browser-standard; no library dependency; pattern used everywhere in 2026 React apps |
 
 ---
 
@@ -159,3 +349,8 @@ Alternatively, `uv python install 3.12` installs a standalone Python 3.12 binary
 - [SQLAlchemy async FastAPI patterns](https://chaoticengineer.hashnode.dev/fastapi-sqlalchemy)
 - [Google OAuth2 best practices](https://developers.google.com/identity/protocols/oauth2)
 - [googlehomepush / pychromecast TTS](https://pypi.org/project/googlehomepush/)
+- [Pydantic v2 JSON Schema docs](https://pydantic.dev/docs/validation/latest/concepts/json_schema/) — model_json_schema, TypeAdapter, Draft 2020-12 compliance confirmed
+- [Pydantic v2 Discriminated Unions](https://docs.pydantic.dev/latest/concepts/unions/) — discriminator on Literal field confirmed
+- [jsonschema 4.26.0 PyPI](https://pypi.org/project/jsonschema/) — version confirmed; ruled out as redundant
+- [SQLAlchemy 2.0 Basic Relationship Patterns](https://docs.sqlalchemy.org/en/20/orm/basic_relationships.html) — selectin async pattern confirmed
+- [Pydantic v2 discriminated unions in FastAPI (2025)](https://uguraslim.com/blog/pydantic-v2-discriminated-unions-in-fastapi-modeling-polymor/) — schema versioning with Literal field confirmed as community best practice
