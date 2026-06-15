@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { CalendarStatus } from "../types/calendar";
 import type { Routine } from "../types/routine";
 import { useBriefSettings } from "../hooks/useBriefSettings";
+import { useGoogleHome } from "../hooks/useGoogleHome";
 import { useRoutines } from "../hooks/useRoutines";
 import RoutineDrawer from "../components/RoutineDrawer";
 
@@ -38,6 +39,11 @@ export default function Settings() {
   const [timeInput, setTimeInput] = useState("");
   const [briefSaving, setBriefSaving] = useState(false);
   const [briefError, setBriefError] = useState<string | null>(null);
+
+  const { ttsEnabled, loading: ghLoading, error: ghError, setEnabled, speak } = useGoogleHome();
+  const [ttsText, setTtsText] = useState("");
+  const [ghSpeaking, setGhSpeaking] = useState(false);
+  const [ghSpeakError, setGhSpeakError] = useState<string | null>(null);
 
   const { routines, loading: routinesLoading, create, update, remove } = useRoutines();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -79,6 +85,17 @@ export default function Settings() {
       if (!ok) setBriefError("Failed to save. Check your connection and try again.");
     } finally {
       setBriefSaving(false);
+    }
+  }
+
+  async function handleSpeak() {
+    setGhSpeakError(null);
+    setGhSpeaking(true);
+    try {
+      const ok = await speak(ttsText);
+      if (!ok) setGhSpeakError("Failed to speak. Check your connection and try again.");
+    } finally {
+      setGhSpeaking(false);
     }
   }
 
@@ -189,6 +206,64 @@ export default function Settings() {
               >
                 {briefSaving ? "Saving…" : "Save Brief Time"}
               </button>
+            </>
+          )}
+        </div>
+      </section>
+
+      {/* Google Home section */}
+      <section style={{ marginBottom: 24 }}>
+        <p style={SECTION_LABEL_STYLE}>Google Home</p>
+
+        <div style={CARD_STYLE}>
+          {ghLoading && ttsEnabled === null ? (
+            <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: 14 }}>Loading…</p>
+          ) : ghError ? (
+            <p style={{ margin: 0, fontSize: 12, color: "var(--destructive)" }}>{ghError}</p>
+          ) : (
+            <>
+              <input
+                type="text"
+                value={ttsText}
+                onChange={(e) => setTtsText(e.target.value)}
+                placeholder="Say something on the speaker"
+                style={{
+                  background: "var(--bg)",
+                  border: "1px solid var(--border)",
+                  borderRadius: 6,
+                  color: "var(--text)",
+                  padding: "8px 10px",
+                  fontSize: 16,
+                  width: "100%",
+                  boxSizing: "border-box",
+                  marginBottom: 12,
+                }}
+              />
+              {ghSpeakError && (
+                <p style={{ margin: "0 0 8px", fontSize: 12, color: "var(--destructive)" }}>
+                  {ghSpeakError}
+                </p>
+              )}
+              <button
+                type="button"
+                className="btn-save"
+                onClick={handleSpeak}
+                disabled={ghSpeaking}
+                style={{ opacity: ghSpeaking ? 0.6 : 1, cursor: ghSpeaking ? "not-allowed" : "pointer", marginBottom: 16 }}
+              >
+                {ghSpeaking ? "Speaking…" : "Speak"}
+              </button>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <input
+                  id="tts-enabled"
+                  type="checkbox"
+                  checked={ttsEnabled ?? false}
+                  onChange={() => setEnabled(!ttsEnabled)}
+                />
+                <label htmlFor="tts-enabled" style={{ fontSize: 14, color: "var(--text)", cursor: "pointer" }}>
+                  Announce on Google Home
+                </label>
+              </div>
             </>
           )}
         </div>
