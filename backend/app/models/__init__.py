@@ -37,6 +37,7 @@ class AppSettings(Base):
     id: Mapped[int] = mapped_column(primary_key=True, default=1)
     brief_hour: Mapped[int] = mapped_column(default=8)
     brief_minute: Mapped[int] = mapped_column(default=0)
+    tts_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
 class RoutineAction(str, enum.Enum):

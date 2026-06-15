@@ -11,6 +11,10 @@ class Settings(BaseSettings):
     google_oauth_redirect_uri: str = "https://secretary.ts.net/auth/google/callback"
     google_session_secret: str = "dev-insecure-change-me"
     timezone: str = "Europe/London"
+    google_home_ip: str = ""
+    google_home_lan_ip: str = ""
+    google_home_name: str = ""
+    webhook_secret: str = ""
 
 
 settings = Settings()
