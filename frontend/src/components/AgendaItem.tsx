@@ -42,7 +42,7 @@ export default function AgendaItem({ item }: Props) {
   };
 
   return (
-    <div style={rowStyle}>
+    <div style={rowStyle} className={item.isEvent ? "agenda-item--event" : undefined}>
       <span style={titleStyle}>{item.title}</span>
       {!item.isEvent && item.priority && (
         <span

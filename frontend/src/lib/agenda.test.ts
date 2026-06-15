@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { buildAgenda, PLACEHOLDER_EVENTS } from "./agenda";
-import type { Task } from "../types/task";
+import { buildAgenda } from "./agenda";
+import type { CalendarEvent, Task } from "../types/task";
 
 const NOW = new Date("2026-06-12T08:00:00Z");
 const TODAY = "2026-06-12";
@@ -17,21 +17,38 @@ function makeTask(overrides: Partial<Task>): Task {
   };
 }
 
+function makeEvent(overrides: Partial<CalendarEvent>): CalendarEvent {
+  return {
+    google_id: "evt-default",
+    title: "Event",
+    start_dt: null,
+    end_dt: null,
+    all_day: false,
+    start_date: null,
+    ...overrides,
+  };
+}
+
 describe("buildAgenda", () => {
-  it("includes placeholder events", () => {
-    const result = buildAgenda([], NOW);
-    expect(result).toHaveLength(PLACEHOLDER_EVENTS.length);
+  it("returns empty array when no tasks and no events", () => {
+    const result = buildAgenda([], [], NOW);
+    expect(result).toHaveLength(0);
+  });
+
+  it("includes calendar events from events array", () => {
+    const standup = makeEvent({ google_id: "evt-1", title: "Team standup", start_dt: `${TODAY}T09:00:00Z`, all_day: false });
+    const lunch = makeEvent({ google_id: "evt-2", title: "Lunch", start_dt: `${TODAY}T12:00:00Z`, all_day: false });
+    const result = buildAgenda([], [standup, lunch], NOW);
+    expect(result).toHaveLength(2);
     expect(result.some((i) => i.title === "Team standup")).toBe(true);
     expect(result.some((i) => i.title === "Lunch")).toBe(true);
   });
 
   it("places a timed task (10:30) between standup (09:00) and lunch (12:00)", () => {
-    const task = makeTask({
-      id: 2,
-      title: "Morning meeting",
-      due_date: `${TODAY}T10:30:00Z`,
-    });
-    const result = buildAgenda([task], NOW);
+    const task = makeTask({ id: 2, title: "Morning meeting", due_date: `${TODAY}T10:30:00Z` });
+    const standup = makeEvent({ google_id: "evt-1", title: "Team standup", start_dt: `${TODAY}T09:00:00Z` });
+    const lunch = makeEvent({ google_id: "evt-2", title: "Lunch", start_dt: `${TODAY}T12:00:00Z` });
+    const result = buildAgenda([task], [standup, lunch], NOW);
     const titles = result.map((i) => i.title);
     const standupIdx = titles.indexOf("Team standup");
     const taskIdx = titles.indexOf("Morning meeting");
@@ -41,61 +58,66 @@ describe("buildAgenda", () => {
   });
 
   it("places all-day tasks (T00:00:00) first, before timed items", () => {
-    const allDay = makeTask({
-      id: 3,
-      title: "All day task",
-      due_date: `${TODAY}T00:00:00Z`,
-    });
-    const result = buildAgenda([allDay], NOW);
+    const allDay = makeTask({ id: 3, title: "All day task", due_date: `${TODAY}T00:00:00Z` });
+    const standup = makeEvent({ google_id: "evt-1", title: "Team standup", start_dt: `${TODAY}T09:00:00Z` });
+    const result = buildAgenda([allDay], [standup], NOW);
     const allDayIdx = result.findIndex((i) => i.title === "All day task");
     const standupIdx = result.findIndex((i) => i.title === "Team standup");
     expect(allDayIdx).toBeLessThan(standupIdx);
   });
 
   it("all-day task has time === null", () => {
-    const allDay = makeTask({
-      id: 4,
-      title: "All day task",
-      due_date: `${TODAY}T00:00:00Z`,
-    });
-    const result = buildAgenda([allDay], NOW);
+    const allDay = makeTask({ id: 4, title: "All day task", due_date: `${TODAY}T00:00:00Z` });
+    const result = buildAgenda([allDay], [], NOW);
     const item = result.find((i) => i.title === "All day task");
     expect(item?.time).toBeNull();
   });
 
   it("excludes completed tasks", () => {
-    const done = makeTask({
-      id: 5,
-      title: "Done task",
-      due_date: `${TODAY}T10:00:00Z`,
-      completed: true,
-    });
-    const result = buildAgenda([done], NOW);
+    const done = makeTask({ id: 5, title: "Done task", due_date: `${TODAY}T10:00:00Z`, completed: true });
+    const result = buildAgenda([done], [], NOW);
     expect(result.every((i) => i.title !== "Done task")).toBe(true);
   });
 
   it("excludes tasks not due today", () => {
-    const yesterday = makeTask({
-      id: 6,
-      title: "Yesterday task",
-      due_date: "2026-06-11T10:00:00Z",
-    });
-    const result = buildAgenda([yesterday], NOW);
+    const yesterday = makeTask({ id: 6, title: "Yesterday task", due_date: "2026-06-11T10:00:00Z" });
+    const result = buildAgenda([yesterday], [], NOW);
     expect(result.every((i) => i.title !== "Yesterday task")).toBe(true);
   });
 
   it("maps task to AgendaItem with correct fields", () => {
-    const task = makeTask({
-      id: 7,
-      title: "My task",
-      priority: "high",
-      due_date: `${TODAY}T14:00:00Z`,
-    });
-    const result = buildAgenda([task], NOW);
+    const task = makeTask({ id: 7, title: "My task", priority: "high", due_date: `${TODAY}T14:00:00Z` });
+    const result = buildAgenda([task], [], NOW);
     const item = result.find((i) => i.id === "task-7");
     expect(item).toBeDefined();
     expect(item?.isEvent).toBe(false);
     expect(item?.priority).toBe("high");
     expect(item?.time).toBe("14:00");
+  });
+
+  it("maps calendar event to AgendaItem with isEvent:true and no priority", () => {
+    const evt = makeEvent({ google_id: "evt-test", title: "Dentist", start_dt: `${TODAY}T15:00:00Z`, all_day: false });
+    const result = buildAgenda([], [evt], NOW);
+    const item = result.find((i) => i.id === "event-evt-test");
+    expect(item).toBeDefined();
+    expect(item?.isEvent).toBe(true);
+    expect(item?.priority).toBeNull();
+    expect(item?.time).toBe("15:00");
+  });
+
+  it("all-day calendar event has time === null and comes first", () => {
+    const allDayEvt = makeEvent({ google_id: "evt-allday", title: "Holiday", all_day: true, start_date: TODAY });
+    const timedTask = makeTask({ id: 8, title: "Timed task", due_date: `${TODAY}T10:00:00Z` });
+    const result = buildAgenda([timedTask], [allDayEvt], NOW);
+    const allDayIdx = result.findIndex((i) => i.id === "event-evt-allday");
+    const timedIdx = result.findIndex((i) => i.id === "task-8");
+    expect(result.find((i) => i.id === "event-evt-allday")?.time).toBeNull();
+    expect(allDayIdx).toBeLessThan(timedIdx);
+  });
+
+  it("uses (No title) for events with empty title", () => {
+    const evt = makeEvent({ google_id: "evt-notitle", title: "", start_dt: `${TODAY}T10:00:00Z` });
+    const result = buildAgenda([], [evt], NOW);
+    expect(result.find((i) => i.id === "event-evt-notitle")?.title).toBe("(No title)");
   });
 });

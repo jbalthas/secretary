@@ -1,10 +1,12 @@
 import { useTasks } from "../hooks/useTasks";
+import { useCalendarEvents } from "../hooks/useCalendarEvents";
 import { buildAgenda } from "../lib/agenda";
 import AgendaItem from "../components/AgendaItem";
 
 export default function Today() {
   const { tasks } = useTasks();
-  const agenda = buildAgenda(tasks);
+  const { events } = useCalendarEvents();
+  const agenda = buildAgenda(tasks, events);
 
   const allDayItems = agenda.filter((i) => i.time === null);
   const timedItems = agenda.filter((i) => i.time !== null);

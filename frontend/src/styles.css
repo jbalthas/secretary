@@ -384,3 +384,9 @@ body {
   font-size: 14px;
   margin: 0;
 }
+
+/* Calendar event agenda item — left indigo border, no checkbox */
+.agenda-item--event {
+  border-left: 3px solid #818cf8;
+  padding-left: 8px;
+}
