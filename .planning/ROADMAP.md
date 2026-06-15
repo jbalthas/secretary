@@ -15,7 +15,7 @@
 | 3 | Pushover Reminders | 3/3 | Complete   | 2026-06-13 |
 | 4 | Calendar Sync | 3/4 | In Progress|  |
 | 5 | Daily Brief & Routines | Morning brief fires proactively; custom routines persist | CAL-06, CAL-07 | 3 |
-| 6 | Google Home TTS | 1/4 | In Progress|  |
+| 6 | Google Home TTS | 2/4 | In Progress|  |
 
 ---
 
@@ -111,9 +111,9 @@
 2. When a task reminder fires, the announcement plays on Google Home in addition to the Pushover notification.
 3. The daily brief plays on Google Home at brief time in addition to the Pushover notification.
 4. Triggering the Google Home morning routine calls the Pi webhook and causes the daily brief to fire.
-**Plans:** 1/4 plans executed
+**Plans:** 2/4 plans executed
 - [x] 06-01-PLAN.md — Wave 0: config + tts_enabled migration + .env/.gitignore + all failing tests (NOTIF-03, NOTIF-04, NOTIF-05, NOTIF-06)
-- [ ] 06-02-PLAN.md — TTSClient service + StaticFiles mount + /tts, /settings/tts, /webhooks/brief router (NOTIF-03, NOTIF-06)
+- [x] 06-02-PLAN.md — TTSClient service + StaticFiles mount + /tts, /settings/tts, /webhooks/brief router (NOTIF-03, NOTIF-06)
 - [ ] 06-03-PLAN.md — build_brief_speech + reminder/brief TTS hooks (best-effort, tts_enabled-gated) (NOTIF-04, NOTIF-05)
 - [ ] 06-04-PLAN.md — Frontend Google Home card + useGoogleHome hook + hardware gate checkpoint (NOTIF-03)
 **UI hint**: yes

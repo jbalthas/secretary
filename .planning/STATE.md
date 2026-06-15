@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-06-15T02:19:46.566Z"
+last_updated: "2026-06-15T02:28:54.550Z"
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 24
-  completed_plans: 19
+  completed_plans: 20
 ---
 
 # Project State
@@ -64,6 +64,9 @@ in-progress
 - [Phase 06-01]: Plan 02 must import TTSClient at module top (not deferred) in routers/tts.py, scheduler.py, brief.py to keep patch targets stable
 - [Phase 06-01]: Plan 03 must expose get_tts_enabled() in app/services/tts_settings.py as the single tts_enabled flag seam
 - [Phase 06-01]: Plan 02 must export CACHE_DIR as module-level Path from app/services/tts.py; MP3 cache naming: sha256(text)[:16].mp3
+- [Phase 06-02]: Webhook must be in routers/webhooks.py (not tts.py) — test patch targets app.routers.webhooks.send_daily_brief are authoritative
+- [Phase 06-02]: tts_settings.py created in Plan 02 ahead of Plan 03 — test_tts_endpoint_disabled requires the seam to exist immediately
+- [Phase 06-02]: TTSClient logs warning (not raises) when no cast device found — test_tts_client_caches_mp3 asserts MP3 exists regardless of cast availability
 
 ### Open Questions (Live Verification Required)
 
@@ -83,5 +86,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-06-15T02:19:46.564Z
+Last session: 2026-06-15T02:28:54.548Z
 Next action: Completed 03-03 (task reminder lifecycle wiring); Phase 03 plans complete
