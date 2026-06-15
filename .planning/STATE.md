@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Phases — Ingest, Organize, Guide
 status: executing
-last_updated: "2026-06-15T19:14:13.474Z"
-last_activity: 2026-06-15 -- Phase 07 execution started
+last_updated: "2026-06-15T19:14:38.871Z"
+last_activity: 2026-06-15
 progress:
   total_phases: 11
-  completed_phases: 6
+  completed_phases: 7
   total_plans: 26
-  completed_plans: 25
+  completed_plans: 26
 ---
 
 # Project State
@@ -17,9 +17,9 @@ progress:
 ## Current Position
 
 Phase: 07 (outlook-calendar-ics-feed-integration) — EXECUTING
-Plan: 1 of 2
-Status: Executing Phase 07
-Last activity: 2026-06-15 -- Phase 07 execution started
+Plan: 2 of 2
+Status: Ready to execute
+Last activity: 2026-06-15
 
 ---
 
@@ -84,6 +84,7 @@ Last activity: 2026-06-15 -- Phase 07 execution started
 - [v2.0 roadmap]: Match ingest entities on external_key (stable LLM slug), never on title; external_key is nullable so manually-created records omit it
 - [v2.0 roadmap]: Planner is a pure deterministic function (no DB write); only POST /plan/approve writes ScheduledBlock rows; delete-then-insert for date_key on approve (idempotent)
 - [v2.0 roadmap]: Habit maps to a recurring Task with a habit flag (not its own table) for v2.0; separate Habit table deferred to v3
+- [Phase 07]: [07-02] UID domain stripped + UtcDateTime TypeDecorator added so SQLite reads start_dt/end_dt back UTC tz-aware; Outlook sync on separate 5-min job id
 
 ### Open Questions (Live Verification Required)
 
@@ -113,5 +114,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-06-15T19:14:13.468Z
+Last session: 2026-06-15T19:14:38.865Z
 Next action: Run `/gsd:plan-phase 8` to break Phase 8 (Goals + Ingest Backend) into executable plans
