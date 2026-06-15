@@ -43,7 +43,54 @@
 
 ---
 
-## v2 Requirements (Deferred)
+## Milestone v2.0 Requirements — Ingest, Organize, Guide
+
+> Phases start at Phase 8 (Phase 7 Outlook ICS owned by a separate concurrent effort). REQ-IDs continue in new categories: INGEST, GOAL, PLAN, GUIDE.
+
+### Ingest (INGEST)
+
+- [ ] **INGEST-01**: App publishes a stable, versioned import schema (`GET /api/v1/ingest/schema`, generated from the Pydantic model) and a documented LLM prompt the user can paste into any LLM to produce a compliant payload
+- [ ] **INGEST-02**: Ingest endpoint validates an uploaded/pasted JSON payload against the schema and returns field-level errors (HTTP 422) on malformed input; `schema_version` mismatch is rejected with a clear message
+- [ ] **INGEST-03**: User can preview an import (dry-run) and see exactly what will be created vs. updated (counts + per-entity diff) before anything is written to the DB
+- [ ] **INGEST-04**: On confirm, the payload is written transactionally — goals, then tasks, then routines, then habits — so a partial failure rolls back cleanly
+- [ ] **INGEST-05**: User can submit a payload by pasting JSON into a textarea OR uploading a `.json` file from the web UI
+- [ ] **INGEST-06**: Re-importing the same payload is idempotent — entities are matched on a stable `external_key` (not title) and upserted, so no duplicates are created
+- [ ] **INGEST-07**: Payload can create habits (recurring behaviors) in addition to goals, tasks, and routines; a habit maps to a recurring task flagged as a habit and may link to a goal
+
+### Goals (GOAL)
+
+- [ ] **GOAL-01**: User can create, edit, and archive a goal with a title, type (career/life/health/learning/financial), optional description/context, and optional target date (archive preserves history; no hard delete)
+- [ ] **GOAL-02**: Each goal shows a progress percentage computed from its linked tasks' completion (recalculated on read, not stored)
+- [ ] **GOAL-03**: A goal can have milestones (title, optional target date, done flag); milestone completion contributes to the goal's tracked progress
+- [ ] **GOAL-04**: User can view all goals in a dedicated Goals view and drill into a goal detail showing its milestones, linked tasks, and progress
+- [ ] **GOAL-05**: User can link a task to a goal from the task form (goal dropdown); routines can also be tagged to a goal
+- [ ] **GOAL-06**: Completing a milestone fires a celebration announcement (Google Home TTS + Pushover), reusing existing notification infrastructure
+
+### Day Organize (PLAN)
+
+- [ ] **PLAN-01**: User can request a proposed plan for the current day — the planner treats synced calendar events as fixed blocks, finds free intervals, and fills them with pending tasks ordered by priority and due date, sizing each block from the task's `estimated_minutes` (default 30 if unset)
+- [ ] **PLAN-02**: User can review the proposed plan and accept/edit/reject blocks before anything commits; the approved plan is stored locally and rendered in the Today view (no Google Calendar write in v2.0)
+
+### Guidance (GUIDE)
+
+- [ ] **GUIDE-01**: The daily brief includes a goal snapshot — each active goal's progress and the single most-urgent task linked to it
+- [ ] **GUIDE-02**: The Today view surfaces a "next best task" — the highest-scoring pending task by priority × goal urgency × due-date proximity
+- [ ] **GUIDE-03**: If a goal has had no task completions for a configurable threshold (default 7 days), the user receives a Pushover nudge that it has stalled
+
+---
+
+## Future / Backlog (post-v2.0)
+
+> Items below were deferred from v1.0 or flagged P3 during v2.0 research; not in the current milestone.
+
+- Energy-aware day planning (peak-hours setting) + automatic buffer blocks between tasks — deferred from v2.0 Organize
+- Mid-day re-plan button (re-propose remaining time) — P3
+- Weekly goal digest (automated Friday/Sunday review) — deferred from v2.0 Guidance (partially served by the existing weekly voice readout, quick task 260615-bse)
+- Per-item ingest conflict report (resolve title conflicts on re-import) — P3
+- Google Calendar write-back for approved plan blocks — needs write OAuth scope + conflict/undo handling
+- Goal-guided coaching via LLM API (server-side) — v3.0 concept
+
+## v1-era Deferred (still backlog)
 
 - IFTTT voice → "add task" (IFTTT webhook + Tailscale Funnel) — deferred; IFTTT latency and Funnel setup are better tackled after core loop is stable
 - Google Calendar event write — deferred; read-only sync sufficient for v1, write adds conflict resolution complexity
