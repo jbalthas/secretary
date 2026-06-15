@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-06-15T03:04:38.248Z"
+last_updated: "2026-06-15T03:25:11.627Z"
 progress:
   total_phases: 6
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 24
-  completed_plans: 22
+  completed_plans: 23
 ---
 
 # Project State
@@ -68,6 +68,8 @@ in-progress
 - [Phase 06-02]: tts_settings.py created in Plan 02 ahead of Plan 03 — test_tts_endpoint_disabled requires the seam to exist immediately
 - [Phase 06-02]: TTSClient logs warning (not raises) when no cast device found — test_tts_client_caches_mp3 asserts MP3 exists regardless of cast availability
 - [Phase 06-google-home-tts]: Use module-ref import (import ... as _tts_settings) for get_tts_enabled() in scheduler.py and brief.py — direct function import bypasses unittest.mock patch on the source module attribute
+- [Phase 04-calendar-sync]: Settings.tsx left untouched (phases 5/6 inline-style pattern preserved); .settings-card CSS not added
+- [Phase 04-04]: agenda.test.ts updated to buildAgenda(tasks,events,now) 3-arg signature; PLACEHOLDER_EVENTS tests removed
 
 ### Open Questions (Live Verification Required)
 
@@ -87,5 +89,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-06-15T02:42:33.447Z
+Last session: 2026-06-15T03:25:07.676Z
 Next action: Completed 03-03 (task reminder lifecycle wiring); Phase 03 plans complete
