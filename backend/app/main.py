@@ -3,7 +3,9 @@ from fastapi import FastAPI
 from starlette.concurrency import run_in_threadpool
 from starlette.middleware.sessions import SessionMiddleware
 from app.config import settings
-from app.routers import tasks, auth, calendar_status, events, settings as settings_router, routines
+from fastapi.staticfiles import StaticFiles
+from app.routers import tasks, auth, calendar_status, events, settings as settings_router, routines, tts, webhooks
+from app.services.tts import CACHE_DIR
 from app.scheduler import scheduler, schedule_calendar_sync, schedule_daily_brief
 
 
@@ -45,6 +47,11 @@ app.include_router(calendar_status.router)
 app.include_router(events.router)
 app.include_router(settings_router.router)
 app.include_router(routines.router)
+app.include_router(tts.router)
+app.include_router(webhooks.router)
+
+CACHE_DIR.mkdir(exist_ok=True)
+app.mount("/tts-audio", StaticFiles(directory=CACHE_DIR), name="tts-audio")
 
 
 @app.get(f"{settings.api_prefix}/health")
