@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildAgenda } from "./agenda";
+import { buildAgenda, buildWeekAgenda } from "./agenda";
 import type { CalendarEvent, Task } from "../types/task";
 
 const NOW = new Date("2026-06-12T08:00:00Z");
@@ -150,5 +150,63 @@ describe("buildAgenda", () => {
     const evt = makeEvent({ google_id: "evt-notitle", title: "", start_dt: `${TODAY}T10:00:00Z` });
     const result = buildAgenda([], [evt], NOW);
     expect(result.find((i) => i.id === "event-evt-notitle")?.title).toBe("(No title)");
+  });
+});
+
+describe("buildWeekAgenda", () => {
+  it("returns 7 groups with dateKey[0] === TODAY", () => {
+    const result = buildWeekAgenda([], [], NOW);
+    expect(result).toHaveLength(7);
+    expect(result[0].dateKey).toBe("2026-06-12");
+  });
+
+  it("labels: Today / Tomorrow / weekday-date format", () => {
+    const result = buildWeekAgenda([], [], NOW);
+    expect(result[0].label).toBe("Today");
+    expect(result[1].label).toBe("Tomorrow");
+    // group[2] = 2026-06-14 (Sun)
+    expect(result[2].label).toMatch(/^[A-Z][a-z]{2}, [A-Z][a-z]{2} \d{1,2}$/);
+  });
+
+  it("buckets items into correct day", () => {
+    // TODAY+2 = 2026-06-14
+    const task14 = makeTask({ id: 10, title: "Task on +2", due_date: "2026-06-14T10:00:00Z" });
+    // TODAY task
+    const task12 = makeTask({ id: 11, title: "Task on today", due_date: `${TODAY}T09:00:00Z` });
+    const result = buildWeekAgenda([task14, task12], [], NOW);
+    expect(result[2].items.some((i) => i.title === "Task on +2")).toBe(true);
+    expect(result[0].items.some((i) => i.title === "Task on today")).toBe(true);
+    // task14 must NOT appear in group[0]
+    expect(result[0].items.every((i) => i.title !== "Task on +2")).toBe(true);
+  });
+
+  it("per-day ordering: all-day first, then timed ascending", () => {
+    const allDay = makeTask({ id: 20, title: "All day", due_date: `${TODAY}T00:00:00Z` });
+    const early = makeTask({ id: 21, title: "Early", due_date: `${TODAY}T09:00:00Z` });
+    const late = makeTask({ id: 22, title: "Late", due_date: `${TODAY}T10:30:00Z` });
+    const result = buildWeekAgenda([late, early, allDay], [], NOW);
+    const titles = result[0].items.map((i) => i.title);
+    expect(titles[0]).toBe("All day");
+    expect(titles[1]).toBe("Early");
+    expect(titles[2]).toBe("Late");
+  });
+
+  it("includes completed items within the week, crossed-out via completed flag", () => {
+    const done = makeTask({ id: 25, title: "Done task", due_date: `${TODAY}T10:00:00Z`, completed: true });
+    const result = buildWeekAgenda([done], [], NOW);
+    const item = result[0].items.find((i) => i.id === "task-25");
+    expect(item).toBeDefined();
+    expect(item?.completed).toBe(true);
+  });
+
+  it("excludes items outside the 7-day window", () => {
+    // TODAY+7 = 2026-06-19 — outside
+    const tooFar = makeTask({ id: 30, title: "Too far ahead", due_date: "2026-06-19T10:00:00Z" });
+    // yesterday = 2026-06-11 — outside
+    const yesterday = makeTask({ id: 31, title: "Yesterday", due_date: "2026-06-11T10:00:00Z" });
+    const result = buildWeekAgenda([tooFar, yesterday], [], NOW);
+    const allItems = result.flatMap((g) => g.items);
+    expect(allItems.every((i) => i.title !== "Too far ahead")).toBe(true);
+    expect(allItems.every((i) => i.title !== "Yesterday")).toBe(true);
   });
 });
