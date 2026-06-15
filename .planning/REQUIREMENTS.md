@@ -10,7 +10,7 @@
 - [x] **INFRA-04**: nginx reverse proxies to FastAPI, serves React static files, and terminates HTTPS via Tailscale cert
 - [x] **INFRA-05**: User can access the web UI from any device via Tailscale (e.g. `https://secretary.ts.net`)
 - [x] **INFRA-06**: Alembic migrations are wired up; SQLite uses WAL mode from first init
-- [ ] **INFRA-07**: Setup script exists to bootstrap a fresh Pi end-to-end with minimal manual steps
+- [x] **INFRA-07**: Setup script exists to bootstrap a fresh Pi end-to-end with minimal manual steps
 
 ### Tasks (TASK)
 
@@ -73,7 +73,7 @@
 | INFRA-04 | Phase 1 — Foundation | Done (01-03) |
 | INFRA-05 | Phase 1 — Foundation | Done (01-03) |
 | INFRA-06 | Phase 1 — Foundation | Complete |
-| INFRA-07 | Phase 1 — Foundation | Pending |
+| INFRA-07 | Phase 1 — Foundation | Done (01-04) |
 | TASK-01 | Phase 2 — Tasks & Agenda | Complete |
 | TASK-02 | Phase 2 — Tasks & Agenda | Complete |
 | TASK-03 | Phase 2 — Tasks & Agenda | Complete |
