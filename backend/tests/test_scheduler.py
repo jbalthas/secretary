@@ -1,5 +1,6 @@
 import types
 from datetime import datetime, timezone
+from unittest.mock import MagicMock, patch
 import pytest
 from apscheduler.jobstores.memory import MemoryJobStore
 from app.scheduler import scheduler, upsert_reminder, remove_reminder
