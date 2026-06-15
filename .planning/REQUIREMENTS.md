@@ -141,3 +141,21 @@
 | NOTIF-04 | Phase 6 — Google Home TTS | Complete |
 | NOTIF-05 | Phase 6 — Google Home TTS | Complete |
 | NOTIF-06 | Phase 6 — Google Home TTS | Complete |
+| GOAL-01 | Phase 8 — Goals + Ingest Backend | Pending |
+| GOAL-02 | Phase 8 — Goals + Ingest Backend | Pending |
+| GOAL-03 | Phase 8 — Goals + Ingest Backend | Pending |
+| GOAL-06 | Phase 8 — Goals + Ingest Backend | Pending |
+| INGEST-01 | Phase 8 — Goals + Ingest Backend | Pending |
+| INGEST-02 | Phase 8 — Goals + Ingest Backend | Pending |
+| INGEST-04 | Phase 8 — Goals + Ingest Backend | Pending |
+| INGEST-06 | Phase 8 — Goals + Ingest Backend | Pending |
+| INGEST-07 | Phase 8 — Goals + Ingest Backend | Pending |
+| GOAL-04 | Phase 9 — Goals + Ingest UI | Pending |
+| GOAL-05 | Phase 9 — Goals + Ingest UI | Pending |
+| INGEST-03 | Phase 9 — Goals + Ingest UI | Pending |
+| INGEST-05 | Phase 9 — Goals + Ingest UI | Pending |
+| PLAN-01 | Phase 10 — Day Auto-Organize | Pending |
+| PLAN-02 | Phase 10 — Day Auto-Organize | Pending |
+| GUIDE-01 | Phase 11 — Goal-Guided Guidance | Pending |
+| GUIDE-02 | Phase 11 — Goal-Guided Guidance | Pending |
+| GUIDE-03 | Phase 11 — Goal-Guided Guidance | Pending |

@@ -1,24 +1,25 @@
 ---
 gsd_state_version: 1.0
 milestone: v2.0
-milestone_name: ingest-organize-guide
-status: defining-requirements
-last_updated: "2026-06-15T00:00:00.000Z"
+milestone_name: Phases — Ingest, Organize, Guide
+status: executing
+last_updated: "2026-06-15T18:20:57.604Z"
+last_activity: 2026-06-15 -- Phase 07 execution started
 progress:
-  total_phases: 0
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_phases: 11
+  completed_phases: 6
+  total_plans: 26
+  completed_plans: 24
 ---
 
 # Project State
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-06-15 - Completed quick task 260615-bse: weekly voice readout on Google Home
+Phase: 07 (outlook-calendar-ics-feed-integration) — EXECUTING
+Plan: 1 of 2
+Status: Executing Phase 07
+Last activity: 2026-06-15 -- Phase 07 execution started
 
 ---
 
@@ -26,7 +27,18 @@ Last activity: 2026-06-15 - Completed quick task 260615-bse: weekly voice readou
 
 **Core value:** One place to manage your schedule and tasks — reachable from any device, voice-controllable via Google Home, and proactive enough to push reminders before you have to think about them.
 
-**Current focus:** Milestone v2.0 — Ingest, Organize, Guide (defining requirements; v2.0 phases start at Phase 8)
+**Current focus:** Phase 07 — outlook-calendar-ics-feed-integration
+
+---
+
+## v2.0 Phase Map
+
+| Phase | Name | Requirements | Status |
+|-------|------|--------------|--------|
+| 8 | Goals + Ingest Backend | GOAL-01, GOAL-02, GOAL-03, GOAL-06, INGEST-01, INGEST-02, INGEST-04, INGEST-06, INGEST-07 | Not started |
+| 9 | Goals + Ingest UI | GOAL-04, GOAL-05, INGEST-03, INGEST-05 | Not started |
+| 10 | Day Auto-Organize | PLAN-01, PLAN-02 | Not started |
+| 11 | Goal-Guided Guidance | GUIDE-01, GUIDE-02, GUIDE-03 | Not started |
 
 ---
 
@@ -34,7 +46,8 @@ Last activity: 2026-06-15 - Completed quick task 260615-bse: weekly voice readou
 
 ### Roadmap Evolution
 
-- Phase 7 added: Outlook Calendar ICS feed integration
+- Phase 7 added: Outlook Calendar ICS feed integration (separate concurrent effort, do not modify)
+- Phases 8–11 added: v2.0 Ingest, Organize, Guide (2026-06-15)
 
 ### Decisions Made
 
@@ -65,12 +78,20 @@ Last activity: 2026-06-15 - Completed quick task 260615-bse: weekly voice readou
 - [Phase 06-google-home-tts]: Use module-ref import (import ... as _tts_settings) for get_tts_enabled() in scheduler.py and brief.py — direct function import bypasses unittest.mock patch on the source module attribute
 - [Phase 04-calendar-sync]: Settings.tsx left untouched (phases 5/6 inline-style pattern preserved); .settings-card CSS not added
 - [Phase 04-04]: agenda.test.ts updated to buildAgenda(tasks,events,now) 3-arg signature; PLACEHOLDER_EVENTS tests removed
+- [v2.0 roadmap]: guidance_service.py must be SYNC (same create_engine+sessionmaker pattern as brief.py) — async-in-thread-pool deadlocks under APScheduler
+- [v2.0 roadmap]: Migration chain from HEAD 0005: 0006 goals → 0007 task FK+estimated_minutes → 0008 routine FK → 0009 scheduled_blocks; write all four before alembic upgrade head
+- [v2.0 roadmap]: Ingest is stateless preview-then-commit — client resends full payload on confirm; no server-side pending state; _resolve() shared between preview and confirm to prevent drift
+- [v2.0 roadmap]: Match ingest entities on external_key (stable LLM slug), never on title; external_key is nullable so manually-created records omit it
+- [v2.0 roadmap]: Planner is a pure deterministic function (no DB write); only POST /plan/approve writes ScheduledBlock rows; delete-then-insert for date_key on approve (idempotent)
+- [v2.0 roadmap]: Habit maps to a recurring Task with a habit flag (not its own table) for v2.0; separate Habit table deferred to v3
 
 ### Open Questions (Live Verification Required)
 
 - Does `tailscale funnel 443` reach IFTTT's servers? (Phase 6 fallback: router port-forward)
 - Can personal Gmail publish OAuth consent to "In production"? (Phase 4 risk)
 - Does pychromecast work with specific Google Home/Nest device? (Phase 6 fallback: Home Assistant)
+- Stall threshold: 7 vs 14 days — make it a user setting, not hardcoded (decide in Phase 11)
+- `user_timezone` as explicit DB setting vs. relying on Pi system tz (decide in Phase 10)
 
 ### Blockers
 
@@ -92,5 +113,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-06-15T03:25:07.676Z
-Next action: Completed 03-03 (task reminder lifecycle wiring); Phase 03 plans complete
+Last session: 2026-06-15
+Next action: Run `/gsd:plan-phase 8` to break Phase 8 (Goals + Ingest Backend) into executable plans
