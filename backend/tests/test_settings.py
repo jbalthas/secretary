@@ -45,3 +45,33 @@ def test_set_brief_time_reschedules_job():
     """D-06: PUT brief-time creates/replaces APScheduler job 'daily_brief'."""
     client.put("/api/v1/settings/brief-time", json={"hour": 6, "minute": 0})
     assert scheduler.get_job("daily_brief") is not None
+
+
+# ---------------------------------------------------------------------------
+# NOTIF-03 — TTS enabled/disabled setting (Phase 06 Wave 0 RED)
+# ---------------------------------------------------------------------------
+
+def test_get_tts_enabled():
+    """NOTIF-03: GET /api/v1/settings/tts returns {"tts_enabled": true} by default.
+
+    Plan 02 must implement GET /api/v1/settings/tts returning the current
+    tts_enabled value from the AppSettings row (default True).
+    """
+    r = client.get("/api/v1/settings/tts")
+    assert r.status_code == 200
+    assert r.json() == {"tts_enabled": True}
+
+
+def test_set_tts_enabled():
+    """NOTIF-03: PUT /api/v1/settings/tts {"tts_enabled": false} returns 200
+    and subsequent GET returns false.
+
+    Plan 02 must implement PUT /api/v1/settings/tts that persists the value
+    to the AppSettings row (upsert id=1 pattern).
+    """
+    r = client.put("/api/v1/settings/tts", json={"tts_enabled": False})
+    assert r.status_code == 200
+
+    r2 = client.get("/api/v1/settings/tts")
+    assert r2.status_code == 200
+    assert r2.json()["tts_enabled"] is False
