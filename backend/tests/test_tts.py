@@ -169,7 +169,7 @@ def test_tts_client_caches_mp3(tmp_path):
 
     with patch("app.services.tts.CACHE_DIR", tmp_path), \
          patch("gtts.gTTS") as MockGTTS, \
-         patch("pychromecast.get_listed_chromecasts", return_value=([], fake_browser)):
+         patch("pychromecast.get_chromecasts", return_value=([], fake_browser)):
 
         mock_tts_instance = MagicMock()
         MockGTTS.return_value = mock_tts_instance

@@ -21,15 +21,19 @@ class TTSClient:
 
         media_url = f"http://{settings.google_home_lan_ip}:8000/tts-audio/{key}.mp3"
 
-        chromecasts, browser = pychromecast.get_listed_chromecasts(
-            friendly_names=[settings.google_home_name] if settings.google_home_name else [],
+        # Match by host (the IP is always configured); friendly_names is a filter that
+        # returns nothing when GOOGLE_HOME_NAME is blank, so don't rely on it.
+        chromecasts, browser = pychromecast.get_chromecasts(
             known_hosts=[settings.google_home_ip],
         )
         try:
-            if not chromecasts:
+            cast = next(
+                (cc for cc in chromecasts if cc.cast_info.host == settings.google_home_ip),
+                None,
+            )
+            if cast is None:
                 _log.warning("Cast device not found at %s — skipping playback", settings.google_home_ip)
                 return
-            cast = chromecasts[0]
             cast.wait()
             cast.media_controller.play_media(media_url, "audio/mp3")
             time.sleep(3)  # WHY: let device buffer before discovery teardown (research Pitfall 4)
