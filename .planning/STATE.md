@@ -1,33 +1,24 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: unknown
-last_updated: "2026-06-15T03:25:11.627Z"
+milestone: v2.0
+milestone_name: ingest-organize-guide
+status: defining-requirements
+last_updated: "2026-06-15T00:00:00.000Z"
 progress:
-  total_phases: 6
-  completed_phases: 5
-  total_plans: 24
-  completed_plans: 23
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
 
-## Current Phase
+## Current Position
 
-Phase 03 — pushover-reminders
-
-## Current Plan
-
-Plan 3 of 3 complete (03-03 done)
-
-## Status
-
-in-progress
-
-## Last Updated
-
-2026-06-12
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-06-15 — Milestone v2.0 (Ingest, Organize, Guide) started
 
 ---
 
@@ -35,7 +26,7 @@ in-progress
 
 **Core value:** One place to manage your schedule and tasks — reachable from any device, voice-controllable via Google Home, and proactive enough to push reminders before you have to think about them.
 
-**Current focus:** Phase 06 — google-home-tts
+**Current focus:** Milestone v2.0 — Ingest, Organize, Guide (defining requirements; v2.0 phases start at Phase 8)
 
 ---
 
