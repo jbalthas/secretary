@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-06-14T21:40:41.733Z"
+last_updated: "2026-06-15T02:19:46.566Z"
 progress:
   total_phases: 6
   completed_phases: 3
-  total_plans: 20
-  completed_plans: 18
+  total_plans: 24
+  completed_plans: 19
 ---
 
 # Project State
@@ -35,7 +35,7 @@ in-progress
 
 **Core value:** One place to manage your schedule and tasks — reachable from any device, voice-controllable via Google Home, and proactive enough to push reminders before you have to think about them.
 
-**Current focus:** Phase 05 — daily-brief-routines
+**Current focus:** Phase 06 — google-home-tts
 
 ---
 
@@ -61,6 +61,9 @@ in-progress
 - [Phase 03-02]: Deferred PushoverClient import in _send_reminder prevents circular import at scheduler module load
 - [03-03]: update_task checks task.completed after DB refresh to branch between remove_reminder and upsert_reminder
 - [03-03]: Monkeypatch at app.routers.tasks.<helper> (not app.scheduler) for router-level test isolation
+- [Phase 06-01]: Plan 02 must import TTSClient at module top (not deferred) in routers/tts.py, scheduler.py, brief.py to keep patch targets stable
+- [Phase 06-01]: Plan 03 must expose get_tts_enabled() in app/services/tts_settings.py as the single tts_enabled flag seam
+- [Phase 06-01]: Plan 02 must export CACHE_DIR as module-level Path from app/services/tts.py; MP3 cache naming: sha256(text)[:16].mp3
 
 ### Open Questions (Live Verification Required)
 
@@ -80,5 +83,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-06-14T21:40:41.729Z
+Last session: 2026-06-15T02:19:46.564Z
 Next action: Completed 03-03 (task reminder lifecycle wiring); Phase 03 plans complete

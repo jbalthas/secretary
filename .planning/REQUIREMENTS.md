@@ -36,10 +36,10 @@
 
 - [x] **NOTIF-01**: Task reminders deliver a Pushover push notification to user's phone at the scheduled time
 - [x] **NOTIF-02**: Daily brief delivers a Pushover push notification with agenda content
-- [ ] **NOTIF-03**: User can trigger a TTS announcement on their Google Home from the web UI (`POST /api/v1/tts`)
-- [ ] **NOTIF-04**: Task reminders also announce on Google Home via pychromecast + gTTS (in addition to Pushover)
-- [ ] **NOTIF-05**: Daily brief announces on Google Home at brief time (in addition to Pushover)
-- [ ] **NOTIF-06**: Google Home morning routine can trigger the daily brief via a webhook endpoint
+- [x] **NOTIF-03**: User can trigger a TTS announcement on their Google Home from the web UI (`POST /api/v1/tts`)
+- [x] **NOTIF-04**: Task reminders also announce on Google Home via pychromecast + gTTS (in addition to Pushover)
+- [x] **NOTIF-05**: Daily brief announces on Google Home at brief time (in addition to Pushover)
+- [x] **NOTIF-06**: Google Home morning routine can trigger the daily brief via a webhook endpoint
 
 ---
 
@@ -90,7 +90,7 @@
 | CAL-04 | Phase 4 — Calendar Sync | Complete |
 | CAL-06 | Phase 5 — Daily Brief & Routines | Complete |
 | CAL-07 | Phase 5 — Daily Brief & Routines | Pending |
-| NOTIF-03 | Phase 6 — Google Home TTS | Pending |
-| NOTIF-04 | Phase 6 — Google Home TTS | Pending |
-| NOTIF-05 | Phase 6 — Google Home TTS | Pending |
-| NOTIF-06 | Phase 6 — Google Home TTS | Pending |
+| NOTIF-03 | Phase 6 — Google Home TTS | Complete |
+| NOTIF-04 | Phase 6 — Google Home TTS | Complete |
+| NOTIF-05 | Phase 6 — Google Home TTS | Complete |
+| NOTIF-06 | Phase 6 — Google Home TTS | Complete |
