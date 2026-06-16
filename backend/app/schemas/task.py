@@ -10,6 +10,7 @@ class TaskCreate(BaseModel):
     due_date: datetime | None = None
     reminder_at: datetime | None = None
     recurrence_cron: str | None = None
+    goal_id: int | None = None
 
 
 class TaskUpdate(TaskCreate):
@@ -22,5 +23,7 @@ class TaskRead(TaskCreate):
     completed: bool
     created_at: datetime
     updated_at: datetime
+    is_habit: bool
+    goal_id: int | None = None
 
     model_config = {"from_attributes": True}
