@@ -1,7 +1,7 @@
 import enum
 from datetime import datetime, timezone
-from sqlalchemy import String, Boolean, DateTime, Text, Enum as SAEnum
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import String, Boolean, DateTime, Text, Enum as SAEnum, ForeignKey, Integer
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db import Base
 
 
@@ -30,6 +30,11 @@ class Task(Base):
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
     )
+    goal_id: Mapped[int | None] = mapped_column(ForeignKey("goals.id", ondelete="SET NULL"), nullable=True)
+    external_key: Mapped[str | None] = mapped_column(String(200), unique=True, nullable=True, index=True)
+    is_habit: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    estimated_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    goal: Mapped["Goal | None"] = relationship("Goal", back_populates="tasks", lazy="selectin")
 
 
 class AppSettings(Base):
@@ -54,6 +59,10 @@ class Routine(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )
+    goal_id: Mapped[int | None] = mapped_column(ForeignKey("goals.id", ondelete="SET NULL"), nullable=True)
+    external_key: Mapped[str | None] = mapped_column(String(200), unique=True, nullable=True, index=True)
+    goal: Mapped["Goal | None"] = relationship("Goal", back_populates="routines", lazy="selectin")
 
 
 from app.models.calendar import CalendarEvent, CalendarSync  # noqa: E402,F401
+from app.models.goal import Goal, Milestone, GoalType, GoalStatus  # noqa: E402,F401
