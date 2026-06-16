@@ -145,9 +145,9 @@
 | GOAL-02 | Phase 8 — Goals + Ingest Backend | Complete |
 | GOAL-03 | Phase 8 — Goals + Ingest Backend | Complete |
 | GOAL-06 | Phase 8 — Goals + Ingest Backend | Complete |
-| INGEST-01 | Phase 8 — Goals + Ingest Backend | Pending |
-| INGEST-02 | Phase 8 — Goals + Ingest Backend | Pending |
-| INGEST-04 | Phase 8 — Goals + Ingest Backend | Pending |
+| INGEST-01 | Phase 8 — Goals + Ingest Backend | Complete |
+| INGEST-02 | Phase 8 — Goals + Ingest Backend | Complete |
+| INGEST-04 | Phase 8 — Goals + Ingest Backend | Complete |
 | INGEST-06 | Phase 8 — Goals + Ingest Backend | Complete |
 | INGEST-07 | Phase 8 — Goals + Ingest Backend | Complete |
 | GOAL-04 | Phase 9 — Goals + Ingest UI | Pending |

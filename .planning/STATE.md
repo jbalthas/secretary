@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Phases — Ingest, Organize, Guide
 status: executing
-last_updated: "2026-06-16T02:17:18.692Z"
+last_updated: "2026-06-16T02:25:31.716Z"
 last_activity: 2026-06-16
 progress:
   total_phases: 11
-  completed_phases: 7
+  completed_phases: 8
   total_plans: 30
-  completed_plans: 29
+  completed_plans: 30
 ---
 
 # Project State
@@ -17,8 +17,8 @@ progress:
 ## Current Position
 
 Phase: 08 (goals-ingest-backend) — EXECUTING
-Plan: 3 of 4
-Status: Executing Phase 08
+Plan: 4 of 4
+Status: Ready to execute
 Last activity: 2026-06-16
 
 ---
@@ -90,6 +90,8 @@ Last activity: 2026-06-16
 - [Phase 08-02]: lazy=selectin mandatory on all Goal/Milestone relationships (prevents MissingGreenlet in async SQLAlchemy); batch_alter_table required for SQLite ALTER on existing tables
 - [Phase 08]: celebrate functions are SYNC (not async) — PushoverClient/TTSClient are sync; call via run_in_threadpool from async route (D-10/D-11)
 - [Phase 08]: progress_pct never stored; computed via two aggregate SQL queries (Tasks+Milestones by goal_id) on every GoalRead (D-02)
+- [Phase 08-goals-ingest-backend]: TestClient(raise_server_exceptions=False) required in test_ingest.py so monkeypatched RuntimeError yields HTTP 500 instead of propagating
+- [Phase 08-goals-ingest-backend]: external_key added to TaskRead so ingest tests can verify external_key is returned in GET /tasks/ responses
 
 ### Open Questions (Live Verification Required)
 
@@ -119,5 +121,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-06-16T02:17:18.689Z
+Last session: 2026-06-16T02:25:31.711Z
 Next action: Run `/gsd:plan-phase 8` to break Phase 8 (Goals + Ingest Backend) into executable plans
