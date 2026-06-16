@@ -171,7 +171,13 @@ Plans:
 2. User can link a task to a goal from the task edit form (goal dropdown); the link is reflected immediately in the goal detail view.
 3. User can paste a JSON payload into a textarea or upload a `.json` file in the Ingest page and trigger a dry-run preview showing counts and per-entity diff before anything is written.
 4. User can click Confirm on the preview and see the new goals/tasks/routines appear in the app; the Confirm button is disabled on submit to prevent double-commit.
-**Plans**: TBD
+**Plans:** 4 plans
+
+Plans:
+- [ ] 09-01-PLAN.md — Backend: ingest preview endpoint + routine goal_id schema + Wave 0 tests (Wave 1)
+- [ ] 09-02-PLAN.md — Frontend foundation: goal types, useGoals, GoalSelect, BottomNav tab, routes, CSS (Wave 1)
+- [ ] 09-03-PLAN.md — Goals page + GoalDrawer: list, detail, milestones, linked tasks (Wave 2)
+- [ ] 09-04-PLAN.md — Drawer goal linking + Ingest page (prompt/paste/upload/preview/confirm) (Wave 2)
 **UI hint**: yes
 
 ---
