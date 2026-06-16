@@ -4,7 +4,7 @@ from starlette.concurrency import run_in_threadpool
 from starlette.middleware.sessions import SessionMiddleware
 from app.config import settings
 from fastapi.staticfiles import StaticFiles
-from app.routers import tasks, auth, calendar_status, events, settings as settings_router, routines, tts, webhooks
+from app.routers import tasks, auth, calendar_status, events, settings as settings_router, routines, tts, webhooks, goals
 from app.services.tts import CACHE_DIR
 from app.scheduler import scheduler, schedule_calendar_sync, schedule_daily_brief, schedule_outlook_ics_sync
 
@@ -55,6 +55,7 @@ app.include_router(settings_router.router)
 app.include_router(routines.router)
 app.include_router(tts.router)
 app.include_router(webhooks.router)
+app.include_router(goals.router)
 
 CACHE_DIR.mkdir(exist_ok=True)
 app.mount("/tts-audio", StaticFiles(directory=CACHE_DIR), name="tts-audio")
