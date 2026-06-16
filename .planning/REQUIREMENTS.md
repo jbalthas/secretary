@@ -60,7 +60,7 @@
 ### Goals (GOAL)
 
 - [x] **GOAL-01**: User can create, edit, and archive a goal with a title, type (career/life/health/learning/financial), optional description/context, and optional target date (archive preserves history; no hard delete)
-- [x] **GOAL-02**: Each goal shows a progress percentage computed from its linked tasks' completion (recalculated on read, not stored)
+- [ ] **GOAL-02**: Each goal shows a progress percentage computed from its linked tasks' completion (recalculated on read, not stored)
 - [x] **GOAL-03**: A goal can have milestones (title, optional target date, done flag); milestone completion contributes to the goal's tracked progress
 - [ ] **GOAL-04**: User can view all goals in a dedicated Goals view and drill into a goal detail showing its milestones, linked tasks, and progress
 - [ ] **GOAL-05**: User can link a task to a goal from the task form (goal dropdown); routines can also be tagged to a goal
@@ -142,12 +142,12 @@
 | NOTIF-05 | Phase 6 — Google Home TTS | Complete |
 | NOTIF-06 | Phase 6 — Google Home TTS | Complete |
 | GOAL-01 | Phase 8 — Goals + Ingest Backend | Complete |
-| GOAL-02 | Phase 8 — Goals + Ingest Backend | Complete |
-| GOAL-03 | Phase 8 — Goals + Ingest Backend | Complete |
-| GOAL-06 | Phase 8 — Goals + Ingest Backend | Complete |
-| INGEST-01 | Phase 8 — Goals + Ingest Backend | Complete |
-| INGEST-02 | Phase 8 — Goals + Ingest Backend | Complete |
-| INGEST-04 | Phase 8 — Goals + Ingest Backend | Complete |
+| GOAL-02 | Phase 8 — Goals + Ingest Backend | Pending |
+| GOAL-03 | Phase 8 — Goals + Ingest Backend | Pending |
+| GOAL-06 | Phase 8 — Goals + Ingest Backend | Pending |
+| INGEST-01 | Phase 8 — Goals + Ingest Backend | Pending |
+| INGEST-02 | Phase 8 — Goals + Ingest Backend | Pending |
+| INGEST-04 | Phase 8 — Goals + Ingest Backend | Pending |
 | INGEST-06 | Phase 8 — Goals + Ingest Backend | Complete |
 | INGEST-07 | Phase 8 — Goals + Ingest Backend | Complete |
 | GOAL-04 | Phase 9 — Goals + Ingest UI | Pending |
