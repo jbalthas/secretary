@@ -10,6 +10,8 @@ from app.schemas.ingest import (
     RoutineImport,
     HabitImport,
     IngestResult,
+    IngestPreviewResult,
+    EntityDiff,
 )
 
 
@@ -122,6 +124,35 @@ async def _upsert_habit(h: HabitImport, goal_id: int | None, session: AsyncSessi
         )
         session.add(row)
         return row, True
+
+
+async def _exists(model, external_key: str, session: AsyncSession) -> bool:
+    result = await session.execute(select(model).where(model.external_key == external_key))
+    return result.scalar_one_or_none() is not None
+
+
+async def dry_run_import(payload: IngestPayload, session: AsyncSession) -> IngestPreviewResult:
+    goals = [
+        EntityDiff(external_key=g.external_key, title=g.title,
+                   action="update" if await _exists(Goal, g.external_key, session) else "create")
+        for g in payload.goals
+    ]
+    tasks = [
+        EntityDiff(external_key=t.external_key, title=t.title,
+                   action="update" if await _exists(Task, t.external_key, session) else "create")
+        for t in payload.tasks
+    ]
+    routines = [
+        EntityDiff(external_key=r.external_key, title=r.name,
+                   action="update" if await _exists(Routine, r.external_key, session) else "create")
+        for r in payload.routines
+    ]
+    habits = [
+        EntityDiff(external_key=h.external_key, title=h.title,
+                   action="update" if await _exists(Task, h.external_key, session) else "create")
+        for h in payload.habits
+    ]
+    return IngestPreviewResult(goals=goals, tasks=tasks, routines=routines, habits=habits)
 
 
 async def apply_import(payload: IngestPayload, session: AsyncSession) -> IngestResult:

@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_session
 from app.config import settings
-from app.schemas.ingest import IngestPayload, IngestResult
+from app.schemas.ingest import IngestPayload, IngestResult, IngestPreviewResult
 from app.services import ingest_service
 
 router = APIRouter(prefix=f"{settings.api_prefix}/ingest", tags=["ingest"])
@@ -17,3 +17,8 @@ async def get_schema():
 @router.post("/confirm", response_model=IngestResult)
 async def confirm(payload: IngestPayload, session: AsyncSession = Depends(get_session)):
     return await ingest_service.apply_import(payload, session)
+
+
+@router.post("/preview", response_model=IngestPreviewResult)
+async def preview(payload: IngestPayload, session: AsyncSession = Depends(get_session)):
+    return await ingest_service.dry_run_import(payload, session)

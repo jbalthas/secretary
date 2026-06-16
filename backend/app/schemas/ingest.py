@@ -90,3 +90,16 @@ class IngestPayload(BaseModel):
 class IngestResult(BaseModel):
     created: dict[str, int]
     updated: dict[str, int]
+
+
+class EntityDiff(BaseModel):
+    external_key: str
+    title: str
+    action: Literal["create", "update"]
+
+
+class IngestPreviewResult(BaseModel):
+    goals: list[EntityDiff] = []
+    tasks: list[EntityDiff] = []
+    routines: list[EntityDiff] = []
+    habits: list[EntityDiff] = []

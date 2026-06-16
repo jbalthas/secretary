@@ -17,6 +17,7 @@ class RoutineCreate(BaseModel):
     cron: str
     action: RoutineAction
     enabled: bool = True
+    goal_id: int | None = None
 
     @field_validator("cron")
     @classmethod
@@ -28,6 +29,7 @@ class RoutineUpdate(BaseModel):
     cron: str | None = None
     action: RoutineAction | None = None
     enabled: bool | None = None
+    goal_id: int | None = None
 
     @field_validator("cron")
     @classmethod
@@ -41,5 +43,6 @@ class RoutineRead(BaseModel):
     cron: str
     action: RoutineAction
     enabled: bool
+    goal_id: int | None = None
     created_at: datetime
     model_config = {"from_attributes": True}
