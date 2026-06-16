@@ -5,6 +5,7 @@ status: draft
 shadcn_initialized: false
 preset: none
 created: 2026-06-16
+revised: 2026-06-16
 ---
 
 # Phase 9 — UI Design Contract
@@ -60,7 +61,9 @@ Source: `frontend/src/styles.css` — all values verified from existing rules.
 | Body | 16px | 400 (regular) | 1.5 | `body` rule in styles.css — default for all content |
 | Label | 14px | 600 (semibold) | 1.4 | Drawer field labels, filter tabs, segmented-control buttons, nav tab text |
 | Heading | 20px | 600 (semibold) | 1.2 | `.page-title`, `.drawer-title` |
-| Caption | 12px | 500 (medium) | 1.3 | `.priority-badge`, `.task-row-error` |
+| Caption | 12px | 400 (regular) | 1.3 | `.priority-badge`, `.task-row-error`, type badges, diff badges |
+
+**Weights declared: 2 — regular (400) and semibold (600). Weight 500 is not used.**
 
 Source: `frontend/src/styles.css` — extracted from `body`, `.page-title`, `.drawer-title`, `.drawer-field label`, `.priority-badge`, `.task-row-description` rules.
 
@@ -70,7 +73,7 @@ Source: `frontend/src/styles.css` — extracted from `body`, `.page-title`, `.dr
 - Goal detail heading (progress section header): label (14px/600) as section label
 - Milestone list items: body (16px/400)
 - Ingest page section headers (LLM Prompt, Preview): heading (20px/600) via `.page-title` reuse
-- Preview diff badges ("create" / "update"): caption (12px/500) matching `.priority-badge` pattern
+- Preview diff badges ("create" / "update"): caption (12px/400) matching `.priority-badge` pattern
 - Validation error list: caption (12px/400) in `--destructive` color
 
 ---
@@ -147,11 +150,13 @@ Components to build (Phase 9) and existing components to extend:
 
 ### Goals Page
 
+**Focal point:** The FAB is the primary action on this page. It must remain visually dominant — fixed position, accent background, above BottomNav — so first-time users immediately know how to create a goal.
+
 **Layout:** `.page` container, `.page-title` "Goals", filter tabs (Active / Archived), goal list rows, FAB for create.
 
 **Goal list row:**
 - Height: minimum 48px (matches `.task-row`)
-- Content: goal title (16px/400), type badge (12px/500 pill), progress percent (14px/400, right-aligned)
+- Content: goal title (16px/400), type badge (12px/400 pill), progress percent (14px/400, right-aligned)
 - Progress bar: 8px tall, full width below title line, `--border` track, `--accent` fill, `border-radius: 4px`
 - Tapping a row opens goal detail (in-page `selectedGoalId` state — no route change)
 
@@ -185,6 +190,8 @@ Applied in: TaskDrawer (after Priority field), RoutineDrawer (after Schedule fie
 
 ### Ingest Page
 
+**Focal point:** "Run Preview" is the primary action on this page. It must be visually distinct (`.btn-save`, right-aligned, accent background) and the only enabled call-to-action until the user has pasted or uploaded valid JSON. The Confirm Import button renders only after a successful preview.
+
 **Route:** `/ingest` — reached via "Import" button on Goals page (lucide `Upload` icon, 16px, placed in page header right side next to page-title).
 
 **Layout:** `.page` container, `.page-title` "Import Data"
@@ -210,8 +217,8 @@ Applied in: TaskDrawer (after Priority field), RoutineDrawer (after Schedule fie
    - Section label: "Preview" + entity counts summary (e.g. "3 goals · 5 tasks · 2 routines · 1 habit")
    - Four sub-groups: Goals, Tasks, Routines, Habits — each with a group header (14px/600) and item list
    - Each item row: entity title (16px/400) + action badge right-aligned
-     - "create" badge: `rgba(16, 185, 129, 0.15)` background, `#10b981` text, 12px/500, pill shape (matching `.priority-badge`)
-     - "update" badge: `rgba(99, 102, 241, 0.15)` background, `#6366f1` text, 12px/500, pill shape
+     - "create" badge: `rgba(16, 185, 129, 0.15)` background, `#10b981` text, 12px/400, pill shape (matching `.priority-badge`)
+     - "update" badge: `rgba(99, 102, 241, 0.15)` background, `#6366f1` text, 12px/400, pill shape
    - If a group is empty (e.g. no habits), the group is omitted
 
 4. **Confirm section** (conditional — renders only after preview results are present)
@@ -240,7 +247,7 @@ Goals tab:
 
 | Action | Trigger | Confirmation |
 |--------|---------|-------------|
-| Archive goal | "Archive Goal" `.btn-delete` in GoalDrawer (edit mode) | confirm-modal — title: "Archive goal?", body: "The goal will be hidden from the active list. You can restore it later.", buttons: "Archive" (`.btn-confirm-delete`) + "Cancel" (`.btn-cancel`) |
+| Archive goal | "Archive Goal" `.btn-delete` in GoalDrawer (edit mode) | confirm-modal — title: "Archive goal?", body: "The goal will be hidden from the active list. Your linked tasks and milestones are preserved.", buttons: "Archive Goal" (`.btn-confirm-delete`) + "Keep Goal" (`.btn-cancel`) |
 | Goal detail archive | "Archive Goal" text link in goal detail | Same confirm-modal pattern |
 
 No hard delete in this phase. Archive is the only destructive action (D-03: archive = `PATCH /goals/{id}` with `status=archived`).
@@ -269,8 +276,8 @@ No hard delete in this phase. Archive is the only destructive action (D-03: arch
 | Goal detail "archive" action | Archive Goal |
 | Archive confirm-modal title | Archive goal? |
 | Archive confirm-modal body | The goal will be hidden from the active list. Your linked tasks and milestones are preserved. |
-| Archive confirm button | Archive |
-| Archive cancel button | Cancel |
+| Archive confirm button | Archive Goal |
+| Archive cancel button | Keep Goal |
 | GoalSelect "no goal" option | No goal |
 | Import button (Goals page header) | Import |
 | Ingest page title | Import Data |
@@ -319,7 +326,7 @@ The following CSS additions are needed in `frontend/src/styles.css`. All existin
   padding: 4px 8px;
   border-radius: 9999px;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 400;
 }
 .type-career    { background: rgba(99, 102, 241, 0.15); color: #6366f1; }
 .type-life      { background: rgba(16, 185, 129, 0.15); color: #10b981; }
@@ -328,7 +335,7 @@ The following CSS additions are needed in `frontend/src/styles.css`. All existin
 .type-financial { background: rgba(20, 184, 166, 0.15); color: #14b8a6; }
 
 /* Ingest diff badges — create / update */
-.diff-badge        { display: inline-block; padding: 4px 8px; border-radius: 9999px; font-size: 12px; font-weight: 500; }
+.diff-badge        { display: inline-block; padding: 4px 8px; border-radius: 9999px; font-size: 12px; font-weight: 400; }
 .diff-badge-create { background: rgba(16, 185, 129, 0.15); color: #10b981; }
 .diff-badge-update { background: rgba(99, 102, 241, 0.15); color: #6366f1; }
 
@@ -363,7 +370,7 @@ The following CSS additions are needed in `frontend/src/styles.css`. All existin
 .goal-row {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   padding: 12px 8px;
   border-bottom: 1px solid var(--border);
   cursor: pointer;
