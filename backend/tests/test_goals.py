@@ -56,7 +56,8 @@ def test_progress_no_items():
     assert r2.json()["progress_pct"] == 0
 
 
-def test_progress_milestones_count():
+def test_progress_milestones_count(monkeypatch):
+    monkeypatch.setattr("app.services.celebrate.fire_milestone_celebration", lambda *a: None)
     r = client.post("/api/v1/goals/", json={"title": "Milestone Progress Goal", "type": "life"})
     goal_id = r.json()["id"]
     ms1 = client.post(f"/api/v1/goals/{goal_id}/milestones", json={"title": "Milestone A"}).json()["id"]
@@ -67,7 +68,8 @@ def test_progress_milestones_count():
     assert r2.json()["progress_pct"] == 50
 
 
-def test_milestone_crud():
+def test_milestone_crud(monkeypatch):
+    monkeypatch.setattr("app.services.celebrate.fire_milestone_celebration", lambda *a: None)
     r = client.post("/api/v1/goals/", json={"title": "CRUD Goal", "type": "career"})
     goal_id = r.json()["id"]
     r2 = client.post(f"/api/v1/goals/{goal_id}/milestones", json={"title": "First Milestone"})
