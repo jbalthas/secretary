@@ -17,7 +17,7 @@
 | 5 | Daily Brief & Routines | Morning brief fires proactively; custom routines persist | CAL-06, CAL-07 | 3 |
 | 6 | Google Home TTS | 3/4 | In Progress|  |
 | 7 | Outlook Calendar ICS feed integration | TBD | TBD | TBD |
-| 8 | Goals + Ingest Backend | Goals, milestones, and habits exist as DB entities; the ingest contract is live and write-safe | GOAL-01, GOAL-02, GOAL-03, GOAL-06, INGEST-01, INGEST-02, INGEST-04, INGEST-06, INGEST-07 | 5 |
+| 8 | Goals + Ingest Backend | 0/4 | Planned    |  |
 | 9 | Goals + Ingest UI | User can manage goals, link tasks, and submit LLM payloads from the web UI | GOAL-04, GOAL-05, INGEST-03, INGEST-05 | 4 |
 | 10 | Day Auto-Organize | User can get and approve a proposed day plan built around calendar events | PLAN-01, PLAN-02 | 4 |
 | 11 | Goal-Guided Guidance | Daily brief includes goal progress; today view surfaces next-best-task; stalled goals trigger nudges | GUIDE-01, GUIDE-02, GUIDE-03 | 3 |
@@ -151,7 +151,7 @@ Plans:
 3. Completing a milestone triggers a Pushover notification and Google Home TTS announcement reusing existing notification infrastructure.
 4. `POST /api/v1/ingest/confirm` writes goals, then tasks, then routines in a single transaction — injecting a failure mid-commit leaves zero new rows; re-posting the same payload is idempotent (no duplicate entities created, matched via `external_key`).
 5. `GET /api/v1/ingest/schema` returns the versioned JSON schema; posting a payload with a mismatched `schema_version` or extra fields returns HTTP 422 with field-level error detail.
-**Plans:** 4 plans
+**Plans:** 0/4 plans executed
 
 Plans:
 - [ ] 08-01-PLAN.md — Wave 0 test stubs (test_goals.py + test_ingest.py, all 20 named tests, red)

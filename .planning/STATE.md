@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Phases — Ingest, Organize, Guide
 status: executing
-last_updated: "2026-06-16T02:00:33.820Z"
-last_activity: 2026-06-16 -- Phase 08 execution started
+last_updated: "2026-06-16T02:06:13.277Z"
+last_activity: 2026-06-16
 progress:
   total_phases: 11
   completed_phases: 7
@@ -17,9 +17,9 @@ progress:
 ## Current Position
 
 Phase: 08 (goals-ingest-backend) — EXECUTING
-Plan: 1 of 4
-Status: Executing Phase 08
-Last activity: 2026-06-16 -- Phase 08 execution started
+Plan: 2 of 4
+Status: Ready to execute
+Last activity: 2026-06-16
 
 ---
 
@@ -85,6 +85,7 @@ Last activity: 2026-06-16 -- Phase 08 execution started
 - [v2.0 roadmap]: Planner is a pure deterministic function (no DB write); only POST /plan/approve writes ScheduledBlock rows; delete-then-insert for date_key on approve (idempotent)
 - [v2.0 roadmap]: Habit maps to a recurring Task with a habit flag (not its own table) for v2.0; separate Habit table deferred to v3
 - [Phase 07]: [07-02] UID domain stripped + UtcDateTime TypeDecorator added so SQLite reads start_dt/end_dt back UTC tz-aware; Outlook sync on separate 5-min job id
+- [Phase 08]: Wave 0 TDD: defer ingest_service import inside test body to keep test_ingest.py collectable before service module exists
 
 ### Open Questions (Live Verification Required)
 
@@ -114,5 +115,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-06-15T19:14:38.865Z
+Last session: 2026-06-16T02:06:13.274Z
 Next action: Run `/gsd:plan-phase 8` to break Phase 8 (Goals + Ingest Backend) into executable plans
