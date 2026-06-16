@@ -165,6 +165,57 @@ def test_habits_created():
     assert habit_task.get("recurrence_cron") == "0 7 * * *"
 
 
+def test_preview_returns_diff():
+    payload = _payload(
+        goals=[{"external_key": "preview-new-goal", "title": "Preview New Goal", "type": "learning"}],
+        tasks=[{"external_key": "preview-new-goal/task-1", "goal_key": "preview-new-goal", "title": "Preview Task"}],
+        routines=[],
+        habits=[],
+    )
+    r = client.post("/api/v1/ingest/preview", json=payload)
+    assert r.status_code == 200
+    body = r.json()
+    assert set(body.keys()) >= {"goals", "tasks", "routines", "habits"}
+    assert body["goals"][0]["action"] == "create"
+    assert body["goals"][0]["external_key"] == "preview-new-goal"
+    assert body["goals"][0]["title"] == "Preview New Goal"
+
+
+def test_preview_update_badge():
+    payload = _payload(
+        goals=[{"external_key": "preview-update-goal", "title": "Preview Update Goal", "type": "career"}],
+        tasks=[],
+        routines=[],
+        habits=[],
+    )
+    client.post("/api/v1/ingest/confirm", json=payload)
+    r = client.post("/api/v1/ingest/preview", json=payload)
+    assert r.status_code == 200
+    body = r.json()
+    assert body["goals"][0]["action"] == "update"
+
+
+def test_preview_writes_nothing():
+    payload = _payload(
+        goals=[{"external_key": "preview-nowrite-goal", "title": "Preview NoWrite Goal", "type": "life"}],
+        tasks=[],
+        routines=[],
+        habits=[],
+    )
+    before = client.get("/api/v1/goals/").json()
+    before_keys = {g.get("external_key") for g in before}
+    assert "preview-nowrite-goal" not in before_keys
+    client.post("/api/v1/ingest/preview", json=payload)
+    after = client.get("/api/v1/goals/").json()
+    after_keys = {g.get("external_key") for g in after}
+    assert "preview-nowrite-goal" not in after_keys
+
+
+def test_preview_invalid_payload_422():
+    r = client.post("/api/v1/ingest/preview", json=_payload(schema_version="2.0"))
+    assert r.status_code == 422
+
+
 def test_habit_goal_linkage():
     payload = _payload(
         goals=[{"external_key": "habit-link-goal", "title": "Habit Linkage Goal", "type": "life"}],
