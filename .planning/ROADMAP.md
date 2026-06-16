@@ -151,7 +151,13 @@ Plans:
 3. Completing a milestone triggers a Pushover notification and Google Home TTS announcement reusing existing notification infrastructure.
 4. `POST /api/v1/ingest/confirm` writes goals, then tasks, then routines in a single transaction — injecting a failure mid-commit leaves zero new rows; re-posting the same payload is idempotent (no duplicate entities created, matched via `external_key`).
 5. `GET /api/v1/ingest/schema` returns the versioned JSON schema; posting a payload with a mismatched `schema_version` or extra fields returns HTTP 422 with field-level error detail.
-**Plans**: TBD
+**Plans:** 4 plans
+
+Plans:
+- [ ] 08-01-PLAN.md — Wave 0 test stubs (test_goals.py + test_ingest.py, all 20 named tests, red)
+- [ ] 08-02-PLAN.md — Goal/Milestone models + Task/Routine columns + FK pragma + migrations 0006/0007/0008
+- [ ] 08-03-PLAN.md — Goals CRUD + live progress + milestone CRUD + celebrations (GOAL-01/02/03/06)
+- [ ] 08-04-PLAN.md — Versioned, validating, atomic, idempotent ingest endpoint (INGEST-01/02/04/06/07)
 **UI hint**: no
 
 ---
