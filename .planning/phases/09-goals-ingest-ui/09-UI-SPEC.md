@@ -1,11 +1,12 @@
 ---
 phase: 9
 slug: goals-ingest-ui
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-06-16
 revised: 2026-06-16
+reviewed_at: 2026-06-16
 ---
 
 # Phase 9 — UI Design Contract
