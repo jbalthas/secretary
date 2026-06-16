@@ -2,6 +2,8 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import BottomNav from "./components/BottomNav";
 import Today from "./pages/Today";
 import Tasks from "./pages/Tasks";
+import Goals from "./pages/Goals";
+import Ingest from "./pages/Ingest";
 import Settings from "./pages/Settings";
 import "./styles.css";
 
@@ -13,6 +15,8 @@ export default function App() {
           <Route path="/" element={<Navigate to="/today" replace />} />
           <Route path="/today" element={<Today />} />
           <Route path="/tasks" element={<Tasks />} />
+          <Route path="/goals" element={<Goals />} />
+          <Route path="/ingest" element={<Ingest />} />
           <Route path="/settings" element={<Settings />} />
         </Routes>
       </div>

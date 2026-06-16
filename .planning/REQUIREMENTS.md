@@ -63,7 +63,7 @@
 - [x] **GOAL-02**: Each goal shows a progress percentage computed from its linked tasks' completion (recalculated on read, not stored)
 - [x] **GOAL-03**: A goal can have milestones (title, optional target date, done flag); milestone completion contributes to the goal's tracked progress
 - [ ] **GOAL-04**: User can view all goals in a dedicated Goals view and drill into a goal detail showing its milestones, linked tasks, and progress
-- [x] **GOAL-05**: User can link a task to a goal from the task form (goal dropdown); routines can also be tagged to a goal
+- [ ] **GOAL-05**: User can link a task to a goal from the task form (goal dropdown); routines can also be tagged to a goal
 - [x] **GOAL-06**: Completing a milestone fires a celebration announcement (Google Home TTS + Pushover), reusing existing notification infrastructure
 
 ### Day Organize (PLAN)
@@ -151,7 +151,7 @@
 | INGEST-06 | Phase 8 — Goals + Ingest Backend | Complete |
 | INGEST-07 | Phase 8 — Goals + Ingest Backend | Complete |
 | GOAL-04 | Phase 9 — Goals + Ingest UI | Pending |
-| GOAL-05 | Phase 9 — Goals + Ingest UI | Complete |
+| GOAL-05 | Phase 9 — Goals + Ingest UI | Pending |
 | INGEST-03 | Phase 9 — Goals + Ingest UI | Complete |
 | INGEST-05 | Phase 9 — Goals + Ingest UI | Pending |
 | PLAN-01 | Phase 10 — Day Auto-Organize | Pending |

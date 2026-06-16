@@ -390,3 +390,137 @@ body {
   border-left: 3px solid #818cf8;
   padding-left: 8px;
 }
+
+/* Progress bar — Goals page and Goal detail */
+.progress-bar-track {
+  height: 8px;
+  background: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 4px;
+  transition: width 300ms ease;
+}
+
+/* Goal type badge — mirrors .priority-badge */
+.type-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 400;
+}
+.type-career    { background: rgba(99, 102, 241, 0.15); color: #6366f1; }
+.type-life      { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+.type-health    { background: rgba(239, 68, 68, 0.15);  color: #ef4444; }
+.type-learning  { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+.type-financial { background: rgba(20, 184, 166, 0.15); color: #14b8a6; }
+
+/* Ingest diff badges — create / update */
+.diff-badge        { display: inline-block; padding: 4px 8px; border-radius: 9999px; font-size: 12px; font-weight: 400; }
+.diff-badge-create { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+.diff-badge-update { background: rgba(99, 102, 241, 0.15); color: #6366f1; }
+
+/* Ingest prompt block */
+.prompt-block {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px;
+  font-size: 14px;
+  font-family: ui-monospace, "Cascadia Code", monospace;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  position: relative;
+}
+
+/* Ingest validation error list */
+.error-list {
+  max-height: 200px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.error-list-item {
+  font-size: 14px;
+  color: var(--destructive);
+  font-family: ui-monospace, "Cascadia Code", monospace;
+}
+
+/* Goal row */
+.goal-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 8px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  min-height: 48px;
+}
+.goal-row:hover {
+  background: var(--surface);
+}
+.goal-row-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.goal-row-title {
+  font-size: 16px;
+  flex: 1;
+  min-width: 0;
+}
+.goal-row-pct {
+  font-size: 14px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+/* Milestone row */
+.milestone-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  min-height: 44px;
+}
+.milestone-row-title {
+  font-size: 16px;
+  flex: 1;
+}
+.milestone-row-title.done {
+  text-decoration: line-through;
+  color: var(--text-secondary);
+}
+
+/* Section label within detail views */
+.section-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 16px 0 8px;
+}
+
+/* Text action buttons (Complete / Archive in goal detail) */
+.btn-text-accent {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 8px 0;
+}
+.btn-text-destructive {
+  background: none;
+  border: none;
+  color: var(--destructive);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 8px 0;
+}
