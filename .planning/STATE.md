@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Phases — Ingest, Organize, Guide
 status: executing
-last_updated: "2026-06-16T13:32:48.386Z"
+last_updated: "2026-06-16T14:17:13.099Z"
 last_activity: 2026-06-16
 progress:
   total_phases: 11
   completed_phases: 8
-  total_plans: 30
-  completed_plans: 30
+  total_plans: 34
+  completed_plans: 31
 ---
 
 # Project State
@@ -92,6 +92,7 @@ Last activity: 2026-06-16
 - [Phase 08]: progress_pct never stored; computed via two aggregate SQL queries (Tasks+Milestones by goal_id) on every GoalRead (D-02)
 - [Phase 08-goals-ingest-backend]: TestClient(raise_server_exceptions=False) required in test_ingest.py so monkeypatched RuntimeError yields HTTP 500 instead of propagating
 - [Phase 08-goals-ingest-backend]: external_key added to TaskRead so ingest tests can verify external_key is returned in GET /tasks/ responses
+- [Phase 09]: [09-02] GoalSelect prop-driven (parent owns useGoals) to avoid double-fetch; routine goal_id typed number|null for unlink
 
 ### Open Questions (Live Verification Required)
 
@@ -121,5 +122,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-06-16T13:32:48.382Z
+Last session: 2026-06-16T14:17:13.096Z
 Next action: Run `/gsd:plan-phase 8` to break Phase 8 (Goals + Ingest Backend) into executable plans
