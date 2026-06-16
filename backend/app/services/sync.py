@@ -1,10 +1,14 @@
-from datetime import datetime, timezone
+import logging
+from datetime import datetime, timezone, date, timedelta
 from sqlalchemy import create_engine, select, delete
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 import google.auth.exceptions
+from icalendar import Calendar
+import recurring_ical_events
+import httpx
 from app.config import settings
 from app.models.calendar import CalendarEvent, CalendarSync
 from app.services.oauth import credentials_from_json
@@ -13,6 +17,10 @@ from app.services.pushover import PushoverClient
 _sync_url = settings.database_url.replace("+aiosqlite", "")
 _engine = create_engine(_sync_url)
 _Session = sessionmaker(_engine)
+
+_log = logging.getLogger(__name__)
+_OUTLOOK_UA = "Mozilla/5.0 (Linux) Chrome/139"
+_OUTLOOK_WINDOW_DAYS = 90
 
 
 def _today_min_rfc3339() -> str:
@@ -160,3 +168,71 @@ def sync_calendar() -> None:
         sync_row.last_synced_at = datetime.now(timezone.utc)
         session.add(sync_row)
         session.commit()
+
+
+def _fetch_ics(url: str) -> bytes:
+    with httpx.Client(follow_redirects=True, timeout=15) as client:
+        resp = client.get(url, headers={"User-Agent": _OUTLOOK_UA})
+        resp.raise_for_status()
+        return resp.content
+
+
+def _expand_ics(raw: bytes) -> list:
+    cal = Calendar.from_ical(raw)
+    today = date.today()
+    end = today + timedelta(days=_OUTLOOK_WINDOW_DAYS)
+    return recurring_ical_events.of(cal).between(today, end)
+
+
+def _parse_ics_component(component) -> dict | None:
+    dtstart = component.get("DTSTART")
+    uid = str(component.get("UID", "")).split("@", 1)[0]
+    if dtstart is None or not uid:
+        return None
+    dt = dtstart.dt
+    title = str(component.get("SUMMARY", "(No title)")).strip() or "(No title)"
+    if isinstance(dt, datetime):                       # timed event
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)       # floating → UTC
+        start_dt = dt.astimezone(timezone.utc)
+        google_id = f"outlook:{uid}:{start_dt.strftime('%Y%m%dT%H%M%S')}"
+        dtend = component.get("DTEND")
+        end_dt = None
+        if dtend is not None and isinstance(dtend.dt, datetime):
+            et = dtend.dt
+            if et.tzinfo is None:
+                et = et.replace(tzinfo=timezone.utc)
+            end_dt = et.astimezone(timezone.utc)
+        return {"google_id": google_id, "title": title, "all_day": False,
+                "start_date": None, "start_dt": start_dt, "end_dt": end_dt,
+                "cancelled": False}
+    else:                                              # all-day (datetime.date)
+        google_id = f"outlook:{uid}:{dt.strftime('%Y%m%d')}"
+        return {"google_id": google_id, "title": title, "all_day": True,
+                "start_date": dt.isoformat(), "start_dt": None, "end_dt": None,
+                "cancelled": False}
+
+
+def _replace_sync(components: list) -> None:
+    with _Session() as session:
+        session.execute(
+            delete(CalendarEvent).where(CalendarEvent.google_id.like("outlook:%"))
+        )
+        for component in components:
+            values = _parse_ics_component(component)
+            if values:
+                _upsert(session, values)
+        session.commit()
+
+
+def sync_outlook_ics() -> None:
+    """Fetch, parse, recurrence-expand, and replace-sync the Outlook ICS feed.
+    Best-effort: all errors logged and swallowed. No-op when url unset."""
+    if not settings.outlook_ics_url:
+        return
+    try:
+        raw = _fetch_ics(settings.outlook_ics_url)
+        events = _expand_ics(raw)
+        _replace_sync(events)
+    except Exception:
+        _log.warning("Outlook ICS sync failed", exc_info=True)

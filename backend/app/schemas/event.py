@@ -9,5 +9,6 @@ class CalendarEventOut(BaseModel):
     end_dt: datetime | None = None
     all_day: bool
     start_date: str | None = None
+    done: bool = False
 
     model_config = {"from_attributes": True}

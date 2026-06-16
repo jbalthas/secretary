@@ -1,7 +1,9 @@
+import { useState } from "react";
 import type { AgendaItem as AgendaItemType } from "../types/task";
 
 interface Props {
   item: AgendaItemType;
+  onToggle: (item: AgendaItemType, completed: boolean) => Promise<void>;
 }
 
 function formatTime(time: string): string {
@@ -16,8 +18,24 @@ function formatTime(time: string): string {
   }).format(date);
 }
 
-export default function AgendaItem({ item }: Props) {
+export default function AgendaItem({ item, onToggle }: Props) {
+  const [localCompleted, setLocalCompleted] = useState(item.completed);
+  const [error, setError] = useState<string | null>(null);
+
   const timeLabel = item.time ? formatTime(item.time) : null;
+
+  async function handleToggle(e: React.ChangeEvent<HTMLInputElement>) {
+    e.stopPropagation();
+    const newValue = !localCompleted;
+    setLocalCompleted(newValue);
+    setError(null);
+    try {
+      await onToggle(item, newValue);
+    } catch {
+      setLocalCompleted(!newValue);
+      setError("Couldn't save — try again");
+    }
+  }
 
   const rowStyle: React.CSSProperties = {
     display: "flex",
@@ -26,6 +44,7 @@ export default function AgendaItem({ item }: Props) {
     padding: "10px 0",
     minHeight: 48,
     borderBottom: "1px solid var(--border)",
+    opacity: localCompleted ? 0.5 : 1,
   };
 
   const titleStyle: React.CSSProperties = {
@@ -33,6 +52,7 @@ export default function AgendaItem({ item }: Props) {
     fontSize: 16,
     fontStyle: item.isEvent ? "italic" : "normal",
     color: "var(--text)",
+    textDecoration: localCompleted ? "line-through" : "none",
   };
 
   const timeStyle: React.CSSProperties = {
@@ -43,6 +63,18 @@ export default function AgendaItem({ item }: Props) {
 
   return (
     <div style={rowStyle} className={item.isEvent ? "agenda-item--event" : undefined}>
+      <input
+        type="checkbox"
+        checked={localCompleted}
+        aria-label={
+          localCompleted
+            ? `Mark '${item.title}' incomplete`
+            : `Mark '${item.title}' complete`
+        }
+        onChange={handleToggle}
+        onClick={(e) => e.stopPropagation()}
+        className="task-checkbox"
+      />
       <span style={titleStyle}>{item.title}</span>
       {!item.isEvent && item.priority && (
         <span
@@ -53,6 +85,7 @@ export default function AgendaItem({ item }: Props) {
         </span>
       )}
       {timeLabel && <span style={timeStyle}>{timeLabel}</span>}
+      {error && <span style={{ fontSize: 12, color: "var(--error, red)" }}>{error}</span>}
     </div>
   );
 }

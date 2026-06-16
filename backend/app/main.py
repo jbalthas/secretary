@@ -6,16 +6,22 @@ from app.config import settings
 from fastapi.staticfiles import StaticFiles
 from app.routers import tasks, auth, calendar_status, events, settings as settings_router, routines, tts, webhooks
 from app.services.tts import CACHE_DIR
-from app.scheduler import scheduler, schedule_calendar_sync, schedule_daily_brief
+from app.scheduler import scheduler, schedule_calendar_sync, schedule_daily_brief, schedule_outlook_ics_sync
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     scheduler.start()
     schedule_calendar_sync()
+    schedule_outlook_ics_sync()
     try:
         from app.services.sync import sync_calendar
         await run_in_threadpool(sync_calendar)
+    except Exception:
+        pass
+    try:
+        from app.services.sync import sync_outlook_ics
+        await run_in_threadpool(sync_outlook_ics)
     except Exception:
         pass
     try:

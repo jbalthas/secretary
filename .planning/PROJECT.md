@@ -8,6 +8,23 @@ A self-hosted personal secretary running on a Raspberry Pi 5. It handles schedul
 
 One place to manage your schedule and tasks — reachable from any device, voice-controllable via Google Home, and proactive enough to push reminders before you have to think about them.
 
+## Current Milestone: v2.0 "Ingest, Organize, Guide"
+
+**Goal:** The secretary ingests LLM-produced structured payloads into first-class goals, tasks, and routines; tracks progress toward those goals; and proactively guides the day by proposing an approved schedule around calendar events.
+
+**Target features:**
+- **Import contract** — a stable, versioned JSON schema plus a documented prompt the user runs in any LLM, which emits the payload
+- **Ingest flow** — a validating endpoint and UI to paste/upload the payload, preview what it will create, confirm, then write goals/tasks/routines
+- **Goals entity** — first-class career/life goals with target dates, linked tasks/routines, and progress reporting
+- **Day auto-organize** — proposes time-blocks around synced calendar events; the user approves before anything commits
+- **Goal-guided guidance** — surfaces goal progress and next-best actions (augmented daily brief / dedicated view / proactive nudges)
+
+**Key context:**
+- External LLM flow — no API key or cost in v2.0; built-in server-side chat deferred to a future milestone
+- Suggest-then-approve scheduling — no silent auto-commit
+- Builds on existing Task/Routine/Calendar models; adds Goals + Ingest + Planning as new layers
+- Phase 7 (Outlook ICS) is owned by a separate concurrent effort — v2.0 numbering starts at Phase 8
+
 ## Context
 
 - **Platform:** Raspberry Pi 5, fresh Raspberry Pi OS
@@ -37,6 +54,14 @@ One place to manage your schedule and tasks — reachable from any device, voice
 
 ### Active
 
+**v2.0 — Ingest, Organize, Guide:**
+- [ ] Stable versioned import contract (JSON schema) + documented LLM prompt
+- [ ] Validating ingest endpoint + UI (paste/upload → preview → confirm → write)
+- [ ] First-class Goals entity with target dates, linked tasks/routines, progress reporting
+- [ ] Day auto-organize: propose time-blocks around calendar events, user approves before commit
+- [ ] Goal-guided guidance: progress + next-best-action surfacing
+
+**v1.0 (carried over / pending validation):**
 - [ ] Pi OS and service setup (nginx, systemd, Python env)
 - [ ] Tailscale installed and accessible remotely
 - [ ] FastAPI backend running as systemd service
@@ -84,4 +109,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-15 after Phase 6 (google-home-tts) completion — final phase of milestone v1.0*
+*Last updated: 2026-06-15 — started milestone v2.0 (Ingest, Organize, Guide)*

@@ -98,3 +98,15 @@ def schedule_calendar_sync() -> None:
         replace_existing=True,
         misfire_grace_time=300,
     )
+
+
+def schedule_outlook_ics_sync() -> None:
+    from apscheduler.triggers.interval import IntervalTrigger
+    from app.services.sync import sync_outlook_ics
+    scheduler.add_job(
+        sync_outlook_ics,
+        IntervalTrigger(minutes=5),
+        id="outlook_ics_sync",
+        replace_existing=True,
+        misfire_grace_time=300,
+    )

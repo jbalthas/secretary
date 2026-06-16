@@ -1,115 +1,101 @@
-# Project Research Summary
+# Project Research Summary — v2.0 "Ingest, Organize, Guide"
 
 **Project:** My Secretary (self-hosted personal assistant, Raspberry Pi 5)
-**Domain:** IoT / self-hosted personal productivity
-**Researched:** 2026-06-12
-**Confidence:** MEDIUM-HIGH
+**Milestone:** v2.0 — Ingest LLM-produced payloads, organize the day, guide toward goals
+**Researched:** 2026-06-15
+**Confidence:** HIGH on stack/architecture; HIGH on goal-tracking + time-blocking patterns; MEDIUM on import-schema design (no dominant standard); guidance kept deliberately simple (no server-side LLM in v2.0)
+
+> Covers v2.0 net-new features only. v1.0 (Task CRUD, Calendar sync, Pushover, TTS, daily brief, routines) is treated as a dependency. The stale v1.0 summary this file replaces is preserved in git history.
 
 ---
 
 ## Executive Summary
 
-Self-hosted personal secretary on Pi 5 — task management, Google Calendar sync, proactive notifications (Pushover + Google Home TTS), and voice input (Google Assistant via IFTTT). Pattern: single-process Python async backend (FastAPI + APScheduler in-process) with SQLite, served behind nginx, accessed remotely via Tailscale. React SPA built on dev machine, served as static files — no Node.js on the Pi at runtime.
+v2.0 adds three layers on top of the shipped v1.0 app: **Ingest** (a versioned JSON contract any external LLM can target → preview → confirm → write), **Goals** (a first-class entity with milestones, linked tasks/routines, and computed progress), and **Organize/Guide** (a deterministic suggest-then-approve day planner plus goal-aware augmentation of the existing daily brief).
 
-Top risks are operational: Google OAuth refresh tokens expire in 7 days if consent screen stays in "Testing" mode; APScheduler jobs duplicate on restart without dedup guards; SQLite locks under concurrent access without WAL mode. None are hard to prevent if addressed upfront.
-
-Tailscale Funnel (not just Tailscale VPN) is required for IFTTT to reach the Pi — this is the project's biggest live-verification unknown.
+The single most important architectural finding: **no new Python dependencies and no server-side LLM are required.** Every feature is buildable on the existing FastAPI + SQLAlchemy 2.0 async + Alembic + Pydantic v2 + React/Vite stack. The user talks to their own LLM externally; the secretary only validates and ingests the resulting JSON.
 
 ---
 
-## Recommended Stack
+## Recommended Stack Additions
 
-| Component | Technology | Version | Notes |
-|-----------|-----------|---------|-------|
-| OS | Raspberry Pi OS Bookworm | Debian 12 | 64-bit default on Pi 5 |
-| Runtime | Python | 3.12 | Install via `uv python install 3.12` |
-| Backend | FastAPI | 0.128.x | `fastapi[standard]` includes uvicorn |
-| ASGI server | Uvicorn | (via fastapi[standard]) | Single worker only |
-| Scheduler | APScheduler | 3.11.x | **NOT 4.x** — v4 is alpha with breaking API |
-| ORM | SQLAlchemy | 2.0.x async | `create_async_engine` + `AsyncSession` |
-| SQLite driver | aiosqlite | 0.20.x | Required for SQLAlchemy async |
-| Migrations | Alembic | 1.13.x | From day one |
-| Google Calendar | google-api-python-client | 2.x | + google-auth-oauthlib 1.x |
-| HTTP client | httpx | 0.27.x | Async Pushover calls |
-| TTS (outbound) | pychromecast + gTTS | 14.x / 2.5.x | Pi → Google Home speaker |
-| Voice (inbound) | IFTTT free tier | — | Google Assistant → webhook |
-| Frontend | React + Vite | 19.2.x / 8.x | Built on dev machine, rsync'd to Pi |
-| Reverse proxy | nginx | 1.26.x | HTTPS via Tailscale cert |
-| Remote access | Tailscale | latest | Funnel required for IFTTT |
-| Python env | uv | latest | Replaces pip/virtualenv |
+**None — reuse the existing stack.** Specific reuse patterns:
+
+| Need | Reuse | Pattern |
+|------|-------|---------|
+| Publish the import contract | Pydantic v2 | `model_json_schema()` served at `GET /api/v1/ingest/schema`; paste into the LLM |
+| Validate incoming payload | Pydantic v2 | `model_validate_json()`; `schema_version: Literal["1.0"]` for free version gating (422 on mismatch) |
+| Goals + Milestones + FKs | SQLAlchemy 2.0 + Alembic | New `Goal`/`Milestone` models; `goal_id` + `external_key` columns on Task/Routine; `lazy="selectin"` for async |
+| Day planner | Hand-rolled greedy interval-fill (~50 lines) | Pure deterministic function: tasks + events → `ProposedSchedule`; writes nothing. `PuLP`/`ortools`/`timeboard` all ruled out as wrong-size |
+| Ingest + plan UI | Native React 19 | `<textarea>` paste + `<input type=file>` + `FileReader`; timeline rendered as divs (same pattern as existing agenda). No new FE libs |
+
+**Explicit blocklist (do NOT add):** server-side LLM/Anthropic SDK, `jsonschema` (Pydantic covers it), `react-hook-form`/`tanstack-query`/`react-dropzone`, any solver library, CSV/iCal parsers.
 
 ---
 
-## Table Stakes Features (v1 Must-Haves)
+## Feature Landscape (P1 → P3)
 
-1. Task CRUD (create / edit / complete) — core interaction loop
-2. Today's agenda view (tasks + events merged)
-3. Google Calendar read sync (OAuth + incremental polling)
-4. Pushover reminders fire reliably (missed reminders = lost trust)
-5. Persist across Pi reboots (systemd `Restart=always`)
-6. Responsive web UI usable on phone
-7. Remote access via Tailscale
-8. Voice "add task" via Google Assistant → IFTTT → webhook
-9. Daily brief delivered proactively (morning push, not pull)
-10. Recurring routines with cron precision
+**P1 — Goals + Ingest foundation (Phase 8):** Goals CRUD, Milestone child model, Task `goal_id`+`estimated_minutes`, Routine `goal_id`, versioned import schema + documented LLM prompt, ingest endpoint (validate → preview → confirm → write), paste/upload UI, Goals list+detail view, progress % computed from linked-task completion.
 
-**Differentiators worth building in v1:**
-- Pi → Google Home TTS announcements for reminders and daily brief
-- Custom daily brief content (configurable template)
+**P2 — Organize + Guide (Phase 9):** gap-finding day planner, priority + goal-urgency sort, peak-hours setting, buffer blocks, propose-then-approve UI, local plan storage (no calendar write), "next best task" surface, goal snapshot in daily brief, stall detection, weekly digest job, milestone-completion celebration (reuses TTS + Pushover).
 
-**Defer to v2:**
-- Google Calendar event write
-- Pushover action buttons
-- Voice queries beyond pre-set trigger phrases
+**P3 / deferred (v2.1+):** Google Calendar write-back for approved blocks, partial-ingest conflict report, mid-day re-plan, LLM-driven coaching.
+
+**Anti-features (out of scope, single-user self-hosted):** habit streaks/streak counters, gamification/points, OKR scoring, social/sharing, daily motivational pushes, notification-per-completion, any review that requires manual input.
 
 ---
 
-## Architecture Overview
+## Architecture Highlights
 
 ```
-Browser (Tailscale) ──→ nginx :443 ──→ /api/* → FastAPI :8000
-Phone (Pushover)    ←──                       ↕
-Google Home (TTS)   ←── pychromecast (LAN)    APScheduler (in-process)
-Google Assistant    ──→ IFTTT ──→ nginx :443 ──→ /webhooks/ifttt
-Google Calendar     ↔── OAuth2 polling (5 min incremental sync)
-                                               ↕
-                                          SQLite .db
+External LLM (user-driven) ──emits──> JSON payload
+        │ paste/upload
+        ▼
+/ingest/preview ──_resolve(payload, dry_run=True)──> diff (creates/updates)   [no writes]
+/ingest/confirm ──_resolve(payload, dry_run=False)─> goals→tasks→routines      [one transaction]
+        │ match on external_key (not title); payload-hash dedup
+        ▼
+   Goal / Milestone / Task(goal_id, estimated_minutes) / Routine(goal_id)
+        │
+planner_service.propose_day_plan(tasks, events) ──pure fn──> ProposedBlock[]   [no writes]
+POST /plan/approve ──delete-then-insert for date_key──> ScheduledBlock         [only writer]
+        │
+guidance_service.build_goal_summary() ──SYNC──> injected into existing brief.py
 ```
 
-**Hard constraints:**
-- Single uvicorn worker only — multiple = duplicate APScheduler fires
-- pychromecast serves MP3 over LAN; Pi must be on same subnet as Google Home
-- WAL mode set before any concurrent writes begin
-- `replace_existing=True` + explicit `id=` on every APScheduler job
+- **Ingest is stateless preview-then-commit:** client resends the full payload on confirm (no server-side pending state). Two endpoints share one private `_resolve(payload, session, dry_run)`.
+- **Match on `external_key`** (stable slug the LLM assigns), never on title → idempotent re-import.
+- **Migration chain (current HEAD 0005):** 0006 goals → 0007 task FK/estimate cols → 0008 routine FK → 0009 scheduled_blocks. All `external_key`/FK columns nullable. Write all four before `alembic upgrade head`.
+- **Guidance service must be SYNC** (same `create_engine`+`sessionmaker` pattern as existing `brief.py`/`tts_settings.py`) — async-in-thread-pool would deadlock under APScheduler.
+- **Planner is a plain on-demand function**, NOT an APScheduler job. Only `/plan/approve` persists.
+- Existing 8 routers untouched; only `brief.py`, `scheduler.py`, `main.py`, `models/__init__.py`, `Today.tsx`, `agenda.ts` get targeted additions.
 
 ---
 
-## Top Pitfalls
+## Top Pitfalls & Guardrails
 
-### Critical (will break in prod)
+### Critical (build the guard before the feature)
+1. **Ingest idempotency** — re-import silently duplicates without `external_key` matching + a payload-hash/`IngestRecord` dedup guard. Build before the first commit path.
+2. **Destructive overwrite** — blindly `session.merge()`-ing over user-edited rows is the hardest bug to recover from. Preview must show a diff; respect `user_modified_at` / conflict handling.
+3. **UTC everywhere** — naive datetimes produce wrong time blocks twice a year (DST). Establish a UTC policy before any planner time-arithmetic.
+4. **All-day / multi-day calendar events** — Google returns `start.date` (not `start.dateTime`); unnormalized events crash gap-finding. Normalize to `(start_dt, end_dt, is_all_day)`.
+5. **APScheduler job duplication** — every new job (stall detection, weekly digest) needs explicit `id=` + `replace_existing=True`. Silent failure = duplicate Pushover spam.
+6. **Alembic multiple heads** — adding 4 tables in one milestone risks branched revisions; verify `alembic heads` returns exactly one.
 
-1. **Google OAuth 7-day token expiry** — Publish consent screen to "In production" immediately. Add Pushover alert on `invalid_grant`.
-2. **APScheduler job duplication on restart** — Always use `id=` + `replace_existing=True`; use SQLAlchemyJobStore.
-3. **SQLite locking** — `PRAGMA journal_mode=WAL` + `PRAGMA busy_timeout=5000` at startup.
-4. **Tailscale Funnel required for IFTTT** — VPN alone is private; IFTTT can't reach it. Enable `tailscale funnel 443`.
-5. **AsyncIOScheduler not BackgroundScheduler** — FastAPI runs on the event loop; thread-based scheduler breaks async SQLAlchemy.
-
-### Likely
-
-6. **pychromecast mDNS fails post-reboot** — Use static DHCP reservation + `known_hosts=[<ip>]` to bypass mDNS.
-7. **gTTS requires internet** — Cache by text hash; pre-generate static MP3s for common phrases as fallback.
-8. **systemd starts before network** — `After=network-online.target time-sync.target tailscaled.service` + exponential backoff.
+### Watch
+- Recurring-task expansion can flood the planner — cap/expand deliberately.
+- Stale plan when the calendar changes after approval — re-plan, don't silently drift.
+- Notification budget across v1 + v2 jobs — audit all Pushover paths before adding guidance nudges; keep guidance pull-not-push (weekly digest + brief snapshot, nudge only on genuine 7+ day stall).
+- Orphaned `goal_id` links on task delete — use `ON DELETE SET NULL`.
 
 ---
 
-## Key Open Questions (Live Verification Required)
-
-| Question | Risk | Fallback |
-|----------|------|---------|
-| Does `tailscale funnel 443` reach IFTTT's servers? | All voice commands fail | Router port-forward |
-| Can personal Gmail publish OAuth consent to "In production"? | Calendar sync dies in 7 days | Re-add self as test user periodically |
-| Does pychromecast work with specific Google Home/Nest device? | TTS never works | Use Home Assistant or REST endpoint |
-| Is IFTTT free tier still 1 applet with webhook trigger in 2026? | Voice integration paywalled | Make.com or abandon voice input |
+## Open Questions (decide during phase planning)
+- Habits: recurring-task `habit` flag (recommended for v2.0) vs. own table (defer to v3).
+- Stall threshold (7 vs 14 days) — make it a user setting, not hardcoded.
+- Weekly digest delivery — Pushover primary; TTS opt-in (Sunday TTS can be jarring).
+- `user_timezone` as an explicit DB setting vs. relying on Pi system tz.
+- `IngestRecord` retention policy.
 
 ---
 
@@ -117,12 +103,11 @@ Google Calendar     ↔── OAuth2 polling (5 min incremental sync)
 
 | Phase | Focus | Gate Test |
 |-------|-------|-----------|
-| 1 | Pi OS, FastAPI skeleton, nginx, Tailscale | `curl https://secretary.ts.net/api/v1/health` returns 200 from phone |
-| 2 | Task CRUD + React UI | Add task from phone browser, see it appear |
-| 3 | Pushover reminders + APScheduler | Task reminder fires to phone at set time |
-| 4 | Google Calendar OAuth + sync | Google Calendar event appears in app within 5 min |
-| 5 | Daily brief + recurring routines | 8am brief fires as Pushover with agenda summary |
-| 6 | IFTTT voice input + Tailscale Funnel | "Hey Google, add task X" → task in UI |
-| 7 | Google Home TTS announcements | `POST /api/v1/tts` → Google Home speaks message |
+| 8 | Goals entity + Import contract (ship together) | Paste an LLM payload → preview shows N goals/tasks/routines → confirm → they appear, progress % renders; re-import creates no duplicates |
+| 9 | Day auto-organize + goal guidance | Request a day plan → proposed blocks fill gaps around calendar events → approve → plan shows in Today; daily brief includes goal snapshot; stalled goal triggers a nudge |
 
-Phases 1–5 are high-confidence. Phases 6–7 have external unknowns with defined fallbacks.
+> v2.0 phases start at **Phase 8** (Phase 7 Outlook ICS is owned by a separate concurrent effort). The architecture research suggested optionally splitting guidance into its own Phase 10; roadmapper to decide based on size.
+
+---
+
+*Synthesized 2026-06-15 from STACK.md, FEATURES.md, ARCHITECTURE.md, PITFALLS.md for My Secretary v2.0.*

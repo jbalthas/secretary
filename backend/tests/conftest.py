@@ -82,6 +82,41 @@ def fake_credentials_json():
     sync_engine.dispose()
 
 
+@pytest.fixture
+def fake_sync_session():
+    from datetime import datetime, timezone
+    from unittest.mock import patch
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    from app.models.calendar import CalendarEvent
+
+    sync_test_url = TEST_DB_URL.replace("+aiosqlite", "")
+    sync_engine = create_engine(sync_test_url)
+    Base.metadata.create_all(sync_engine)
+    TestSyncSession = sessionmaker(sync_engine)
+
+    with TestSyncSession() as s:
+        s.query(CalendarEvent).delete()
+        s.add(CalendarEvent(
+            google_id="google_event_keep_1",
+            title="Existing Google event",
+            all_day=False,
+            start_date=None,
+            start_dt=datetime(2026, 9, 1, 12, 0, tzinfo=timezone.utc),
+            end_dt=datetime(2026, 9, 1, 13, 0, tzinfo=timezone.utc),
+            cancelled=False,
+        ))
+        s.commit()
+
+    with patch("app.services.sync._Session", TestSyncSession):
+        yield TestSyncSession
+
+    with TestSyncSession() as s:
+        s.query(CalendarEvent).delete()
+        s.commit()
+    sync_engine.dispose()
+
+
 def make_google_event(
     event_id="evt1",
     summary="Test Event",

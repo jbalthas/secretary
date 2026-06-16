@@ -132,3 +132,105 @@ def send_daily_brief() -> None:
             TTSClient().speak(speech)
     except Exception:
         logging.getLogger(__name__).exception("TTS brief failed")
+
+
+def _day_entries(s, day_start_naive: datetime) -> tuple[list[tuple[str, str]], list[str]]:
+    from app.models import Task
+    from app.models.calendar import CalendarEvent
+
+    day_end_naive = day_start_naive + timedelta(days=1)
+    day_str = day_start_naive.date().isoformat()
+
+    tasks = s.execute(
+        select(Task).where(
+            Task.completed == False,
+            Task.due_date.isnot(None),
+            Task.due_date >= day_start_naive,
+            Task.due_date < day_end_naive,
+        )
+    ).scalars().all()
+    events = s.execute(
+        select(CalendarEvent).where(
+            CalendarEvent.cancelled == False,
+            or_(
+                CalendarEvent.start_date == day_str,
+                and_(
+                    CalendarEvent.start_dt >= day_start_naive,
+                    CalendarEvent.start_dt < day_end_naive,
+                ),
+            ),
+        )
+    ).scalars().all()
+
+    timed: list[tuple[str, str]] = []
+    untimed: list[str] = []
+
+    for t in tasks:
+        if t.due_date.hour == 0 and t.due_date.minute == 0:
+            untimed.append(t.title)
+        else:
+            timed.append((t.due_date.strftime("%H:%M"), t.title))
+
+    for e in events:
+        if e.all_day or e.start_dt is None:
+            untimed.append(e.title)
+        else:
+            timed.append((e.start_dt.strftime("%H:%M"), e.title))
+
+    timed.sort(key=lambda x: x[0])
+    return timed, untimed
+
+
+def build_week_body() -> str:
+    now = datetime.now()
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    blocks: list[str] = []
+
+    with _Session() as s:
+        for i in range(7):
+            day_start = today_start + timedelta(days=i)
+            timed, untimed = _day_entries(s, day_start)
+            if not (timed or untimed):
+                continue
+            lines = [f"{day_start.strftime('%A')}:"]
+            lines += [f"{hm} {title}" for hm, title in timed]
+            lines += [f"• {t}" for t in untimed]
+            blocks.append("\n".join(lines))
+
+    return "\n".join(blocks) if blocks else "Nothing scheduled this week."
+
+
+def build_week_speech() -> str:
+    now = datetime.now()
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    day_strings: list[str] = []
+
+    with _Session() as s:
+        for i in range(7):
+            day_start = today_start + timedelta(days=i)
+            timed, untimed = _day_entries(s, day_start)
+            if not (timed or untimed):
+                continue
+            titles = [title for _, title in timed] + untimed
+            day_strings.append(f"{day_start.strftime('%A')}: " + ", ".join(titles) + ".")
+
+    if not day_strings:
+        return "Good morning. Nothing scheduled this week."
+    return "Good morning. This week. " + " ".join(day_strings)
+
+
+def send_weekly_brief() -> None:
+    try:
+        body = build_week_body()
+    except Exception:
+        body = "Could not load agenda."
+    PushoverClient().send(title="This week", message=body, priority=0)
+    try:
+        if _tts_settings.get_tts_enabled():
+            try:
+                speech = build_week_speech()
+            except Exception:
+                speech = "Good morning."
+            TTSClient().speak(speech)
+    except Exception:
+        logging.getLogger(__name__).exception("TTS brief failed")

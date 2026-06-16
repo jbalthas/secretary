@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     google_home_lan_ip: str = ""
     google_home_name: str = ""
     webhook_secret: str = ""
+    outlook_ics_url: str = ""
 
 
 settings = Settings()

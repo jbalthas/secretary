@@ -1,1 +1,12 @@
 tts_cache/
+
+# Runtime SQLite DBs created at repo root by test/dev runs
+*.db
+*.db-wal
+*.db-shm
+
+# Vite incremental build cache
+**/tsconfig*.tsbuildinfo
+
+# GSD worktrees / local tooling
+.claude/worktrees/
