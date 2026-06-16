@@ -25,5 +25,6 @@ class TaskRead(TaskCreate):
     updated_at: datetime
     is_habit: bool
     goal_id: int | None = None
+    external_key: str | None = None
 
     model_config = {"from_attributes": True}
