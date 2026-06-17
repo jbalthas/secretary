@@ -8,6 +8,7 @@ export interface Task {
   due_date?: string;
   reminder_at?: string;
   recurrence_cron?: string;
+  estimated_minutes?: number | null;
   completed: boolean;
   goal_id?: number | null;
   created_at: string;
@@ -21,6 +22,7 @@ export interface TaskCreate {
   due_date?: string;
   reminder_at?: string;
   recurrence_cron?: string;
+  estimated_minutes?: number | null;
   goal_id?: number | null;
 }
 

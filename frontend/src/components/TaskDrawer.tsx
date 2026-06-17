@@ -70,6 +70,7 @@ export default function TaskDrawer({ open, task, goals, onClose, onSave, onDelet
   const [dueDate, setDueDate] = useState("");
   const [dueTime, setDueTime] = useState("");
   const [description, setDescription] = useState("");
+  const [estimatedMinutes, setEstimatedMinutes] = useState("");
   const [reminderAt, setReminderAt] = useState("");
   const [recurrenceMode, setRecurrenceMode] = useState<"preset" | "custom">("preset");
   const [recurrencePreset, setRecurrencePreset] = useState("");
@@ -84,6 +85,7 @@ export default function TaskDrawer({ open, task, goals, onClose, onSave, onDelet
       setDueDate(isoToDateInput(task?.due_date));
       setDueTime(isoToTimeInput(task?.due_date));
       setDescription(task?.description ?? "");
+      setEstimatedMinutes(task?.estimated_minutes != null ? String(task.estimated_minutes) : "");
       setReminderAt(isoToDatetimeLocal(task?.reminder_at));
       const cron = task?.recurrence_cron ?? "";
       const preset = RECURRENCE_OPTIONS.find((o) => o.cron === cron);
@@ -107,6 +109,7 @@ export default function TaskDrawer({ open, task, goals, onClose, onSave, onDelet
       due_date: combineDatetime(dueDate, dueTime),
       goal_id: goalId,
       description: description || undefined,
+      estimated_minutes: estimatedMinutes ? Number(estimatedMinutes) : undefined,
       reminder_at: reminderAt ? `${reminderAt}:00Z` : undefined,
       recurrence_cron:
         recurrenceMode === "custom"
@@ -194,6 +197,20 @@ export default function TaskDrawer({ open, task, goals, onClose, onSave, onDelet
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Add a description..."
+              />
+            </div>
+          </Collapsible>
+
+          <Collapsible label="Duration">
+            <div className="drawer-field">
+              <label htmlFor="task-estimated-minutes">Estimated minutes</label>
+              <input
+                id="task-estimated-minutes"
+                type="number"
+                min={1}
+                value={estimatedMinutes}
+                onChange={(e) => setEstimatedMinutes(e.target.value)}
+                placeholder="e.g. 30"
               />
             </div>
           </Collapsible>
