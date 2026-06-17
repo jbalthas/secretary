@@ -68,3 +68,17 @@ def test_task_recurrence_stored():
     )
     assert r.status_code == 201
     assert r.json()["recurrence_cron"] == "0 9 * * 1-5"
+
+
+def test_unlink_task_from_goal():
+    g = client.post("/api/v1/goals/", json={"title": "Ship v2", "type": "learning"}).json()
+    t = client.post("/api/v1/tasks/", json={"title": "Linked", "goal_id": g["id"]}).json()
+    assert t["goal_id"] == g["id"]
+
+    r = client.patch(f"/api/v1/tasks/{t['id']}", json={"goal_id": None})
+    assert r.status_code == 200
+    assert r.json()["goal_id"] is None
+
+    tasks = client.get("/api/v1/tasks/").json()
+    found = next(task for task in tasks if task["id"] == t["id"])
+    assert found["goal_id"] is None
