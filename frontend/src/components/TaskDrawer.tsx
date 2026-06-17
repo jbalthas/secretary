@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react";
 import { X, ChevronDown, ChevronRight } from "lucide-react";
 import type { Task, TaskCreate, Priority } from "../types/task";
+import type { Goal } from "../types/goal";
+import GoalSelect from "./GoalSelect";
 
 interface Props {
   open: boolean;
   task: Task | null;
+  goals: Goal[];
   onClose: () => void;
   onSave: (body: TaskCreate, id?: number) => Promise<void>;
   onDelete: (id: number) => Promise<void>;
@@ -60,9 +63,10 @@ function Collapsible({ label, children }: CollapsibleProps) {
   );
 }
 
-export default function TaskDrawer({ open, task, onClose, onSave, onDelete }: Props) {
+export default function TaskDrawer({ open, task, goals, onClose, onSave, onDelete }: Props) {
   const [title, setTitle] = useState("");
   const [priority, setPriority] = useState<Priority>("medium");
+  const [goalId, setGoalId] = useState<number | null>(null);
   const [dueDate, setDueDate] = useState("");
   const [dueTime, setDueTime] = useState("");
   const [description, setDescription] = useState("");
@@ -76,6 +80,7 @@ export default function TaskDrawer({ open, task, onClose, onSave, onDelete }: Pr
     if (open) {
       setTitle(task?.title ?? "");
       setPriority(task?.priority ?? "medium");
+      setGoalId(task?.goal_id ?? null);
       setDueDate(isoToDateInput(task?.due_date));
       setDueTime(isoToTimeInput(task?.due_date));
       setDescription(task?.description ?? "");
@@ -100,6 +105,7 @@ export default function TaskDrawer({ open, task, onClose, onSave, onDelete }: Pr
       title,
       priority,
       due_date: combineDatetime(dueDate, dueTime),
+      goal_id: goalId ?? undefined,
       description: description || undefined,
       reminder_at: reminderAt ? `${reminderAt}:00Z` : undefined,
       recurrence_cron:
@@ -157,6 +163,11 @@ export default function TaskDrawer({ open, task, onClose, onSave, onDelete }: Pr
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="drawer-field">
+            <label>Goal</label>
+            <GoalSelect goals={goals} value={goalId} onChange={setGoalId} />
           </div>
 
           <div className="drawer-field">
