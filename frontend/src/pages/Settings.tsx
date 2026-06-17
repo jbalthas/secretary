@@ -4,6 +4,7 @@ import type { Routine } from "../types/routine";
 import { useBriefSettings } from "../hooks/useBriefSettings";
 import { useGoogleHome } from "../hooks/useGoogleHome";
 import { useRoutines } from "../hooks/useRoutines";
+import { useGoals } from "../hooks/useGoals";
 import RoutineDrawer from "../components/RoutineDrawer";
 
 const STATUS_URL = "/api/v1/calendar/status";
@@ -46,6 +47,7 @@ export default function Settings() {
   const [ghSpeakError, setGhSpeakError] = useState<string | null>(null);
 
   const { routines, loading: routinesLoading, create, update, remove } = useRoutines();
+  const { goals } = useGoals();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingRoutine, setEditingRoutine] = useState<Routine | null>(null);
 
@@ -319,6 +321,7 @@ export default function Settings() {
       <RoutineDrawer
         open={drawerOpen}
         routine={editingRoutine}
+        goals={goals}
         onClose={() => setDrawerOpen(false)}
         onSave={(body, id) => id !== undefined ? update(id, body) : create(body)}
         onDelete={remove}

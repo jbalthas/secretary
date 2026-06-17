@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useTasks } from "../hooks/useTasks";
+import { useGoals } from "../hooks/useGoals";
 import TaskRow from "../components/TaskRow";
 import TaskDrawer from "../components/TaskDrawer";
 import FAB from "../components/FAB";
@@ -29,6 +30,7 @@ function sortTasks(tasks: Task[], sort: Sort): Task[] {
 
 export default function Tasks() {
   const { tasks, createTask, patchTask, deleteTask } = useTasks();
+  const { goals } = useGoals();
   const [filter, setFilter] = useState<Filter>("pending");
   const [sort, setSort] = useState<Sort>("due");
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -117,6 +119,7 @@ export default function Tasks() {
       <TaskDrawer
         open={drawerOpen}
         task={editingTask}
+        goals={goals}
         onClose={() => setDrawerOpen(false)}
         onSave={handleSave}
         onDelete={deleteTask}

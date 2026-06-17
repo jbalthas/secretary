@@ -1,19 +1,23 @@
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import type { Routine, RoutineInput, RoutineAction } from "../types/routine";
+import type { Goal } from "../types/goal";
+import GoalSelect from "./GoalSelect";
 
 interface Props {
   open: boolean;
   routine: Routine | null;
+  goals: Goal[];
   onClose: () => void;
   onSave: (body: RoutineInput, id?: number) => Promise<boolean>;
   onDelete: (id: number) => Promise<boolean>;
 }
 
-export default function RoutineDrawer({ open, routine, onClose, onSave, onDelete }: Props) {
+export default function RoutineDrawer({ open, routine, goals, onClose, onSave, onDelete }: Props) {
   const [name, setName] = useState("");
   const [cron, setCron] = useState("");
   const [action, setAction] = useState<RoutineAction>("send_daily_brief");
+  const [goalId, setGoalId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [cronError, setCronError] = useState<string | null>(null);
@@ -25,6 +29,7 @@ export default function RoutineDrawer({ open, routine, onClose, onSave, onDelete
       setName(routine?.name ?? "");
       setCron(routine?.cron ?? "");
       setAction(routine?.action ?? "send_daily_brief");
+      setGoalId(routine?.goal_id ?? null);
       setSaving(false);
       setSaveError(null);
       setCronError(null);
@@ -47,7 +52,7 @@ export default function RoutineDrawer({ open, routine, onClose, onSave, onDelete
     }
     setSaving(true);
     try {
-      const body: RoutineInput = { name, cron: cron.trim(), action };
+      const body: RoutineInput = { name, cron: cron.trim(), action, goal_id: goalId };
       const ok = await onSave(body, routine?.id);
       if (ok) {
         onClose();
@@ -121,6 +126,11 @@ export default function RoutineDrawer({ open, routine, onClose, onSave, onDelete
             >
               <option value="send_daily_brief">Send daily brief notification</option>
             </select>
+          </div>
+
+          <div className="drawer-field">
+            <label htmlFor="routine-goal">Goal</label>
+            <GoalSelect goals={goals} value={goalId} onChange={setGoalId} />
           </div>
 
           {saveError && (
