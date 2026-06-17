@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Phases — Ingest, Organize, Guide
 status: executing
-last_updated: "2026-06-16T14:17:13.099Z"
-last_activity: 2026-06-16
+last_updated: "2026-06-17T13:17:13.371Z"
+last_activity: 2026-06-17
 progress:
   total_phases: 11
   completed_phases: 8
   total_plans: 34
-  completed_plans: 32
+  completed_plans: 33
 ---
 
 # Project State
@@ -17,9 +17,9 @@ progress:
 ## Current Position
 
 Phase: 9
-Plan: 2 of 4 complete
-Status: Executing Phase 09
-Last activity: 2026-06-16
+Plan: 3 of 4 complete
+Status: Ready to execute
+Last activity: 2026-06-17
 
 ---
 
@@ -96,6 +96,7 @@ Last activity: 2026-06-16
 - [Phase 09]: [09-01] EntityDiff.title maps RoutineImport.name; habits previewed as Task rows on Task.external_key
 - [Phase 09]: [09-01] Routine goal_id needs no router change — model_dump()+setattr loop already pass it; column from migration 0008
 - [Phase 09]: [09-02] GoalSelect prop-driven (parent owns useGoals) to avoid double-fetch; routine goal_id typed number|null for unlink
+- [Phase 09]: [09-03] Goal detail is an in-page selectedGoalId sub-view (no route); Goals.tsx owns its own TaskDrawer for linked-task edits
 
 ### Open Questions (Live Verification Required)
 
@@ -125,5 +126,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-06-16T14:17:13.096Z
+Last session: 2026-06-17T13:17:08.598Z
 Next action: Run `/gsd:plan-phase 8` to break Phase 8 (Goals + Ingest Backend) into executable plans
