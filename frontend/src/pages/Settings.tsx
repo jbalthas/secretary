@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { CalendarStatus } from "../types/calendar";
 import type { Routine } from "../types/routine";
 import { useBriefSettings } from "../hooks/useBriefSettings";
+import { useWorkHours } from "../hooks/useWorkHours";
 import { useGoogleHome } from "../hooks/useGoogleHome";
 import { useRoutines } from "../hooks/useRoutines";
 import { useGoals } from "../hooks/useGoals";
@@ -46,6 +47,12 @@ export default function Settings() {
   const [ghSpeaking, setGhSpeaking] = useState(false);
   const [ghSpeakError, setGhSpeakError] = useState<string | null>(null);
 
+  const { workStart, workEnd, loading: whLoading, save: saveWorkHours } = useWorkHours();
+  const [whStart, setWhStart] = useState("");
+  const [whEnd, setWhEnd] = useState("");
+  const [whSaving, setWhSaving] = useState(false);
+  const [whError, setWhError] = useState<string | null>(null);
+
   const { routines, loading: routinesLoading, create, update, remove } = useRoutines();
   const { goals } = useGoals();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -55,6 +62,12 @@ export default function Settings() {
   useEffect(() => {
     if (briefTime !== null) setTimeInput(briefTime);
   }, [briefTime]);
+
+  // Sync work hours inputs when they load
+  useEffect(() => {
+    if (workStart !== null) setWhStart(workStart);
+    if (workEnd !== null) setWhEnd(workEnd);
+  }, [workStart, workEnd]);
 
   async function loadStatus() {
     const res = await fetch(STATUS_URL);
@@ -87,6 +100,17 @@ export default function Settings() {
       if (!ok) setBriefError("Failed to save. Check your connection and try again.");
     } finally {
       setBriefSaving(false);
+    }
+  }
+
+  async function handleSaveWorkHours() {
+    setWhError(null);
+    setWhSaving(true);
+    try {
+      const ok = await saveWorkHours(whStart, whEnd);
+      if (!ok) setWhError("Failed to save. Check your connection and try again.");
+    } finally {
+      setWhSaving(false);
     }
   }
 
@@ -207,6 +231,77 @@ export default function Settings() {
                 style={{ opacity: briefSaving ? 0.6 : 1, cursor: briefSaving ? "not-allowed" : "pointer" }}
               >
                 {briefSaving ? "Saving…" : "Save Brief Time"}
+              </button>
+            </>
+          )}
+        </div>
+      </section>
+
+      {/* Work Hours section */}
+      <section style={{ marginBottom: 24 }}>
+        <p style={SECTION_LABEL_STYLE}>Work Hours</p>
+
+        <div style={CARD_STYLE}>
+          {whLoading && workStart === null ? (
+            <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: 14 }}>Loading…</p>
+          ) : (
+            <>
+              <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
+                <div className="drawer-field" style={{ flex: 1 }}>
+                  <label htmlFor="work-start">Start</label>
+                  <input
+                    id="work-start"
+                    type="time"
+                    value={whStart}
+                    onChange={(e) => setWhStart(e.target.value)}
+                    style={{
+                      background: "var(--bg)",
+                      border: "1px solid var(--border)",
+                      borderRadius: 6,
+                      color: "var(--text)",
+                      padding: "8px 10px",
+                      fontSize: 16,
+                      width: "100%",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+                <div className="drawer-field" style={{ flex: 1 }}>
+                  <label htmlFor="work-end">End</label>
+                  <input
+                    id="work-end"
+                    type="time"
+                    value={whEnd}
+                    onChange={(e) => setWhEnd(e.target.value)}
+                    style={{
+                      background: "var(--bg)",
+                      border: "1px solid var(--border)",
+                      borderRadius: 6,
+                      color: "var(--text)",
+                      padding: "8px 10px",
+                      fontSize: 16,
+                      width: "100%",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+              </div>
+              <p style={{ margin: "0 0 12px", fontSize: 12, color: "var(--text-secondary)" }}>
+                Used to plan your day. Times follow the Pi's timezone.
+              </p>
+              {whError && (
+                <p style={{ margin: "0 0 8px", fontSize: 12, color: "var(--destructive)" }}>
+                  {whError}
+                </p>
+              )}
+              <button
+                type="button"
+                className="btn-save"
+                onClick={handleSaveWorkHours}
+                disabled={whSaving}
+                style={{ opacity: whSaving ? 0.6 : 1, cursor: whSaving ? "not-allowed" : "pointer" }}
+              >
+                {whSaving ? "Saving…" : "Save Work Hours"}
               </button>
             </>
           )}

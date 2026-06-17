@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { Calendar, ListTodo, Target, Settings } from "lucide-react";
+import { Calendar, ListTodo, Target, CalendarCheck, Settings } from "lucide-react";
 
 const navStyle: React.CSSProperties = {
   position: "fixed",
@@ -57,6 +57,16 @@ export default function BottomNav() {
       >
         <Target size={22} />
         Goals
+      </NavLink>
+      <NavLink
+        to="/organize"
+        style={({ isActive }) => ({
+          ...tabStyle,
+          color: isActive ? "var(--accent)" : "var(--text-secondary)",
+        })}
+      >
+        <CalendarCheck size={22} />
+        Organize
       </NavLink>
       <NavLink
         to="/settings"

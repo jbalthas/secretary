@@ -1,5 +1,6 @@
 import { useTasks } from "../hooks/useTasks";
 import { useCalendarEvents } from "../hooks/useCalendarEvents";
+import { usePlan } from "../hooks/usePlan";
 import { buildWeekAgenda } from "../lib/agenda";
 import type { DayGroup } from "../lib/agenda";
 import AgendaItem from "../components/AgendaItem";
@@ -61,10 +62,16 @@ function DaySection({ group, onToggle }: DaySectionProps) {
   );
 }
 
+function localDateKey(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 export default function Today() {
   const { tasks, patchTask } = useTasks();
   const { events, patchEvent } = useCalendarEvents();
-  const groups = buildWeekAgenda(tasks, events);
+  const todayKey = localDateKey(new Date());
+  const { blocks } = usePlan(todayKey);
+  const groups = buildWeekAgenda(tasks, events, new Date(), blocks);
 
   async function handleToggle(item: AgendaItemType, completed: boolean) {
     if (item.isEvent && item.googleId) {
