@@ -18,8 +18,8 @@ progress:
 
 Phase: 10 (day-auto-organize) — COMPLETE
 Plan: 4 of 4
-Status: Phase complete — ready for verification
-Last activity: 2026-06-17
+Status: Phase complete — automation verified (4/4), human-UAT pending
+Last activity: 2026-06-17 - Completed quick task 260617-ldm: per-task estimated_minutes field in TaskDrawer
 
 ---
 
