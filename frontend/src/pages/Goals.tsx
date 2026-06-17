@@ -224,6 +224,7 @@ export default function Goals() {
         <TaskDrawer
           open={taskDrawerOpen}
           task={editingTask}
+          goals={goals}
           onClose={() => setTaskDrawerOpen(false)}
           onSave={handleTaskSave}
           onDelete={deleteTask}
