@@ -2,24 +2,24 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Phases — Ingest, Organize, Guide
-status: verifying
-last_updated: "2026-06-17T13:54:09.266Z"
-last_activity: "2026-06-17 - Completed quick task 260617-bvj: fix task→goal unlink in TaskDrawer"
+status: executing
+last_updated: "2026-06-17T19:26:32.858Z"
+last_activity: 2026-06-17
 progress:
   total_phases: 11
   completed_phases: 9
-  total_plans: 34
-  completed_plans: 34
+  total_plans: 38
+  completed_plans: 35
 ---
 
 # Project State
 
 ## Current Position
 
-Phase: 10
-Plan: Not started
-Status: Ready to verify
-Last activity: 2026-06-17 - Completed quick task 260617-bvj: fix task→goal unlink in TaskDrawer
+Phase: 10 (day-auto-organize) — EXECUTING
+Plan: 2 of 4
+Status: Ready to execute
+Last activity: 2026-06-17
 
 ---
 
@@ -27,7 +27,7 @@ Last activity: 2026-06-17 - Completed quick task 260617-bvj: fix task→goal unl
 
 **Core value:** One place to manage your schedule and tasks — reachable from any device, voice-controllable via Google Home, and proactive enough to push reminders before you have to think about them.
 
-**Current focus:** Phase 09 — goals-ingest-ui
+**Current focus:** Phase 10 — day-auto-organize
 
 ---
 
@@ -99,6 +99,8 @@ Last activity: 2026-06-17 - Completed quick task 260617-bvj: fix task→goal unl
 - [Phase 09]: [09-03] Goal detail is an in-page selectedGoalId sub-view (no route); Goals.tsx owns its own TaskDrawer for linked-task edits
 - [Phase 09]: [09-04] Routines always send explicit goal_id (null to unlink) under backend exclude_unset=True; tasks omit goal_id when unset
 - [Phase 09]: [09-04] TaskDrawer goals prop is required — every TaskDrawer render site (Tasks.tsx, Goals.tsx) must pass goals from useGoals()
+- [Phase 10]: [10-01] Work hours exposed as HH:MM strings in API but persisted as four integer columns; set_work_hours touches no scheduler (no job)
+- [Phase 10]: [10-01] Migration 0009 adds work-hours columns as nullable (no server_default) to avoid NOT NULL failure on existing app_settings id=1; router coalesces None to 9/0/18/0
 
 ### Open Questions (Live Verification Required)
 
@@ -129,5 +131,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-06-17T13:54:09.263Z
+Last session: 2026-06-17T19:26:32.855Z
 Next action: Run `/gsd:plan-phase 8` to break Phase 8 (Goals + Ingest Backend) into executable plans

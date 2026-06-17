@@ -68,8 +68,8 @@
 
 ### Day Organize (PLAN)
 
-- [ ] **PLAN-01**: User can request a proposed plan for the current day — the planner treats synced calendar events as fixed blocks, finds free intervals, and fills them with pending tasks ordered by priority and due date, sizing each block from the task's `estimated_minutes` (default 30 if unset)
-- [ ] **PLAN-02**: User can review the proposed plan and accept/edit/reject blocks before anything commits; the approved plan is stored locally and rendered in the Today view (no Google Calendar write in v2.0)
+- [x] **PLAN-01**: User can request a proposed plan for the current day — the planner treats synced calendar events as fixed blocks, finds free intervals, and fills them with pending tasks ordered by priority and due date, sizing each block from the task's `estimated_minutes` (default 30 if unset)
+- [x] **PLAN-02**: User can review the proposed plan and accept/edit/reject blocks before anything commits; the approved plan is stored locally and rendered in the Today view (no Google Calendar write in v2.0)
 
 ### Guidance (GUIDE)
 
@@ -154,8 +154,8 @@
 | GOAL-05 | Phase 9 — Goals + Ingest UI | Complete |
 | INGEST-03 | Phase 9 — Goals + Ingest UI | Complete |
 | INGEST-05 | Phase 9 — Goals + Ingest UI | Complete |
-| PLAN-01 | Phase 10 — Day Auto-Organize | Pending |
-| PLAN-02 | Phase 10 — Day Auto-Organize | Pending |
+| PLAN-01 | Phase 10 — Day Auto-Organize | Complete |
+| PLAN-02 | Phase 10 — Day Auto-Organize | Complete |
 | GUIDE-01 | Phase 11 — Goal-Guided Guidance | Pending |
 | GUIDE-02 | Phase 11 — Goal-Guided Guidance | Pending |
 | GUIDE-03 | Phase 11 — Goal-Guided Guidance | Pending |
