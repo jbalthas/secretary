@@ -125,6 +125,7 @@ None
 | 260615-bll | Rolling 7-day week view in Today tab, grouped by day | 2026-06-15 | 0fa2e7f | [260615-bll-show-rolling-7-day-week-view-in-today-ta](./quick/260615-bll-show-rolling-7-day-week-view-in-today-ta/) |
 | 260615-bse | Weekly voice readout (tasks + events) on Google Home, alongside daily brief; webhook `range=day\|week` | 2026-06-15 | 4fabd1f | [260615-bse-add-weekly-voice-readout-tasks-events-to](./quick/260615-bse-add-weekly-voice-readout-tasks-events-to/) |
 | 260617-bvj | Fix task→goal unlink: send goal_id explicitly (null) from TaskDrawer; widen TaskCreate type; backend regression test | 2026-06-17 | a3f65fa | [260617-bvj-fix-task-to-goal-unlink-in-taskdrawer-se](./quick/260617-bvj-fix-task-to-goal-unlink-in-taskdrawer-se/) |
+| 260617-ldm | Add per-task estimated_minutes (Duration) field: backend TaskCreate schema + frontend types + TaskDrawer Collapsible input; planner block sizing without re-ingest | 2026-06-17 | 361915a | [260617-ldm-add-per-task-estimated-minutes-duration-](./quick/260617-ldm-add-per-task-estimated-minutes-duration-/) |
 
 ### Todos
 
@@ -134,5 +135,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-06-17T20:13:59.254Z
+Last session: 2026-06-17T20:25:08.000Z (quick task 260617-ldm complete)
 Next action: Run `/gsd:plan-phase 8` to break Phase 8 (Goals + Ingest Backend) into executable plans
