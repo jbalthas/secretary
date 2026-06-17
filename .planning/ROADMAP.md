@@ -19,7 +19,7 @@
 | 7 | Outlook Calendar ICS feed integration | TBD | TBD | TBD |
 | 8 | Goals + Ingest Backend | 4/4 | Complete   | 2026-06-16 |
 | 9 | Goals + Ingest UI | User can manage goals, link tasks, and submit LLM payloads from the web UI | GOAL-04, GOAL-05, INGEST-03, INGEST-05 | 4 |
-| 10 | Day Auto-Organize | 1/4 | In Progress|  |
+| 10 | Day Auto-Organize | 2/4 | In Progress|  |
 | 11 | Goal-Guided Guidance | Daily brief includes goal progress; today view surfaces next-best-task; stalled goals trigger nudges | GUIDE-01, GUIDE-02, GUIDE-03 | 3 |
 
 ---
@@ -191,11 +191,11 @@ Plans:
 2. Proposed blocks are sized from `estimated_minutes` (default 30 if unset) and ordered by priority then due-date proximity; the planner never auto-commits — `GET /plan/propose` writes nothing to the DB.
 3. User can remove, reorder, or adjust proposed blocks before approving; clicking Approve once commits the plan; a second Approve for the same date is rejected (idempotent, not duplicated).
 4. Approved plan blocks appear in the Today view alongside calendar events and tasks; if a calendar event is added after approval and overlaps an approved block, a staleness warning is shown.
-**Plans:** 1/4 plans executed
+**Plans:** 2/4 plans executed
 
 Plans:
 - [x] 10-01-PLAN.md — Wave 0 tests + ScheduledBlock model + plan schemas + AppSettings work-hours + migration 0009 (Wave 1)
-- [ ] 10-02-PLAN.md — Pure planner_service.propose_day_plan (gap-find + first-fit + tiered ordering) (Wave 2)
+- [x] 10-02-PLAN.md — Pure planner_service.propose_day_plan (gap-find + first-fit + tiered ordering) (Wave 2)
 - [ ] 10-03-PLAN.md — Plan router: propose/approve/replan/blocks/delete + staleness + main.py wiring (Wave 3)
 - [ ] 10-04-PLAN.md — Frontend: usePlan/useWorkHours, Organize page, Today staleness badge, Settings work-hours, nav/route (Wave 4)
 **UI hint**: yes
