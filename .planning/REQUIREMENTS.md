@@ -53,7 +53,7 @@
 - [x] **INGEST-02**: Ingest endpoint validates an uploaded/pasted JSON payload against the schema and returns field-level errors (HTTP 422) on malformed input; `schema_version` mismatch is rejected with a clear message
 - [x] **INGEST-03**: User can preview an import (dry-run) and see exactly what will be created vs. updated (counts + per-entity diff) before anything is written to the DB
 - [x] **INGEST-04**: On confirm, the payload is written transactionally — goals, then tasks, then routines, then habits — so a partial failure rolls back cleanly
-- [ ] **INGEST-05**: User can submit a payload by pasting JSON into a textarea OR uploading a `.json` file from the web UI
+- [x] **INGEST-05**: User can submit a payload by pasting JSON into a textarea OR uploading a `.json` file from the web UI
 - [x] **INGEST-06**: Re-importing the same payload is idempotent — entities are matched on a stable `external_key` (not title) and upserted, so no duplicates are created
 - [x] **INGEST-07**: Payload can create habits (recurring behaviors) in addition to goals, tasks, and routines; a habit maps to a recurring task flagged as a habit and may link to a goal
 
@@ -62,8 +62,8 @@
 - [x] **GOAL-01**: User can create, edit, and archive a goal with a title, type (career/life/health/learning/financial), optional description/context, and optional target date (archive preserves history; no hard delete)
 - [x] **GOAL-02**: Each goal shows a progress percentage computed from its linked tasks' completion (recalculated on read, not stored)
 - [x] **GOAL-03**: A goal can have milestones (title, optional target date, done flag); milestone completion contributes to the goal's tracked progress
-- [ ] **GOAL-04**: User can view all goals in a dedicated Goals view and drill into a goal detail showing its milestones, linked tasks, and progress
-- [ ] **GOAL-05**: User can link a task to a goal from the task form (goal dropdown); routines can also be tagged to a goal
+- [x] **GOAL-04**: User can view all goals in a dedicated Goals view and drill into a goal detail showing its milestones, linked tasks, and progress
+- [x] **GOAL-05**: User can link a task to a goal from the task form (goal dropdown); routines can also be tagged to a goal
 - [x] **GOAL-06**: Completing a milestone fires a celebration announcement (Google Home TTS + Pushover), reusing existing notification infrastructure
 
 ### Day Organize (PLAN)
@@ -150,10 +150,10 @@
 | INGEST-04 | Phase 8 — Goals + Ingest Backend | Complete |
 | INGEST-06 | Phase 8 — Goals + Ingest Backend | Complete |
 | INGEST-07 | Phase 8 — Goals + Ingest Backend | Complete |
-| GOAL-04 | Phase 9 — Goals + Ingest UI | Pending |
-| GOAL-05 | Phase 9 — Goals + Ingest UI | Pending |
+| GOAL-04 | Phase 9 — Goals + Ingest UI | Complete |
+| GOAL-05 | Phase 9 — Goals + Ingest UI | Complete |
 | INGEST-03 | Phase 9 — Goals + Ingest UI | Complete |
-| INGEST-05 | Phase 9 — Goals + Ingest UI | Pending |
+| INGEST-05 | Phase 9 — Goals + Ingest UI | Complete |
 | PLAN-01 | Phase 10 — Day Auto-Organize | Pending |
 | PLAN-02 | Phase 10 — Day Auto-Organize | Pending |
 | GUIDE-01 | Phase 11 — Goal-Guided Guidance | Pending |

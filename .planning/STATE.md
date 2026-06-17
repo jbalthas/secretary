@@ -9,7 +9,7 @@ progress:
   total_phases: 11
   completed_phases: 8
   total_plans: 34
-  completed_plans: 33
+  completed_plans: 34
 ---
 
 # Project State
@@ -17,8 +17,8 @@ progress:
 ## Current Position
 
 Phase: 9
-Plan: 3 of 4 complete
-Status: Ready to execute
+Plan: 4 of 4 complete
+Status: Ready to verify
 Last activity: 2026-06-17
 
 ---
@@ -97,6 +97,8 @@ Last activity: 2026-06-17
 - [Phase 09]: [09-01] Routine goal_id needs no router change — model_dump()+setattr loop already pass it; column from migration 0008
 - [Phase 09]: [09-02] GoalSelect prop-driven (parent owns useGoals) to avoid double-fetch; routine goal_id typed number|null for unlink
 - [Phase 09]: [09-03] Goal detail is an in-page selectedGoalId sub-view (no route); Goals.tsx owns its own TaskDrawer for linked-task edits
+- [Phase 09]: [09-04] Routines always send explicit goal_id (null to unlink) under backend exclude_unset=True; tasks omit goal_id when unset
+- [Phase 09]: [09-04] TaskDrawer goals prop is required — every TaskDrawer render site (Tasks.tsx, Goals.tsx) must pass goals from useGoals()
 
 ### Open Questions (Live Verification Required)
 
