@@ -24,8 +24,11 @@ export default function AgendaItem({ item, onToggle }: Props) {
 
   const timeLabel = item.time ? formatTime(item.time) : null;
 
+  const isPlannedBlock = item.isBlock && item.taskId == null && item.googleId == null;
+
   async function handleToggle(e: React.ChangeEvent<HTMLInputElement>) {
     e.stopPropagation();
+    if (isPlannedBlock) return;
     const newValue = !localCompleted;
     setLocalCompleted(newValue);
     setError(null);
@@ -66,6 +69,7 @@ export default function AgendaItem({ item, onToggle }: Props) {
       <input
         type="checkbox"
         checked={localCompleted}
+        disabled={isPlannedBlock}
         aria-label={
           localCompleted
             ? `Mark '${item.title}' incomplete`
@@ -83,6 +87,12 @@ export default function AgendaItem({ item, onToggle }: Props) {
         >
           {item.priority === "high" ? "High" : item.priority === "medium" ? "Med" : "Low"}
         </span>
+      )}
+      {item.isBlock && (
+        <span style={{ fontSize: 11, background: "var(--accent)", color: "#fff", borderRadius: 4, padding: "1px 5px", flexShrink: 0 }}>Planned</span>
+      )}
+      {item.conflict_with && (
+        <span style={{ fontSize: 11, background: "var(--destructive, #ef4444)", color: "#fff", borderRadius: 4, padding: "1px 5px", flexShrink: 0 }} title={`Conflicts with: ${item.conflict_with}`}>! {item.conflict_with}</span>
       )}
       {timeLabel && <span style={timeStyle}>{timeLabel}</span>}
       {error && <span style={{ fontSize: 12, color: "var(--error, red)" }}>{error}</span>}

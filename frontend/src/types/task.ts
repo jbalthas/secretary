@@ -33,6 +33,9 @@ export interface AgendaItem {
   completed: boolean;
   taskId?: number;
   googleId?: string;
+  isBlock?: boolean;
+  conflict_with?: string | null;
+  blockId?: number;
 }
 
 export interface CalendarEvent {

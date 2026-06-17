@@ -1,4 +1,5 @@
 import type { AgendaItem, CalendarEvent, Task } from "../types/task";
+import type { ScheduledBlock } from "../types/plan";
 
 export interface DayGroup {
   dateKey: string;
@@ -10,7 +11,12 @@ function toDateKey(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-function buildDayItems(tasks: Task[], events: CalendarEvent[], dateKey: string): AgendaItem[] {
+function buildDayItems(
+  tasks: Task[],
+  events: CalendarEvent[],
+  dateKey: string,
+  blocks?: ScheduledBlock[]
+): AgendaItem[] {
   const allDayItems: AgendaItem[] = [];
   const timedItems: AgendaItem[] = [];
 
@@ -37,12 +43,18 @@ function buildDayItems(tasks: Task[], events: CalendarEvent[], dateKey: string):
     }
   }
 
-  const dayEvents = events.filter((e) =>
-    e.all_day ? e.start_date === dateKey : e.start_dt?.slice(0, 10) === dateKey
-  );
+  const dayEvents = events.filter((e) => {
+    if (e.all_day) return e.start_date === dateKey;
+    if (!e.start_dt) return false;
+    return toDateKey(new Date(e.start_dt)) === dateKey;
+  });
 
   for (const e of dayEvents) {
-    const time = e.all_day ? null : (e.start_dt ? e.start_dt.slice(11, 16) : null);
+    let time: string | null = null;
+    if (!e.all_day && e.start_dt) {
+      const d = new Date(e.start_dt);
+      time = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+    }
     const item: AgendaItem = {
       id: `event-${e.google_id}`,
       title: e.title || "(No title)",
@@ -57,6 +69,23 @@ function buildDayItems(tasks: Task[], events: CalendarEvent[], dateKey: string):
     } else {
       timedItems.push(item);
     }
+  }
+
+  for (const b of (blocks ?? [])) {
+    if (b.date_key !== dateKey) continue;
+    const d = new Date(b.start_dt);
+    const time = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+    timedItems.push({
+      id: `block-${b.id}`,
+      title: b.title,
+      time,
+      priority: null,
+      isEvent: false,
+      isBlock: true,
+      completed: false,
+      blockId: b.id,
+      conflict_with: b.conflict_with,
+    });
   }
 
   const timed = timedItems.sort((a, b) =>
@@ -80,18 +109,28 @@ function dayLabel(offset: number, y: number, m: number, d: number): string {
   return weekdayDateFmt.format(new Date(Date.UTC(y, m, d, 12, 0, 0)));
 }
 
-export function buildAgenda(tasks: Task[], events: CalendarEvent[], now: Date = new Date()): AgendaItem[] {
-  return buildDayItems(tasks, events, toDateKey(now));
+export function buildAgenda(
+  tasks: Task[],
+  events: CalendarEvent[],
+  now: Date = new Date(),
+  blocks?: ScheduledBlock[]
+): AgendaItem[] {
+  return buildDayItems(tasks, events, toDateKey(now), blocks);
 }
 
-export function buildWeekAgenda(tasks: Task[], events: CalendarEvent[], now: Date = new Date()): DayGroup[] {
+export function buildWeekAgenda(
+  tasks: Task[],
+  events: CalendarEvent[],
+  now: Date = new Date(),
+  blocks?: ScheduledBlock[]
+): DayGroup[] {
   const groups: DayGroup[] = [];
   for (let offset = 0; offset < 7; offset++) {
     const day = new Date(now);
     day.setDate(now.getDate() + offset);
     const dateKey = toDateKey(day);
     const label = dayLabel(offset, day.getFullYear(), day.getMonth(), day.getDate());
-    groups.push({ dateKey, label, items: buildDayItems(tasks, events, dateKey) });
+    groups.push({ dateKey, label, items: buildDayItems(tasks, events, dateKey, blocks) });
   }
   return groups;
 }
