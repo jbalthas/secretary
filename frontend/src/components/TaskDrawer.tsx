@@ -105,7 +105,7 @@ export default function TaskDrawer({ open, task, goals, onClose, onSave, onDelet
       title,
       priority,
       due_date: combineDatetime(dueDate, dueTime),
-      goal_id: goalId ?? undefined,
+      goal_id: goalId,
       description: description || undefined,
       reminder_at: reminderAt ? `${reminderAt}:00Z` : undefined,
       recurrence_cron:

@@ -21,7 +21,7 @@ export interface TaskCreate {
   due_date?: string;
   reminder_at?: string;
   recurrence_cron?: string;
-  goal_id?: number;
+  goal_id?: number | null;
 }
 
 export interface AgendaItem {
