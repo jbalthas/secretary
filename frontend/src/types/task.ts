@@ -9,7 +9,7 @@ export interface Task {
   reminder_at?: string;
   recurrence_cron?: string;
   completed: boolean;
-  goal_id?: number;
+  goal_id?: number | null;
   created_at: string;
   updated_at: string;
 }
