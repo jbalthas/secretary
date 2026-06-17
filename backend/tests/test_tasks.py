@@ -70,6 +70,32 @@ def test_task_recurrence_stored():
     assert r.json()["recurrence_cron"] == "0 9 * * 1-5"
 
 
+def test_task_estimated_minutes_stored():
+    r = client.post(
+        "/api/v1/tasks/",
+        json={"title": "Write report", "estimated_minutes": 45},
+    )
+    assert r.status_code == 201
+    assert r.json()["estimated_minutes"] == 45
+
+
+def test_task_estimated_minutes_defaults_null():
+    r = client.post("/api/v1/tasks/", json={"title": "No estimate"})
+    assert r.status_code == 201
+    assert r.json()["estimated_minutes"] is None
+
+
+def test_task_estimated_minutes_patch():
+    create = client.post(
+        "/api/v1/tasks/",
+        json={"title": "Resize me", "estimated_minutes": 45},
+    )
+    task_id = create.json()["id"]
+    r = client.patch(f"/api/v1/tasks/{task_id}", json={"estimated_minutes": 90})
+    assert r.status_code == 200
+    assert r.json()["estimated_minutes"] == 90
+
+
 def test_unlink_task_from_goal():
     g = client.post("/api/v1/goals/", json={"title": "Ship v2", "type": "learning"}).json()
     t = client.post("/api/v1/tasks/", json={"title": "Linked", "goal_id": g["id"]}).json()
