@@ -210,7 +210,13 @@ Plans:
 1. The daily brief includes a goal snapshot section listing each active goal's progress percentage and the single most-urgent task linked to it.
 2. The Today view displays a "next best task" — the highest-scoring pending task by priority × goal urgency × due-date proximity — surfaced above the agenda.
 3. If a goal has had no task completions for a configurable threshold (default 7 days), the user receives a Pushover nudge; no more than one guidance-type notification fires per day across all guidance paths.
-**Plans**: TBD
+**Plans:** 4 plans
+
+Plans:
+- [ ] 11-01-PLAN.md — Migration 0010 (completed_at + stall settings) + stamp + stall-threshold API + Wave 0 tests (Wave 1)
+- [ ] 11-02-PLAN.md — guidance_service stall nudge + brief goal snapshot + stall_check job (GUIDE-01, GUIDE-03) (Wave 2)
+- [ ] 11-03-PLAN.md — GET /guidance/next-best-task scoring endpoint (GUIDE-02) (Wave 2)
+- [ ] 11-04-PLAN.md — Today Focus banner + Settings stall-threshold field + checkpoint (GUIDE-02, GUIDE-03) (Wave 3)
 **UI hint**: yes
 
 ---
