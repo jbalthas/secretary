@@ -52,13 +52,14 @@ One place to manage your schedule and tasks — reachable from any device, voice
 - Daily brief fires at a UI-configurable time with today's agenda, and custom recurring routines (cron) persist across reboots (Validated in Phase 5: daily-brief-routines — CAL-06, CAL-07, NOTIF-02; golden-path human UAT passed)
 - Reminders and the daily brief announce on the Google Home speaker alongside Pushover, ad-hoc TTS is triggerable from the web UI, and a secret-guarded webhook triggers the brief (Validated in Phase 6: google-home-tts — NOTIF-03, NOTIF-04, NOTIF-05, NOTIF-06; code + 53 backend tests verified, hardware speaker gate pending human test on Pi deploy)
 - Goals, milestones, and habits are first-class DB entities; the versioned import contract is live; the ingest endpoint validates, commits atomically, and is idempotent (Validated in Phase 8: goals-ingest-backend — GOAL-01/02/03/06, INGEST-01/02/04/06/07; 20 phase tests green, live Pushover+TTS celebration delivery pending human test on Pi)
+- Goals are manageable from the web UI (list, drill-in detail, milestones, archive); tasks and routines link to goals via a shared dropdown; the Ingest page paste/uploads an LLM JSON payload, previews a per-entity dry-run diff, then confirms (Validated in Phase 9: goals-ingest-ui — GOAL-04/05, INGEST-03/05; 18/18 verifier must-haves, golden-path human UAT approved)
 
 ### Active
 
 **v2.0 — Ingest, Organize, Guide:**
 - [x] Stable versioned import contract (JSON schema) + documented LLM prompt — Phase 8 backend
-- [ ] Validating ingest endpoint + UI (paste/upload → preview → confirm → write) — backend done (Phase 8); UI in Phase 9
-- [ ] First-class Goals entity with target dates, linked tasks/routines, progress reporting — backend done (Phase 8); UI in Phase 9
+- [x] Validating ingest endpoint + UI (paste/upload → preview → confirm → write) — backend (Phase 8) + UI (Phase 9)
+- [x] First-class Goals entity with target dates, linked tasks/routines, progress reporting — backend (Phase 8) + UI (Phase 9)
 - [ ] Day auto-organize: propose time-blocks around calendar events, user approves before commit
 - [ ] Goal-guided guidance: progress + next-best-action surfacing
 
@@ -110,4 +111,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-16 — Phase 8 complete (goals-ingest-backend): Goals/Milestones/habits, versioned ingest contract, atomic idempotent ingest endpoint*
+*Last updated: 2026-06-17 — Phase 9 complete (goals-ingest-ui): Goals page + drill-in detail, task/routine goal linking, Ingest page (paste/upload → preview → confirm)*
