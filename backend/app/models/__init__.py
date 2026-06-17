@@ -66,3 +66,4 @@ class Routine(Base):
 
 from app.models.calendar import CalendarEvent, CalendarSync  # noqa: E402,F401
 from app.models.goal import Goal, Milestone, GoalType, GoalStatus  # noqa: E402,F401
+from app.models.plan import ScheduledBlock  # noqa: E402,F401
