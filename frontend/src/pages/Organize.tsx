@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { usePlan } from "../hooks/usePlan";
 import { useTasks } from "../hooks/useTasks";
+import { useWorkHours } from "../hooks/useWorkHours";
 import type { ProposedBlock } from "../types/plan";
 
 type Phase = "loading" | "approved" | "proposing" | "editing" | "fully_booked" | "saving" | "done";
@@ -17,6 +18,15 @@ function toTimeInput(iso: string): string {
 
 function durationMinutes(start: string, end: string): number {
   return Math.round((new Date(end).getTime() - new Date(start).getTime()) / 60000);
+}
+
+function isAfterWorkHours(workEnd: string | null): boolean {
+  if (!workEnd) return false;
+  const now = new Date();
+  const [h, m] = workEnd.split(":").map(Number);
+  const end = new Date(now);
+  end.setHours(h, m, 0, 0);
+  return now >= end;
 }
 
 function withStartAndDuration(block: ProposedBlock, timeStr: string, minutes: number): ProposedBlock {
@@ -59,6 +69,7 @@ export default function Organize() {
   const todayKey = localDateKey(new Date());
   const { blocks, loading, fetchBlocks, propose, approve, replan } = usePlan(todayKey);
   const { tasks } = useTasks();
+  const { workEnd } = useWorkHours();
 
   const [phase, setPhase] = useState<Phase>("loading");
   const [draftBlocks, setDraftBlocks] = useState<ProposedBlock[]>([]);
@@ -164,7 +175,9 @@ export default function Organize() {
 
       {phase === "fully_booked" && (
         <p style={{ color: "var(--text-secondary)", fontSize: 15 }}>
-          No free time today — your calendar is full.
+          {isAfterWorkHours(workEnd)
+            ? "Your work hours for today are done — there's no time left to schedule. Adjust your hours in Settings, or plan again tomorrow."
+            : "No free time today — your calendar is fully booked."}
         </p>
       )}
 
