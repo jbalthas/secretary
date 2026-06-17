@@ -19,7 +19,7 @@ progress:
 Phase: 10
 Plan: Not started
 Status: Ready to verify
-Last activity: 2026-06-17
+Last activity: 2026-06-17 - Completed quick task 260617-bvj: fix task→goal unlink in TaskDrawer
 
 ---
 
@@ -119,7 +119,7 @@ None
 | 260615-bi1 | Cross out / mark-done activities on the Today tab (tasks persist complete; events get a UI-only server-side done flag) | 2026-06-15 | b445a83 | [260615-bi1-cross-out-mark-done-activities-on-the-to](./quick/260615-bi1-cross-out-mark-done-activities-on-the-to/) |
 | 260615-bll | Rolling 7-day week view in Today tab, grouped by day | 2026-06-15 | 0fa2e7f | [260615-bll-show-rolling-7-day-week-view-in-today-ta](./quick/260615-bll-show-rolling-7-day-week-view-in-today-ta/) |
 | 260615-bse | Weekly voice readout (tasks + events) on Google Home, alongside daily brief; webhook `range=day\|week` | 2026-06-15 | 4fabd1f | [260615-bse-add-weekly-voice-readout-tasks-events-to](./quick/260615-bse-add-weekly-voice-readout-tasks-events-to/) |
-| 260617-bvj | Fix task→goal unlink: send goal_id explicitly (null) from TaskDrawer; widen TaskCreate type; backend regression test | 2026-06-17 | ee98002 | [260617-bvj-fix-task-to-goal-unlink-in-taskdrawer-se](./quick/260617-bvj-fix-task-to-goal-unlink-in-taskdrawer-se/) |
+| 260617-bvj | Fix task→goal unlink: send goal_id explicitly (null) from TaskDrawer; widen TaskCreate type; backend regression test | 2026-06-17 | a3f65fa | [260617-bvj-fix-task-to-goal-unlink-in-taskdrawer-se](./quick/260617-bvj-fix-task-to-goal-unlink-in-taskdrawer-se/) |
 
 ### Todos
 
