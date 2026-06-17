@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Phases — Ingest, Organize, Guide
 status: verifying
-last_updated: "2026-06-17T20:13:59.257Z"
-last_activity: 2026-06-17
+last_updated: "2026-06-17T20:29:32.898Z"
+last_activity: "2026-06-17 - Completed quick task 260617-ldm: per-task estimated_minutes field in TaskDrawer"
 progress:
   total_phases: 11
   completed_phases: 10
@@ -135,5 +135,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-06-17T20:25:08.000Z (quick task 260617-ldm complete)
+Last session: 2026-06-17T20:29:32.894Z
 Next action: Run `/gsd:plan-phase 8` to break Phase 8 (Goals + Ingest Backend) into executable plans
