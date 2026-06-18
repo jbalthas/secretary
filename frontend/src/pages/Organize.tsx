@@ -20,6 +20,7 @@ import {
   sortOrganizeTasks,
   type OrganizeTaskSort,
 } from "../lib/organizeTaskSort";
+import { appendCurrentTasksToPlan } from "../lib/organizePlan";
 import type { ProposedBlock } from "../types/plan";
 import type { Task } from "../types/task";
 
@@ -86,7 +87,7 @@ export default function Organize() {
   const today = new Date();
   const todayKey = localDateKey(today);
   const { blocks, loading, fetchBlocks, propose, approve, replan } = usePlan(todayKey);
-  const { tasks } = useTasks();
+  const { tasks, refresh: refreshTasks } = useTasks();
   const { events } = useCalendarEvents();
   const { workStart, workEnd } = useWorkHours();
 
@@ -97,6 +98,8 @@ export default function Organize() {
   const [error, setError] = useState<string | null>(null);
   const [taskSort, setTaskSort] = useState<OrganizeTaskSort>("priority");
   const initialized = useRef(false);
+  const planApprovedAt = useRef<Date | null>(null);
+  const manuallyRemovedTaskIds = useRef(new Set<number>());
 
   const incompleteTasks = useMemo(() => tasks.filter((task) => !task.completed), [tasks]);
   const scheduledTaskIds = useMemo(
@@ -156,6 +159,10 @@ export default function Organize() {
     if (loading || initialized.current) return;
     initialized.current = true;
     if (blocks.length > 0) {
+      planApprovedAt.current = blocks.reduce((latest, block) => {
+        const approvedAt = new Date(block.approved_at);
+        return approvedAt > latest ? approvedAt : latest;
+      }, new Date(blocks[0].approved_at));
       setDraftBlocks(
         blocks.map(({ task_id, title, start_dt, end_dt }) => ({ task_id, title, start_dt, end_dt })),
       );
@@ -166,6 +173,38 @@ export default function Organize() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading]);
+
+  useEffect(() => {
+    if (!initialized.current) return;
+    setDraftBlocks((current) =>
+      appendCurrentTasksToPlan(
+        current,
+        incompleteTasks.filter((task) => !manuallyRemovedTaskIds.current.has(task.id)),
+        workStart || "09:00",
+        new Date(),
+        planApprovedAt.current,
+      ),
+    );
+  }, [incompleteTasks, workStart]);
+
+  useEffect(() => {
+    function refreshCurrentTasks() {
+      void refreshTasks();
+    }
+
+    function refreshVisibleTasks() {
+      if (document.visibilityState === "visible") refreshCurrentTasks();
+    }
+
+    window.addEventListener("focus", refreshCurrentTasks);
+    document.addEventListener("visibilitychange", refreshVisibleTasks);
+    return () => {
+      window.removeEventListener("focus", refreshCurrentTasks);
+      document.removeEventListener("visibilitychange", refreshVisibleTasks);
+    };
+    // Refresh only in response to browser lifecycle events.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function nextStartTime(): string {
     const fallback = workStart || "09:00";
@@ -179,11 +218,16 @@ export default function Organize() {
   }
 
   function scheduleTask(task: Task) {
+    manuallyRemovedTaskIds.current.delete(task.id);
     setDraftBlocks((current) => [...current, taskBlock(task, nextStartTime())]);
   }
 
   function removeBlock(index: number) {
-    setDraftBlocks((current) => current.filter((_, blockIndex) => blockIndex !== index));
+    setDraftBlocks((current) => {
+      const taskId = current[index]?.task_id;
+      if (taskId != null) manuallyRemovedTaskIds.current.add(taskId);
+      return current.filter((_, blockIndex) => blockIndex !== index);
+    });
   }
 
   function updateBlock(index: number, time: string, duration: number) {
@@ -195,6 +239,7 @@ export default function Organize() {
   }
 
   async function autoArrange() {
+    manuallyRemovedTaskIds.current.clear();
     setIsReplacement(isReplacement || blocks.length > 0);
     await loadProposal();
   }
@@ -209,6 +254,7 @@ export default function Organize() {
         await approve(todayKey, draftBlocks);
       }
       await fetchBlocks();
+      planApprovedAt.current = new Date();
       setPhase("done");
     } catch (saveError) {
       if (saveError instanceof Error && saveError.message === "already_approved") {
