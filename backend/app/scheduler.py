@@ -88,6 +88,18 @@ def remove_routine(routine_id: int) -> None:
         pass
 
 
+def schedule_stall_check(hour: int = 8, minute: int = 5) -> None:
+    from apscheduler.triggers.cron import CronTrigger
+    from app.services.guidance_service import send_stall_nudge
+    scheduler.add_job(
+        send_stall_nudge,
+        CronTrigger(hour=hour, minute=minute, timezone=settings.timezone),
+        id="stall_check",
+        replace_existing=True,
+        misfire_grace_time=None,
+    )
+
+
 def schedule_calendar_sync() -> None:
     from apscheduler.triggers.interval import IntervalTrigger
     from app.services.sync import sync_calendar

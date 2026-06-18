@@ -6,7 +6,7 @@ from app.config import settings
 from fastapi.staticfiles import StaticFiles
 from app.routers import tasks, auth, calendar_status, events, settings as settings_router, routines, tts, webhooks, goals, ingest, plan
 from app.services.tts import CACHE_DIR
-from app.scheduler import scheduler, schedule_calendar_sync, schedule_daily_brief, schedule_outlook_ics_sync
+from app.scheduler import scheduler, schedule_calendar_sync, schedule_daily_brief, schedule_outlook_ics_sync, schedule_stall_check
 
 
 @asynccontextmanager
@@ -39,6 +39,7 @@ async def lifespan(app: FastAPI):
         _eng.dispose()
     except Exception:
         schedule_daily_brief(8, 0)
+    schedule_stall_check()
     yield
     scheduler.shutdown()
 
