@@ -12,6 +12,7 @@ class TaskCreate(BaseModel):
     recurrence_cron: str | None = None
     estimated_minutes: int | None = None
     goal_id: int | None = None
+    list_name: str | None = None
 
 
 class TaskUpdate(TaskCreate):

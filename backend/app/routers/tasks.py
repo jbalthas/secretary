@@ -11,9 +11,20 @@ from app.scheduler import upsert_reminder, remove_reminder
 router = APIRouter(prefix=f"{settings.api_prefix}/tasks", tags=["tasks"])
 
 
+@router.get("/lists", response_model=list[str])
+async def list_task_lists(session: AsyncSession = Depends(get_session)):
+    result = await session.execute(
+        select(Task.list_name).where(Task.list_name.isnot(None)).distinct().order_by(Task.list_name)
+    )
+    return [row for row in result.scalars().all()]
+
+
 @router.get("/", response_model=list[TaskRead])
-async def list_tasks(session: AsyncSession = Depends(get_session)):
-    result = await session.execute(select(Task).order_by(Task.created_at.desc()))
+async def list_tasks(list_name: str | None = None, session: AsyncSession = Depends(get_session)):
+    stmt = select(Task).order_by(Task.created_at.desc())
+    if list_name:
+        stmt = stmt.where(Task.list_name == list_name)
+    result = await session.execute(stmt)
     return result.scalars().all()
 
 

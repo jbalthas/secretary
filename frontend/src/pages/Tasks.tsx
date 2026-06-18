@@ -35,8 +35,14 @@ export default function Tasks() {
   const [sort, setSort] = useState<Sort>("due");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [activeList, setActiveList] = useState<string | null>(null);
 
-  const filtered = tasks.filter((t) =>
+  const listNames = Array.from(
+    new Set(tasks.map((t) => t.list_name).filter(Boolean))
+  ) as string[];
+
+  const listFiltered = activeList ? tasks.filter((t) => t.list_name === activeList) : tasks;
+  const filtered = listFiltered.filter((t) =>
     filter === "pending" ? !t.completed : t.completed
   );
   const sorted = sortTasks(filtered, sort);
@@ -52,6 +58,22 @@ export default function Tasks() {
   return (
     <div className="page">
       <h1 className="page-title">Tasks</h1>
+
+      {listNames.length > 0 && (
+        <div className="list-chips">
+          <button
+            className={"list-chip" + (!activeList ? " active" : "")}
+            onClick={() => setActiveList(null)}
+          >All</button>
+          {listNames.map((l) => (
+            <button
+              key={l}
+              className={"list-chip" + (activeList === l ? " active" : "")}
+              onClick={() => setActiveList(l)}
+            >{l}</button>
+          ))}
+        </div>
+      )}
 
       <div className="filter-sort-row">
         <div className="filter-tabs">
