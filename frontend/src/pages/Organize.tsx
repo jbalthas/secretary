@@ -273,8 +273,11 @@ export default function Organize() {
         <div className="organize-notice" role="status">
           <AlertTriangle size={18} />
           <div>
-            <strong>Your calendar is full, but your plan is still yours.</strong>
-            <span>Add tasks below and choose exactly where they should go—even if they overlap a commitment.</span>
+            <strong>Your day is booked from 8 AM to 8 PM, but it still belongs to you.</strong>
+            <span>
+              Plan your whole life here—not just work. Place anything that matters where it belongs, even if it
+              overlaps a commitment.
+            </span>
           </div>
         </div>
       ) : null}
