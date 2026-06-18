@@ -154,6 +154,8 @@ def build_brief_speech() -> str:
     speech = "Good morning."
     if titles:
         speech += " " + ". ".join(titles) + "."
+    elif not goals:
+        speech += " Nothing scheduled today."
 
     if goals:
         sorted_goals = sorted(goals, key=lambda g: (g.target_date is None, g.target_date))
