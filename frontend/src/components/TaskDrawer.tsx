@@ -67,6 +67,8 @@ export default function TaskDrawer({ open, task, goals, onClose, onSave, onDelet
   const [title, setTitle] = useState("");
   const [priority, setPriority] = useState<Priority>("medium");
   const [goalId, setGoalId] = useState<number | null>(null);
+  const [listName, setListName] = useState("");
+  const [listOptions, setListOptions] = useState<string[]>([]);
   const [dueDate, setDueDate] = useState("");
   const [dueTime, setDueTime] = useState("");
   const [description, setDescription] = useState("");
@@ -82,6 +84,8 @@ export default function TaskDrawer({ open, task, goals, onClose, onSave, onDelet
       setTitle(task?.title ?? "");
       setPriority(task?.priority ?? "medium");
       setGoalId(task?.goal_id ?? null);
+      setListName(task?.list_name ?? "");
+      fetch("/api/v1/tasks/lists").then((r) => r.json()).then(setListOptions).catch(() => {});
       setDueDate(isoToDateInput(task?.due_date));
       setDueTime(isoToTimeInput(task?.due_date));
       setDescription(task?.description ?? "");
@@ -108,6 +112,7 @@ export default function TaskDrawer({ open, task, goals, onClose, onSave, onDelet
       priority,
       due_date: combineDatetime(dueDate, dueTime),
       goal_id: goalId,
+      list_name: listName || undefined,
       description: description || undefined,
       estimated_minutes: estimatedMinutes ? Number(estimatedMinutes) : undefined,
       reminder_at: reminderAt ? `${reminderAt}:00Z` : undefined,
@@ -171,6 +176,22 @@ export default function TaskDrawer({ open, task, goals, onClose, onSave, onDelet
           <div className="drawer-field">
             <label>Goal</label>
             <GoalSelect goals={goals} value={goalId} onChange={setGoalId} />
+          </div>
+
+          <div className="drawer-field">
+            <label htmlFor="task-list">List</label>
+            <input
+              id="task-list"
+              type="text"
+              list="task-list-options"
+              value={listName}
+              onChange={(e) => setListName(e.target.value)}
+              placeholder="e.g. Grocery, Work, Life"
+              autoComplete="off"
+            />
+            <datalist id="task-list-options">
+              {listOptions.map((l) => <option key={l} value={l} />)}
+            </datalist>
           </div>
 
           <div className="drawer-field">

@@ -524,3 +524,8 @@ body {
   cursor: pointer;
   padding: 8px 0;
 }
+
+/* List filter chips */
+.list-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.list-chip { padding: 4px 12px; border-radius: 16px; border: 1px solid var(--border, #334155); background: transparent; color: var(--text, #e2e8f0); cursor: pointer; font-size: 0.875rem; }
+.list-chip.active { background: var(--accent, #6366f1); color: white; border-color: var(--accent, #6366f1); }
