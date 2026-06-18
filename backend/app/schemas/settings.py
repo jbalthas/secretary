@@ -21,3 +21,12 @@ class WorkHoursRead(BaseModel):
 class WorkHoursUpdate(BaseModel):
     work_start: str = Field(pattern=r"^\d{2}:\d{2}$")
     work_end: str = Field(pattern=r"^\d{2}:\d{2}$")
+
+
+class StallThresholdRead(BaseModel):
+    stall_threshold_days: int
+    model_config = {"from_attributes": True}
+
+
+class StallThresholdUpdate(BaseModel):
+    stall_threshold_days: int = Field(ge=1, le=365)

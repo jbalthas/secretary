@@ -29,11 +29,15 @@ async def create_task(body: TaskCreate, session: AsyncSession = Depends(get_sess
 
 @router.patch("/{task_id}", response_model=TaskRead)
 async def update_task(task_id: int, body: TaskUpdate, session: AsyncSession = Depends(get_session)):
+    from datetime import datetime, timezone
     task = await session.get(Task, task_id)
     if not task:
         raise HTTPException(404)
+    was_completed = task.completed
     for k, v in body.model_dump(exclude_unset=True).items():
         setattr(task, k, v)
+    if task.completed and not was_completed:
+        task.completed_at = datetime.now(timezone.utc)
     await session.commit()
     await session.refresh(task)
     if task.completed:
