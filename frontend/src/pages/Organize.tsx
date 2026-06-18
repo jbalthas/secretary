@@ -16,6 +16,10 @@ import { useCalendarEvents } from "../hooks/useCalendarEvents";
 import { usePlan } from "../hooks/usePlan";
 import { useTasks } from "../hooks/useTasks";
 import { useWorkHours } from "../hooks/useWorkHours";
+import {
+  sortOrganizeTasks,
+  type OrganizeTaskSort,
+} from "../lib/organizeTaskSort";
 import type { ProposedBlock } from "../types/plan";
 import type { Task } from "../types/task";
 
@@ -91,6 +95,7 @@ export default function Organize() {
   const [isReplacement, setIsReplacement] = useState(false);
   const [calendarFull, setCalendarFull] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [taskSort, setTaskSort] = useState<OrganizeTaskSort>("priority");
   const initialized = useRef(false);
 
   const incompleteTasks = useMemo(() => tasks.filter((task) => !task.completed), [tasks]);
@@ -98,10 +103,10 @@ export default function Organize() {
     () => new Set(draftBlocks.flatMap((block) => (block.task_id == null ? [] : [block.task_id]))),
     [draftBlocks],
   );
-  const queuedTasks = useMemo(
-    () => incompleteTasks.filter((task) => !scheduledTaskIds.has(task.id)),
-    [incompleteTasks, scheduledTaskIds],
-  );
+  const queuedTasks = useMemo(() => {
+    const unscheduled = incompleteTasks.filter((task) => !scheduledTaskIds.has(task.id));
+    return sortOrganizeTasks(unscheduled, taskSort);
+  }, [incompleteTasks, scheduledTaskIds, taskSort]);
   const timedEvents = useMemo(
     () =>
       events
@@ -291,7 +296,20 @@ export default function Organize() {
               <h2>Tasks</h2>
               <p>{queuedTasks.length} waiting to be placed</p>
             </div>
-            <span className="organize-count">{queuedTasks.length}</span>
+            <div className="organize-task-tools">
+              <label className="organize-sort-control">
+                <span>Sort tasks</span>
+                <select
+                  value={taskSort}
+                  onChange={(event) => setTaskSort(event.target.value as OrganizeTaskSort)}
+                  aria-label="Sort tasks"
+                >
+                  <option value="priority">Priority</option>
+                  <option value="list">List</option>
+                </select>
+              </label>
+              <span className="organize-count">{queuedTasks.length}</span>
+            </div>
           </div>
 
           <div className="organize-task-list">
