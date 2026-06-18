@@ -5,7 +5,7 @@ const API = "/api/v1/plan";
 
 export function usePlan(dateKey: string) {
   const [blocks, setBlocks] = useState<ScheduledBlock[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   async function fetchBlocks() {
     setLoading(true);
