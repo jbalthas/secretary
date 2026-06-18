@@ -1,10 +1,11 @@
 import { useTasks } from "../hooks/useTasks";
 import { useCalendarEvents } from "../hooks/useCalendarEvents";
 import { usePlan } from "../hooks/usePlan";
+import { useNextBestTask } from "../hooks/useNextBestTask";
 import { buildWeekAgenda } from "../lib/agenda";
 import type { DayGroup } from "../lib/agenda";
 import AgendaItem from "../components/AgendaItem";
-import type { AgendaItem as AgendaItemType } from "../types/task";
+import type { AgendaItem as AgendaItemType, Task } from "../types/task";
 
 interface DaySectionProps {
   group: DayGroup;
@@ -62,6 +63,22 @@ function DaySection({ group, onToggle }: DaySectionProps) {
   );
 }
 
+function FocusBanner({ task }: { task: Task | null }) {
+  if (!task) return null;
+  return (
+    <div role="region" aria-label="Suggested focus" style={{
+      background: "var(--surface)",
+      borderLeft: "3px solid var(--accent)",
+      borderRadius: 6,
+      padding: 12,
+      marginBottom: 16,
+    }}>
+      <p className="focus-banner-label" style={{ margin: 0, fontSize: 14, fontWeight: 600, color: "var(--text-secondary)" }}>Focus on</p>
+      <p className="focus-banner-title" style={{ margin: "2px 0 0", fontSize: 16, fontWeight: 400, color: "var(--text)" }}>{task.title}</p>
+    </div>
+  );
+}
+
 function localDateKey(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
@@ -71,6 +88,7 @@ export default function Today() {
   const { events, patchEvent } = useCalendarEvents();
   const todayKey = localDateKey(new Date());
   const { blocks } = usePlan(todayKey);
+  const { task: nextBest } = useNextBestTask();
   const groups = buildWeekAgenda(tasks, events, new Date(), blocks);
 
   async function handleToggle(item: AgendaItemType, completed: boolean) {
@@ -84,6 +102,7 @@ export default function Today() {
   return (
     <div className="page">
       <h1 className="page-title">This Week</h1>
+      <FocusBanner task={nextBest} />
       {groups.map((group) => (
         <DaySection key={group.dateKey} group={group} onToggle={handleToggle} />
       ))}

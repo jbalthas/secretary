@@ -3,6 +3,7 @@ import type { CalendarStatus } from "../types/calendar";
 import type { Routine } from "../types/routine";
 import { useBriefSettings } from "../hooks/useBriefSettings";
 import { useWorkHours } from "../hooks/useWorkHours";
+import { useStallThreshold } from "../hooks/useStallThreshold";
 import { useGoogleHome } from "../hooks/useGoogleHome";
 import { useRoutines } from "../hooks/useRoutines";
 import { useGoals } from "../hooks/useGoals";
@@ -53,6 +54,11 @@ export default function Settings() {
   const [whSaving, setWhSaving] = useState(false);
   const [whError, setWhError] = useState<string | null>(null);
 
+  const { days: stallDays, loading: stallLoading, save: saveStall } = useStallThreshold();
+  const [stallInput, setStallInput] = useState("");
+  const [stallSaving, setStallSaving] = useState(false);
+  const [stallError, setStallError] = useState<string | null>(null);
+
   const { routines, loading: routinesLoading, create, update, remove } = useRoutines();
   const { goals } = useGoals();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -68,6 +74,11 @@ export default function Settings() {
     if (workStart !== null) setWhStart(workStart);
     if (workEnd !== null) setWhEnd(workEnd);
   }, [workStart, workEnd]);
+
+  // Sync stall threshold input when it loads
+  useEffect(() => {
+    if (stallDays !== null) setStallInput(String(stallDays));
+  }, [stallDays]);
 
   async function loadStatus() {
     const res = await fetch(STATUS_URL);
@@ -101,6 +112,20 @@ export default function Settings() {
     } finally {
       setBriefSaving(false);
     }
+  }
+
+  async function handleSaveStall() {
+    const n = Number(stallInput);
+    if (!Number.isInteger(n) || n < 1 || n > 365) {
+      setStallError("Enter a number between 1 and 365.");
+      return;
+    }
+    setStallError(null);
+    setStallSaving(true);
+    try {
+      const ok = await saveStall(n);
+      if (!ok) setStallError("Failed to save. Check your connection and try again.");
+    } finally { setStallSaving(false); }
   }
 
   async function handleSaveWorkHours() {
@@ -302,6 +327,58 @@ export default function Settings() {
                 style={{ opacity: whSaving ? 0.6 : 1, cursor: whSaving ? "not-allowed" : "pointer" }}
               >
                 {whSaving ? "Saving…" : "Save Work Hours"}
+              </button>
+            </>
+          )}
+        </div>
+      </section>
+
+      {/* Guidance section */}
+      <section style={{ marginBottom: 24 }}>
+        <p style={SECTION_LABEL_STYLE}>Guidance</p>
+
+        <div style={CARD_STYLE}>
+          {stallLoading && stallDays === null ? (
+            <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: 14 }}>Loading…</p>
+          ) : (
+            <>
+              <div className="drawer-field" style={{ marginBottom: 8 }}>
+                <label htmlFor="stall-threshold">Stall threshold (days)</label>
+                <input
+                  id="stall-threshold"
+                  type="number"
+                  min={1}
+                  max={365}
+                  value={stallInput}
+                  onChange={(e) => setStallInput(e.target.value)}
+                  style={{
+                    background: "var(--bg)",
+                    border: `1px solid ${stallError ? "var(--destructive)" : "var(--border)"}`,
+                    borderRadius: 6,
+                    color: "var(--text)",
+                    padding: "8px 10px",
+                    fontSize: 16,
+                    width: "100%",
+                    boxSizing: "border-box",
+                  }}
+                />
+              </div>
+              <p style={{ margin: "0 0 12px", fontSize: 12, color: "var(--text-secondary)" }}>
+                Goals with no task completions for this many days trigger a nudge. Default: 7.
+              </p>
+              {stallError && (
+                <p style={{ margin: "0 0 8px", fontSize: 12, color: "var(--destructive)" }}>
+                  {stallError}
+                </p>
+              )}
+              <button
+                type="button"
+                className="btn-save"
+                onClick={handleSaveStall}
+                disabled={stallSaving}
+                style={{ opacity: stallSaving ? 0.6 : 1, cursor: stallSaving ? "not-allowed" : "pointer" }}
+              >
+                {stallSaving ? "Saving…" : "Save Settings"}
               </button>
             </>
           )}

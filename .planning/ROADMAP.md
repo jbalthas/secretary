@@ -216,7 +216,7 @@ Plans:
 - [x] 11-01-PLAN.md — Migration 0010 (completed_at + stall settings) + stamp + stall-threshold API + Wave 0 tests (Wave 1)
 - [x] 11-02-PLAN.md — guidance_service stall nudge + brief goal snapshot + stall_check job (GUIDE-01, GUIDE-03) (Wave 2)
 - [ ] 11-03-PLAN.md — GET /guidance/next-best-task scoring endpoint (GUIDE-02) (Wave 2)
-- [ ] 11-04-PLAN.md — Today Focus banner + Settings stall-threshold field + checkpoint (GUIDE-02, GUIDE-03) (Wave 3)
+- [x] 11-04-PLAN.md — Today Focus banner + Settings stall-threshold field + checkpoint (GUIDE-02, GUIDE-03) (Wave 3)
 **UI hint**: yes
 
 ---
