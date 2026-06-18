@@ -20,7 +20,7 @@
 | 8 | Goals + Ingest Backend | 4/4 | Complete   | 2026-06-16 |
 | 9 | Goals + Ingest UI | User can manage goals, link tasks, and submit LLM payloads from the web UI | GOAL-04, GOAL-05, INGEST-03, INGEST-05 | 4 |
 | 10 | Day Auto-Organize | 4/4 | Complete   | 2026-06-17 |
-| 11 | Goal-Guided Guidance | 2/4 | In Progress|  |
+| 11 | Goal-Guided Guidance | 2/4 | Complete    | 2026-06-18 |
 
 ---
 
@@ -210,7 +210,7 @@ Plans:
 1. The daily brief includes a goal snapshot section listing each active goal's progress percentage and the single most-urgent task linked to it.
 2. The Today view displays a "next best task" — the highest-scoring pending task by priority × goal urgency × due-date proximity — surfaced above the agenda.
 3. If a goal has had no task completions for a configurable threshold (default 7 days), the user receives a Pushover nudge; no more than one guidance-type notification fires per day across all guidance paths.
-**Plans:** 2/4 plans executed
+**Plans:** 4/4 plans complete
 
 Plans:
 - [x] 11-01-PLAN.md — Migration 0010 (completed_at + stall settings) + stamp + stall-threshold API + Wave 0 tests (Wave 1)

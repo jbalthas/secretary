@@ -73,7 +73,7 @@
 
 ### Guidance (GUIDE)
 
-- [ ] **GUIDE-01**: The daily brief includes a goal snapshot — each active goal's progress and the single most-urgent task linked to it
+- [x] **GUIDE-01**: The daily brief includes a goal snapshot — each active goal's progress and the single most-urgent task linked to it
 - [x] **GUIDE-02**: The Today view surfaces a "next best task" — the highest-scoring pending task by priority × goal urgency × due-date proximity
 - [x] **GUIDE-03**: If a goal has had no task completions for a configurable threshold (default 7 days), the user receives a Pushover nudge that it has stalled
 
@@ -156,6 +156,6 @@
 | INGEST-05 | Phase 9 — Goals + Ingest UI | Complete |
 | PLAN-01 | Phase 10 — Day Auto-Organize | Complete |
 | PLAN-02 | Phase 10 — Day Auto-Organize | Complete |
-| GUIDE-01 | Phase 11 — Goal-Guided Guidance | Pending |
+| GUIDE-01 | Phase 11 — Goal-Guided Guidance | Complete |
 | GUIDE-02 | Phase 11 — Goal-Guided Guidance | Complete |
 | GUIDE-03 | Phase 11 — Goal-Guided Guidance | Complete |
