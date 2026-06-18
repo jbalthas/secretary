@@ -1,11 +1,25 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import {
+  AlertTriangle,
+  ArrowRight,
+  CalendarDays,
+  Check,
+  Clock3,
+  GripVertical,
+  Plus,
+  RotateCcw,
+  Sparkles,
+  Trash2,
+} from "lucide-react";
+import { useCalendarEvents } from "../hooks/useCalendarEvents";
 import { usePlan } from "../hooks/usePlan";
 import { useTasks } from "../hooks/useTasks";
 import { useWorkHours } from "../hooks/useWorkHours";
 import type { ProposedBlock } from "../types/plan";
+import type { Task } from "../types/task";
 
-type Phase = "loading" | "approved" | "proposing" | "editing" | "fully_booked" | "saving" | "done";
+type Phase = "loading" | "proposing" | "editing" | "saving" | "done";
 
 function localDateKey(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -17,273 +31,409 @@ function toTimeInput(iso: string): string {
 }
 
 function durationMinutes(start: string, end: string): number {
-  return Math.round((new Date(end).getTime() - new Date(start).getTime()) / 60000);
-}
-
-function isAfterWorkHours(workEnd: string | null): boolean {
-  if (!workEnd) return false;
-  const now = new Date();
-  const [h, m] = workEnd.split(":").map(Number);
-  const end = new Date(now);
-  end.setHours(h, m, 0, 0);
-  return now >= end;
+  return Math.max(5, Math.round((new Date(end).getTime() - new Date(start).getTime()) / 60000));
 }
 
 function withStartAndDuration(block: ProposedBlock, timeStr: string, minutes: number): ProposedBlock {
+  if (!/^\d{2}:\d{2}$/.test(timeStr) || !Number.isFinite(minutes)) return block;
   const start = new Date(block.start_dt);
-  const [h, m] = timeStr.split(":").map(Number);
-  start.setHours(h, m, 0, 0);
-  const end = new Date(start.getTime() + Math.max(1, minutes) * 60000);
-  return { ...block, start_dt: start.toISOString(), end_dt: end.toISOString() };
+  const [hours, mins] = timeStr.split(":").map(Number);
+  if (hours > 23 || mins > 59) return block;
+  start.setHours(hours, mins, 0, 0);
+  return {
+    ...block,
+    start_dt: start.toISOString(),
+    end_dt: new Date(start.getTime() + Math.max(5, minutes) * 60000).toISOString(),
+  };
 }
 
-const cardStyle: React.CSSProperties = {
-  background: "var(--surface)",
-  border: "1px solid var(--border)",
-  borderRadius: 12,
-  padding: 12,
-  marginBottom: 10,
-};
+function formatLongDate(date: Date): string {
+  return new Intl.DateTimeFormat(undefined, {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  }).format(date);
+}
 
-const smallBtn: React.CSSProperties = {
-  minWidth: 40,
-  minHeight: 40,
-  borderRadius: 8,
-  border: "1px solid var(--border)",
-  background: "transparent",
-  color: "var(--text)",
-  fontSize: 16,
-  cursor: "pointer",
-};
+function formatTimeRange(startIso: string, endIso: string): string {
+  const formatter = new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" });
+  return `${formatter.format(new Date(startIso))} – ${formatter.format(new Date(endIso))}`;
+}
 
-const inputStyle: React.CSSProperties = {
-  background: "var(--bg)",
-  border: "1px solid var(--border)",
-  borderRadius: 6,
-  color: "var(--text)",
-  padding: "8px 10px",
-  fontSize: 16,
-};
+function priorityLabel(task: Task): string {
+  if (task.due_date && new Date(task.due_date).getTime() <= Date.now()) return "Due";
+  return `${task.priority[0].toUpperCase()}${task.priority.slice(1)}`;
+}
+
+function taskBlock(task: Task, startTime: string): ProposedBlock {
+  const start = new Date();
+  const [hours, minutes] = startTime.split(":").map(Number);
+  start.setHours(hours, minutes, 0, 0);
+  const duration = task.estimated_minutes || 30;
+  return {
+    task_id: task.id,
+    title: task.title,
+    start_dt: start.toISOString(),
+    end_dt: new Date(start.getTime() + duration * 60000).toISOString(),
+  };
+}
 
 export default function Organize() {
-  const todayKey = localDateKey(new Date());
+  const today = new Date();
+  const todayKey = localDateKey(today);
   const { blocks, loading, fetchBlocks, propose, approve, replan } = usePlan(todayKey);
   const { tasks } = useTasks();
-  const { workEnd } = useWorkHours();
+  const { events } = useCalendarEvents();
+  const { workStart, workEnd } = useWorkHours();
 
   const [phase, setPhase] = useState<Phase>("loading");
   const [draftBlocks, setDraftBlocks] = useState<ProposedBlock[]>([]);
-  const [unplacedTaskIds, setUnplacedTaskIds] = useState<number[]>([]);
-  const [isReplan, setIsReplan] = useState(false);
+  const [isReplacement, setIsReplacement] = useState(false);
+  const [calendarFull, setCalendarFull] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const proposedOnce = useRef(false);
+  const initialized = useRef(false);
 
-  async function startProposal(replanMode: boolean) {
+  const incompleteTasks = useMemo(() => tasks.filter((task) => !task.completed), [tasks]);
+  const scheduledTaskIds = useMemo(
+    () => new Set(draftBlocks.flatMap((block) => (block.task_id == null ? [] : [block.task_id]))),
+    [draftBlocks],
+  );
+  const queuedTasks = useMemo(
+    () => incompleteTasks.filter((task) => !scheduledTaskIds.has(task.id)),
+    [incompleteTasks, scheduledTaskIds],
+  );
+  const timedEvents = useMemo(
+    () =>
+      events
+        .filter((event) => !event.all_day && event.start_dt && event.end_dt)
+        .sort((a, b) => new Date(a.start_dt!).getTime() - new Date(b.start_dt!).getTime()),
+    [events],
+  );
+  const sortedDrafts = useMemo(
+    () => draftBlocks.map((block, index) => ({ block, index })).sort((a, b) =>
+      new Date(a.block.start_dt).getTime() - new Date(b.block.start_dt).getTime()),
+    [draftBlocks],
+  );
+  const scheduleItems = useMemo(
+    () =>
+      [
+        ...timedEvents.map((event) => ({
+          kind: "event" as const,
+          start: new Date(event.start_dt!).getTime(),
+          event,
+        })),
+        ...sortedDrafts.map(({ block, index }) => ({
+          kind: "task" as const,
+          start: new Date(block.start_dt).getTime(),
+          block,
+          index,
+        })),
+      ].sort((a, b) => a.start - b.start),
+    [sortedDrafts, timedEvents],
+  );
+
+  async function loadProposal() {
     setError(null);
     setPhase("proposing");
     const result = await propose(todayKey);
     if (!result) {
-      setError("Could not generate a plan. Try again.");
-      setPhase(replanMode ? "approved" : "editing");
-      return;
-    }
-    if (result.fully_booked) {
-      setPhase("fully_booked");
+      setError("Could not build a plan. You can still add tasks manually.");
+      setDraftBlocks([]);
+      setPhase("editing");
       return;
     }
     setDraftBlocks(result.blocks);
-    setUnplacedTaskIds(result.unplaced_task_ids);
-    setIsReplan(replanMode);
+    setCalendarFull(result.fully_booked);
     setPhase("editing");
   }
 
-  // Decide initial state once existing blocks have loaded.
   useEffect(() => {
-    if (loading || proposedOnce.current) return;
-    proposedOnce.current = true;
+    if (loading || initialized.current) return;
+    initialized.current = true;
     if (blocks.length > 0) {
-      setPhase("approved");
+      setDraftBlocks(
+        blocks.map(({ task_id, title, start_dt, end_dt }) => ({ task_id, title, start_dt, end_dt })),
+      );
+      setIsReplacement(true);
+      setPhase("editing");
     } else {
-      startProposal(false);
+      void loadProposal();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading]);
 
-  function moveBlock(index: number, direction: -1 | 1) {
-    setDraftBlocks((prev) => {
-      const next = [...prev];
-      const target = index + direction;
-      if (target < 0 || target >= next.length) return prev;
-      [next[index], next[target]] = [next[target], next[index]];
-      return next;
-    });
+  function nextStartTime(): string {
+    const fallback = workStart || "09:00";
+    if (draftBlocks.length === 0) return fallback;
+    const latestEnd = draftBlocks.reduce((latest, block) => {
+      const end = new Date(block.end_dt);
+      return end > latest ? end : latest;
+    }, new Date(draftBlocks[0].end_dt));
+    latestEnd.setMinutes(Math.ceil(latestEnd.getMinutes() / 15) * 15, 0, 0);
+    return `${String(latestEnd.getHours()).padStart(2, "0")}:${String(latestEnd.getMinutes()).padStart(2, "0")}`;
+  }
+
+  function scheduleTask(task: Task) {
+    setDraftBlocks((current) => [...current, taskBlock(task, nextStartTime())]);
   }
 
   function removeBlock(index: number) {
-    setDraftBlocks((prev) => prev.filter((_, i) => i !== index));
+    setDraftBlocks((current) => current.filter((_, blockIndex) => blockIndex !== index));
   }
 
-  function updateBlock(index: number, timeStr: string, minutes: number) {
-    setDraftBlocks((prev) =>
-      prev.map((b, i) => (i === index ? withStartAndDuration(b, timeStr, minutes) : b))
+  function updateBlock(index: number, time: string, duration: number) {
+    setDraftBlocks((current) =>
+      current.map((block, blockIndex) =>
+        blockIndex === index ? withStartAndDuration(block, time, duration) : block,
+      ),
     );
   }
 
-  async function handleApprove() {
+  async function autoArrange() {
+    setIsReplacement(isReplacement || blocks.length > 0);
+    await loadProposal();
+  }
+
+  async function savePlan() {
     setError(null);
     setPhase("saving");
     try {
-      if (isReplan) {
+      if (isReplacement || blocks.length > 0) {
         await replan(todayKey, draftBlocks);
       } else {
         await approve(todayKey, draftBlocks);
       }
+      await fetchBlocks();
       setPhase("done");
-    } catch (e) {
-      if (e instanceof Error && e.message === "already_approved") {
+    } catch (saveError) {
+      if (saveError instanceof Error && saveError.message === "already_approved") {
+        setIsReplacement(true);
+        await replan(todayKey, draftBlocks);
         await fetchBlocks();
-        setPhase("approved");
+        setPhase("done");
       } else {
-        setError("Could not save. Try again.");
+        setError("Your plan could not be saved. Please try again.");
         setPhase("editing");
       }
     }
   }
 
-  function handleReplan() {
-    if (!window.confirm("Re-plan will replace your approved plan. Continue?")) return;
-    startProposal(true);
+  if (phase === "loading" || phase === "proposing") {
+    return (
+      <div className="page organize-page">
+        <div className="organize-loading">
+          <Sparkles size={20} />
+          <span>{phase === "proposing" ? "Arranging your day…" : "Loading your day…"}</span>
+        </div>
+      </div>
+    );
   }
 
-  const unplacedTitles = unplacedTaskIds
-    .map((id) => tasks.find((t) => t.id === id)?.title)
-    .filter((t): t is string => Boolean(t));
+  if (phase === "done") {
+    return (
+      <div className="page organize-page">
+        <div className="organize-success">
+          <span className="organize-success-icon"><Check size={24} /></span>
+          <h1>Your day is organized.</h1>
+          <p>{draftBlocks.length} task{draftBlocks.length === 1 ? "" : "s"} placed on today&apos;s plan.</p>
+          <Link to="/today" className="organize-primary-button">
+            View today <ArrowRight size={17} />
+          </Link>
+          <button type="button" className="organize-text-button" onClick={() => setPhase("editing")}>
+            Keep editing
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="page">
-      <h1 className="page-title">Organize</h1>
-
-      {error && (
-        <p style={{ fontSize: 13, color: "var(--destructive, #ef4444)", marginBottom: 12 }}>{error}</p>
-      )}
-
-      {(phase === "loading" || phase === "proposing") && (
-        <p style={{ color: "var(--text-secondary)", fontSize: 14 }}>
-          {phase === "proposing" ? "Building your plan…" : "Loading…"}
-        </p>
-      )}
-
-      {phase === "fully_booked" && (
-        <p style={{ color: "var(--text-secondary)", fontSize: 15 }}>
-          {isAfterWorkHours(workEnd)
-            ? "Your work hours for today are done — there's no time left to schedule. Adjust your hours in Settings, or plan again tomorrow."
-            : "No free time today — your calendar is fully booked."}
-        </p>
-      )}
-
-      {phase === "approved" && (
-        <>
-          <p style={{ fontSize: 15, color: "var(--text)", marginBottom: 12 }}>
-            Plan approved for today.
-          </p>
-          {blocks.map((b) => (
-            <div key={b.id} style={cardStyle}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-                <span style={{ fontWeight: 600, color: "var(--text)" }}>{b.title}</span>
-                <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>{toTimeInput(b.start_dt)}</span>
-              </div>
-              {b.conflict_with && (
-                <p style={{ margin: "6px 0 0", fontSize: 12, color: "var(--destructive, #ef4444)" }}>
-                  Conflicts with: {b.conflict_with}
-                </p>
-              )}
-            </div>
-          ))}
-          <button type="button" className="btn-save" onClick={handleReplan} style={{ marginTop: 8 }}>
-            Re-plan
+    <div className="page organize-page">
+      <header className="organize-header">
+        <div>
+          <h1 className="organize-title">Organize</h1>
+          <p className="organize-date">{formatLongDate(today)}</p>
+        </div>
+        <div className="organize-header-actions">
+          <button type="button" className="organize-secondary-button" onClick={() => void autoArrange()}>
+            <Sparkles size={16} /> Auto-arrange
           </button>
-        </>
-      )}
-
-      {(phase === "editing" || phase === "saving") && (
-        <>
-          {draftBlocks.length === 0 ? (
-            <p style={{ color: "var(--text-secondary)", fontSize: 14 }}>No blocks to schedule.</p>
-          ) : (
-            draftBlocks.map((b, i) => {
-              const minutes = durationMinutes(b.start_dt, b.end_dt);
-              return (
-                <div key={`${b.task_id ?? "x"}-${i}`} style={cardStyle}>
-                  <div style={{ fontWeight: 600, color: "var(--text)", marginBottom: 8 }}>{b.title}</div>
-                  <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
-                    <input
-                      type="time"
-                      aria-label={`Start time for ${b.title}`}
-                      value={toTimeInput(b.start_dt)}
-                      onChange={(e) => updateBlock(i, e.target.value, minutes)}
-                      style={inputStyle}
-                    />
-                    <input
-                      type="number"
-                      aria-label={`Duration in minutes for ${b.title}`}
-                      min={5}
-                      step={5}
-                      value={minutes}
-                      onChange={(e) => updateBlock(i, toTimeInput(b.start_dt), Number(e.target.value))}
-                      style={{ ...inputStyle, width: 80 }}
-                    />
-                    <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>min</span>
-                    <div style={{ display: "flex", gap: 6, marginLeft: "auto" }}>
-                      <button type="button" style={smallBtn} aria-label="Move up" onClick={() => moveBlock(i, -1)}>↑</button>
-                      <button type="button" style={smallBtn} aria-label="Move down" onClick={() => moveBlock(i, 1)}>↓</button>
-                      <button
-                        type="button"
-                        style={{ ...smallBtn, color: "var(--destructive, #ef4444)" }}
-                        aria-label="Remove"
-                        onClick={() => removeBlock(i)}
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })
-          )}
-
-          {unplacedTitles.length > 0 && (
-            <div style={{ marginTop: 16 }}>
-              <p style={{ fontSize: 13, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-secondary)", margin: "0 0 8px" }}>
-                Didn&apos;t fit
-              </p>
-              <ul style={{ margin: 0, paddingLeft: 18, color: "var(--text-secondary)", fontSize: 14 }}>
-                {unplacedTitles.map((title, i) => (
-                  <li key={i}>{title}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
           <button
             type="button"
-            className="btn-save"
-            onClick={handleApprove}
-            disabled={phase === "saving" || draftBlocks.length === 0}
-            style={{ marginTop: 16, opacity: phase === "saving" || draftBlocks.length === 0 ? 0.6 : 1, cursor: phase === "saving" ? "not-allowed" : "pointer" }}
+            className="organize-primary-button"
+            onClick={() => void savePlan()}
+            disabled={phase === "saving"}
           >
-            {phase === "saving" ? "Saving…" : isReplan ? "Approve Re-plan" : "Approve"}
+            <Check size={17} /> {phase === "saving" ? "Saving…" : isReplacement ? "Save changes" : "Save plan"}
           </button>
-        </>
-      )}
+        </div>
+      </header>
 
-      {phase === "done" && (
-        <>
-          <p style={{ fontSize: 15, color: "var(--text)", marginBottom: 12 }}>Plan approved.</p>
-          <Link to="/today" style={{ color: "var(--accent)", fontWeight: 600 }}>
-            Back to Today
-          </Link>
-        </>
-      )}
+      {calendarFull ? (
+        <div className="organize-notice" role="status">
+          <AlertTriangle size={18} />
+          <div>
+            <strong>Your calendar is full, but your plan is still yours.</strong>
+            <span>Add tasks below and choose exactly where they should go—even if they overlap a commitment.</span>
+          </div>
+        </div>
+      ) : null}
+
+      {error ? <div className="organize-error">{error}</div> : null}
+
+      <div className="organize-workspace">
+        <aside className="organize-task-panel" aria-label="Unscheduled tasks">
+          <div className="organize-panel-heading">
+            <div>
+              <h2>Tasks</h2>
+              <p>{queuedTasks.length} waiting to be placed</p>
+            </div>
+            <span className="organize-count">{queuedTasks.length}</span>
+          </div>
+
+          <div className="organize-task-list">
+            {queuedTasks.length === 0 ? (
+              <div className="organize-empty-queue">
+                <Check size={18} />
+                <span>Everything is on the schedule.</span>
+              </div>
+            ) : (
+              queuedTasks.map((task) => (
+                <article className="organize-task-card" key={task.id}>
+                  <div className="organize-task-copy">
+                    <h3>{task.title}</h3>
+                    <div className="organize-task-meta">
+                      <span className={`organize-priority organize-priority--${task.priority}`}>
+                        {priorityLabel(task)}
+                      </span>
+                      <span><Clock3 size={13} /> {task.estimated_minutes || 30} min</span>
+                      {task.list_name ? <span>{task.list_name}</span> : null}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="organize-add-button"
+                    aria-label={`Add ${task.title} to schedule`}
+                    onClick={() => scheduleTask(task)}
+                  >
+                    <Plus size={18} />
+                  </button>
+                </article>
+              ))
+            )}
+          </div>
+        </aside>
+
+        <main className="organize-schedule-panel" aria-label="Today's schedule">
+          <div className="organize-panel-heading organize-schedule-heading">
+            <div>
+              <h2>Today&apos;s schedule</h2>
+              <p>{workStart || "09:00"} – {workEnd || "18:00"} · {draftBlocks.length} flexible block{draftBlocks.length === 1 ? "" : "s"}</p>
+            </div>
+            <CalendarDays size={19} />
+          </div>
+
+          <div className="organize-legend" aria-label="Schedule legend">
+            <span><i className="organize-legend-dot organize-legend-dot--event" /> Calendar</span>
+            <span><i className="organize-legend-dot organize-legend-dot--task" /> Flexible task</span>
+          </div>
+
+          <div className="organize-timeline">
+            {scheduleItems.map((item) => {
+              if (item.kind === "event") {
+                return (
+                  <article className="organize-calendar-block" key={item.event.google_id}>
+                    <div className="organize-time-column">
+                      {toTimeInput(item.event.start_dt!)}
+                    </div>
+                    <div className="organize-calendar-content">
+                      <span className="organize-fixed-label">Fixed</span>
+                      <h3>{item.event.title}</h3>
+                      <p>{formatTimeRange(item.event.start_dt!, item.event.end_dt!)}</p>
+                    </div>
+                  </article>
+                );
+              }
+              const minutes = durationMinutes(item.block.start_dt, item.block.end_dt);
+              return (
+                <article className="organize-planned-block" key={`${item.block.task_id ?? "custom"}-${item.index}`}>
+                  <div className="organize-time-column">
+                    {toTimeInput(item.block.start_dt)}
+                  </div>
+                  <div className="organize-planned-content">
+                    <GripVertical className="organize-grip" size={18} aria-hidden="true" />
+                    <div className="organize-planned-copy">
+                      <h3>{item.block.title}</h3>
+                      <div className="organize-block-controls">
+                        <label>
+                          <span>Start</span>
+                          <input
+                            type="time"
+                            value={toTimeInput(item.block.start_dt)}
+                            onChange={(event) => updateBlock(item.index, event.target.value, minutes)}
+                            onInput={(event) => updateBlock(item.index, event.currentTarget.value, minutes)}
+                            aria-label={`Start time for ${item.block.title}`}
+                          />
+                        </label>
+                        <label>
+                          <span>Duration</span>
+                          <div className="organize-duration-input">
+                            <input
+                              type="number"
+                              min={5}
+                              step={5}
+                              value={minutes}
+                              onChange={(event) => {
+                                const nextDuration = event.target.valueAsNumber;
+                                if (Number.isFinite(nextDuration)) {
+                                  updateBlock(item.index, toTimeInput(item.block.start_dt), nextDuration);
+                                }
+                              }}
+                              onInput={(event) => {
+                                const nextDuration = event.currentTarget.valueAsNumber;
+                                if (Number.isFinite(nextDuration)) {
+                                  updateBlock(item.index, toTimeInput(item.block.start_dt), nextDuration);
+                                }
+                              }}
+                              aria-label={`Duration for ${item.block.title}`}
+                            />
+                            <span>min</span>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      className="organize-remove-button"
+                      aria-label={`Remove ${item.block.title} from schedule`}
+                      onClick={() => removeBlock(item.index)}
+                    >
+                      <Trash2 size={17} />
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
+
+            {timedEvents.length === 0 && draftBlocks.length === 0 ? (
+              <div className="organize-empty-schedule">
+                <Clock3 size={22} />
+                <h3>Start shaping your day</h3>
+                <p>Add a task from the queue and set the time that works for you.</p>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="organize-schedule-footer">
+            <span>Changes stay local until you save.</span>
+            {isReplacement ? (
+              <button type="button" className="organize-text-button" onClick={() => void autoArrange()}>
+                <RotateCcw size={14} /> Reset to suggested plan
+              </button>
+            ) : null}
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
