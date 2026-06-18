@@ -214,14 +214,19 @@ def _parse_ics_component(component) -> dict | None:
 
 
 def _replace_sync(components: list) -> None:
+    values_by_id = {}
+    for component in components:
+        values = _parse_ics_component(component)
+        if values:
+            values_by_id[values["google_id"]] = values
+
     with _Session() as session:
-        session.execute(
-            delete(CalendarEvent).where(CalendarEvent.google_id.like("outlook:%"))
-        )
-        for component in components:
-            values = _parse_ics_component(component)
-            if values:
-                _upsert(session, values)
+        stale_rows = CalendarEvent.google_id.like("outlook:%")
+        if values_by_id:
+            stale_rows = stale_rows & CalendarEvent.google_id.not_in(values_by_id)
+        session.execute(delete(CalendarEvent).where(stale_rows))
+        for values in values_by_id.values():
+            _upsert(session, values)
         session.commit()
 
 

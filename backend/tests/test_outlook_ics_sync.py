@@ -145,6 +145,28 @@ def test_deletion_propagation(monkeypatch, fake_sync_session):
     assert len(after) == 0
 
 
+def test_resync_preserves_local_done_state(monkeypatch, fake_sync_session):
+    fixture = _make_fixture()
+    _run_sync(monkeypatch, fixture)
+
+    with fake_sync_session() as s:
+        event = (
+            s.query(CalendarEvent)
+            .filter(CalendarEvent.google_id.like("outlook:timed-event-001:%"))
+            .one()
+        )
+        event.done = True
+        event_id = event.google_id
+        s.commit()
+
+    _run_sync(monkeypatch, fixture)
+
+    with fake_sync_session() as s:
+        event = s.get(CalendarEvent, event_id)
+        assert event is not None
+        assert event.done is True
+
+
 def test_google_rows_untouched(monkeypatch, fake_sync_session):
     _run_sync(monkeypatch, _make_fixture())
     with fake_sync_session() as s:
