@@ -1,61 +1,105 @@
 ---
 phase: 11-goal-guided-guidance
 plan: "04"
-subsystem: frontend
-tags: [hooks, today, settings, guidance, focus-banner]
-dependency_graph:
-  requires: ["11-01", "11-03"]
-  provides: ["GUIDE-02-ui", "GUIDE-03-ui"]
-  affects: [frontend/src/pages/Today.tsx, frontend/src/pages/Settings.tsx]
-tech_stack:
+subsystem: ui
+tags: [react, hooks, typescript, guidance, focus-banner, settings]
+
+requires:
+  - phase: 11-01
+    provides: stall_threshold_days setting and /guidance/next-best-task endpoint
+  - phase: 11-03
+    provides: GET/PUT /settings/stall-threshold endpoints
+
+provides:
+  - useNextBestTask hook (one-shot fetch of /guidance/next-best-task)
+  - useStallThreshold hook (get/put /settings/stall-threshold)
+  - FocusBanner component in Today.tsx above the agenda
+  - Guidance section with stall-threshold input in Settings.tsx
+
+affects: [future phases using guidance surface or settings patterns]
+
+tech-stack:
   added: []
-  patterns: [one-shot-fetch-hook, get-put-settings-hook]
-key_files:
+  patterns:
+    - "One-shot on-mount fetch hook (useNextBestTask mirrors usePlan)"
+    - "Get/put settings hook with local input state (useStallThreshold mirrors useWorkHours)"
+    - "In-file supplementary component (FocusBanner) rendered conditionally above agenda"
+
+key-files:
   created:
     - frontend/src/hooks/useNextBestTask.ts
     - frontend/src/hooks/useStallThreshold.ts
   modified:
     - frontend/src/pages/Today.tsx
     - frontend/src/pages/Settings.tsx
-decisions:
-  - FocusBanner is in-file component (not extracted) — read-only, no TaskDrawer interaction per 11-UI-SPEC
-  - Meta line (goal name · priority) omitted from banner — Task type has no resolved goal title
-metrics:
-  duration: ~10min
-  completed: "2026-06-18"
-  tasks_completed: 2
-  files_changed: 4
+
+key-decisions:
+  - "FocusBanner meta line (goal name · priority) omitted — Task type does not expose resolved goal title; no secondary fetch"
+  - "Banner is read-only and does not open TaskDrawer per 11-UI-SPEC Interaction Notes"
+
+patterns-established:
+  - "useStallThreshold: get/put settings hook pattern, mirrors useWorkHours exactly"
+  - "useNextBestTask: silent-fail one-shot hook — supplementary UI never shows errors"
+
+requirements-completed: [GUIDE-02, GUIDE-03]
+
+duration: ~30min
+completed: 2026-06-18
 ---
 
-# Phase 11 Plan 04: FocusBanner + Guidance Settings Summary
+# Phase 11 Plan 04: Goal-Guided Guidance UI Summary
 
-Today "Focus on:" banner fed by GET /guidance/next-best-task and Settings Guidance section with validated stall-threshold (1-365 days) GET/PUT input.
+**Today "Focus on:" banner (indigo left border, read-only) fed by /guidance/next-best-task, and Settings Guidance section with validated stall-threshold (1–365 days) GET/PUT via useStallThreshold hook**
 
-## Tasks Completed
+## Performance
 
-| # | Name | Commit | Files |
-|---|------|--------|-------|
-| 1 | useNextBestTask + useStallThreshold hooks | 4853ad8 | frontend/src/hooks/useNextBestTask.ts, frontend/src/hooks/useStallThreshold.ts |
-| 2 | FocusBanner in Today.tsx + Guidance section in Settings.tsx | 918642f | frontend/src/pages/Today.tsx, frontend/src/pages/Settings.tsx |
+- **Duration:** ~30 min
+- **Started:** 2026-06-18
+- **Completed:** 2026-06-18
+- **Tasks:** 2 auto + 1 checkpoint (human-verify approved)
+- **Files modified:** 4
+
+## Accomplishments
+
+- `useNextBestTask` hook: one-shot fetch on mount, silent-fail (banner is supplementary)
+- `useStallThreshold` hook: get/put pair mirroring useWorkHours pattern exactly
+- FocusBanner rendered between page-title h1 and groups.map in Today.tsx — absent when null/error
+- Guidance section in Settings.tsx with integer 1–365 validation, red border on error, save/reload cycle
+
+## Task Commits
+
+1. **Task 1: useNextBestTask + useStallThreshold hooks** - `4853ad8` (feat)
+2. **Task 2: FocusBanner in Today.tsx + Guidance section in Settings.tsx** - `918642f` (feat)
+3. **Task 3: checkpoint:human-verify** — approved by user
+
+## Files Created/Modified
+
+- `frontend/src/hooks/useNextBestTask.ts` — one-shot fetch, returns `{ task: Task | null }`, silent-fail
+- `frontend/src/hooks/useStallThreshold.ts` — get/put hook, `{ days, loading, save }`
+- `frontend/src/pages/Today.tsx` — imports useNextBestTask, renders FocusBanner above agenda
+- `frontend/src/pages/Settings.tsx` — imports useStallThreshold, adds Guidance section after Work Hours
 
 ## Decisions Made
 
-- FocusBanner is an in-file component (not extracted to components/) — read-only with no interactions, belongs conceptually to Today.tsx
-- Banner meta line (goal name · priority) omitted because Task type does not expose a resolved goal title string — avoids a secondary fetch per 11-UI-SPEC note
-- Guidance section placed after Work Hours, before Google Home — follows page flow from planning to ambient config
+- FocusBanner meta line (goal · priority) omitted because Task type does not expose a resolved goal title; no secondary fetch per plan instruction.
+- Banner is read-only (no onClick, no TaskDrawer) per 11-UI-SPEC Interaction Notes.
 
 ## Deviations from Plan
 
-None — plan executed exactly as written.
+None - plan executed exactly as written.
 
-## Known Stubs
+## Issues Encountered
 
-None — both endpoints are wired to live backend routes from 11-01 and 11-03.
+None.
 
-## Self-Check: PASSED
+## User Setup Required
 
-- frontend/src/hooks/useNextBestTask.ts: FOUND
-- frontend/src/hooks/useStallThreshold.ts: FOUND
-- frontend/src/pages/Today.tsx modified: confirmed (contains useNextBestTask, FocusBanner, "Focus on", aria-label="Suggested focus")
-- frontend/src/pages/Settings.tsx modified: confirmed (contains useStallThreshold, "Stall threshold (days)", validation message)
-- Commits 4853ad8 and 918642f: FOUND
+None - no external service configuration required.
+
+## Next Phase Readiness
+
+Phase 11 is now fully complete — all four plans executed and human-verified. The full guidance pipeline (backend scheduler nudge, next-best-task API, and frontend surfaces) is live.
+
+---
+*Phase: 11-goal-guided-guidance*
+*Completed: 2026-06-18*
