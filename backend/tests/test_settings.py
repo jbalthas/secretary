@@ -75,3 +75,18 @@ def test_set_tts_enabled():
     r2 = client.get("/api/v1/settings/tts")
     assert r2.status_code == 200
     assert r2.json()["tts_enabled"] is False
+
+
+# ---------------------------------------------------------------------------
+# GUIDE-03 — stall threshold setting (Phase 11 Wave 0)
+# ---------------------------------------------------------------------------
+
+def test_stall_threshold_roundtrip():
+    """D-11: PUT then GET /settings/stall-threshold returns the saved value."""
+    r = client.put("/api/v1/settings/stall-threshold", json={"stall_threshold_days": 14})
+    assert r.status_code == 200
+    assert r.json()["stall_threshold_days"] == 14
+
+    r2 = client.get("/api/v1/settings/stall-threshold")
+    assert r2.status_code == 200
+    assert r2.json()["stall_threshold_days"] == 14

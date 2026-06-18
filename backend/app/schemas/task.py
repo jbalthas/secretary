@@ -22,6 +22,7 @@ class TaskUpdate(TaskCreate):
 class TaskRead(TaskCreate):
     id: int
     completed: bool
+    completed_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
     is_habit: bool

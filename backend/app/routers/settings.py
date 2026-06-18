@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import get_session
 from app.models import AppSettings
-from app.schemas.settings import BriefTimeRead, BriefTimeUpdate, WorkHoursRead, WorkHoursUpdate
+from app.schemas.settings import BriefTimeRead, BriefTimeUpdate, WorkHoursRead, WorkHoursUpdate, StallThresholdRead, StallThresholdUpdate
 from app.config import settings
 from app.scheduler import schedule_daily_brief
 
@@ -56,3 +56,22 @@ async def set_work_hours(body: WorkHoursUpdate, session: AsyncSession = Depends(
         cfg.work_end_minute = em
     await session.commit()
     return WorkHoursRead(work_start=body.work_start, work_end=body.work_end)
+
+
+@router.get("/stall-threshold", response_model=StallThresholdRead)
+async def get_stall_threshold(session: AsyncSession = Depends(get_session)):
+    cfg = await session.get(AppSettings, 1)
+    days = cfg.stall_threshold_days if cfg and cfg.stall_threshold_days is not None else 7
+    return StallThresholdRead(stall_threshold_days=days)
+
+
+@router.put("/stall-threshold", response_model=StallThresholdRead)
+async def set_stall_threshold(body: StallThresholdUpdate, session: AsyncSession = Depends(get_session)):
+    cfg = await session.get(AppSettings, 1)
+    if cfg is None:
+        cfg = AppSettings(id=1, stall_threshold_days=body.stall_threshold_days)
+        session.add(cfg)
+    else:
+        cfg.stall_threshold_days = body.stall_threshold_days
+    await session.commit()
+    return StallThresholdRead(stall_threshold_days=body.stall_threshold_days)

@@ -96,6 +96,23 @@ def test_task_estimated_minutes_patch():
     assert r.json()["estimated_minutes"] == 90
 
 
+def test_completed_at_stamped():
+    """D-09: PATCH completed=True stamps completed_at; idempotent re-PATCH does not change it."""
+    create = client.post("/api/v1/tasks/", json={"title": "Stamp me"})
+    task_id = create.json()["id"]
+
+    r1 = client.patch(f"/api/v1/tasks/{task_id}", json={"completed": True})
+    assert r1.status_code == 200
+    data1 = r1.json()
+    assert data1["completed"] is True
+    assert data1["completed_at"] is not None
+    first_stamp = data1["completed_at"]
+
+    r2 = client.patch(f"/api/v1/tasks/{task_id}", json={"completed": True})
+    assert r2.status_code == 200
+    assert r2.json()["completed_at"] == first_stamp
+
+
 def test_unlink_task_from_goal():
     g = client.post("/api/v1/goals/", json={"title": "Ship v2", "type": "learning"}).json()
     t = client.post("/api/v1/tasks/", json={"title": "Linked", "goal_id": g["id"]}).json()
