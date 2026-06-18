@@ -37,11 +37,20 @@ export default function Tasks() {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [activeList, setActiveList] = useState<string | null>(null);
 
-  const listNames = Array.from(
-    new Set(tasks.map((t) => t.list_name).filter(Boolean))
-  ) as string[];
+  const goalListById = new Map(goals.map((g) => [g.id, g.list_name]));
+  function listsForTask(t: Task): string[] {
+    const lists: string[] = [];
+    if (t.list_name) lists.push(t.list_name);
+    const goalList = t.goal_id != null ? goalListById.get(t.goal_id) : null;
+    if (goalList && goalList !== t.list_name) lists.push(goalList);
+    return lists;
+  }
 
-  const listFiltered = activeList ? tasks.filter((t) => t.list_name === activeList) : tasks;
+  const listNames = Array.from(new Set(tasks.flatMap(listsForTask)));
+
+  const listFiltered = activeList
+    ? tasks.filter((t) => listsForTask(t).includes(activeList))
+    : tasks;
   const filtered = listFiltered.filter((t) =>
     filter === "pending" ? !t.completed : t.completed
   );
