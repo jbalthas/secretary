@@ -1,6 +1,6 @@
 import enum
-from datetime import datetime, timezone
-from sqlalchemy import String, Boolean, DateTime, Text, Enum as SAEnum, ForeignKey, Integer
+from datetime import datetime, timezone, date
+from sqlalchemy import String, Boolean, DateTime, Date, Text, Enum as SAEnum, ForeignKey, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db import Base
 
@@ -34,6 +34,8 @@ class Task(Base):
     external_key: Mapped[str | None] = mapped_column(String(200), unique=True, nullable=True, index=True)
     is_habit: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     estimated_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    list_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
     goal: Mapped["Goal | None"] = relationship("Goal", back_populates="tasks", lazy="selectin")
 
 
@@ -47,6 +49,8 @@ class AppSettings(Base):
     work_start_minute: Mapped[int] = mapped_column(Integer, default=0)
     work_end_hour: Mapped[int] = mapped_column(Integer, default=18)
     work_end_minute: Mapped[int] = mapped_column(Integer, default=0)
+    stall_threshold_days: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    last_guidance_sent_date: Mapped[date | None] = mapped_column(Date, nullable=True)
 
 
 class RoutineAction(str, enum.Enum):
