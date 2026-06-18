@@ -126,6 +126,7 @@ None
 | 260615-bse | Weekly voice readout (tasks + events) on Google Home, alongside daily brief; webhook `range=day\|week` | 2026-06-15 | 4fabd1f | [260615-bse-add-weekly-voice-readout-tasks-events-to](./quick/260615-bse-add-weekly-voice-readout-tasks-events-to/) |
 | 260617-bvj | Fix task→goal unlink: send goal_id explicitly (null) from TaskDrawer; widen TaskCreate type; backend regression test | 2026-06-17 | a3f65fa | [260617-bvj-fix-task-to-goal-unlink-in-taskdrawer-se](./quick/260617-bvj-fix-task-to-goal-unlink-in-taskdrawer-se/) |
 | 260617-ldm | Add per-task estimated_minutes (Duration) field: backend TaskCreate schema + frontend types + TaskDrawer Collapsible input; planner block sizing without re-ingest | 2026-06-17 | 361915a | [260617-ldm-add-per-task-estimated-minutes-duration-](./quick/260617-ldm-add-per-task-estimated-minutes-duration-/) |
+| 260618-dbv | Add task lists (list_name nullable string): migration 0010, model, schemas, GET /tasks/lists, list_name filter on GET /tasks/, TaskDrawer autocomplete input, Tasks page chip row filter | 2026-06-18 | e389d2e | [260618-dbv-add-task-lists-a-simple-list-name-string](./quick/260618-dbv-add-task-lists-a-simple-list-name-string/) |
 
 ### Todos
 
@@ -135,5 +136,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-06-17T20:29:32.894Z
+Last session: 2026-06-18T14:40:00Z
 Next action: Run `/gsd:plan-phase 8` to break Phase 8 (Goals + Ingest Backend) into executable plans
