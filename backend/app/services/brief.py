@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime, timezone, timedelta
-from sqlalchemy import create_engine, select, or_, and_
+from sqlalchemy import create_engine, select, or_, and_, func, case
 from sqlalchemy.orm import sessionmaker
 from app.config import settings as app_settings
 from app.services.pushover import PushoverClient
@@ -12,9 +12,24 @@ _engine = create_engine(_sync_url)
 _Session = sessionmaker(_engine)
 
 
+def _compute_progress_sync(goal_id: int, session) -> int:
+    from app.models import Task
+    from app.models.goal import Milestone
+    task_row = session.execute(
+        select(func.count(Task.id), func.sum(case((Task.completed == True, 1), else_=0))).where(Task.goal_id == goal_id)
+    ).one()
+    ms_row = session.execute(
+        select(func.count(Milestone.id), func.sum(case((Milestone.done == True, 1), else_=0))).where(Milestone.goal_id == goal_id)
+    ).one()
+    total = (task_row[0] or 0) + (ms_row[0] or 0)
+    done = (task_row[1] or 0) + (ms_row[1] or 0)
+    return round(done / total * 100) if total > 0 else 0
+
+
 def build_brief_body() -> str:
     from app.models import Task
     from app.models.calendar import CalendarEvent
+    from app.models.goal import Goal
 
     now = datetime.now()  # local time, matching how SQLite stores naive datetimes
     today_str = now.date().isoformat()
@@ -42,30 +57,53 @@ def build_brief_body() -> str:
                 ),
             )
         ).scalars().all()
+        goals = s.execute(select(Goal).where(Goal.status == "active")).scalars().all()
 
-    timed = []
-    untimed = []
+        timed = []
+        untimed = []
 
-    for t in tasks:
-        if t.due_date.hour == 0 and t.due_date.minute == 0:
-            untimed.append(f"• {t.title}")
-        else:
-            timed.append((t.due_date.strftime("%H:%M"), t.title))
+        for t in tasks:
+            if t.due_date.hour == 0 and t.due_date.minute == 0:
+                untimed.append(f"• {t.title}")
+            else:
+                timed.append((t.due_date.strftime("%H:%M"), t.title))
 
-    for e in events:
-        if e.all_day or e.start_dt is None:
-            untimed.append(f"• {e.title}")
-        else:
-            timed.append((e.start_dt.strftime("%H:%M"), e.title))
+        for e in events:
+            if e.all_day or e.start_dt is None:
+                untimed.append(f"• {e.title}")
+            else:
+                timed.append((e.start_dt.strftime("%H:%M"), e.title))
 
-    timed.sort(key=lambda x: x[0])
-    lines = [f"{hm} {title}" for hm, title in timed] + untimed
-    return "\n".join(lines) if lines else "Nothing scheduled today."
+        timed.sort(key=lambda x: x[0])
+        lines = [f"{hm} {title}" for hm, title in timed] + untimed
+
+        goal_lines = []
+        for g in goals:
+            pct = _compute_progress_sync(g.id, s)
+            pending = [t for t in g.tasks if not t.completed]
+            if pending:
+                with_due = [t for t in pending if t.due_date]
+                if with_due:
+                    next_task = min(with_due, key=lambda t: t.due_date)
+                else:
+                    next_task = max(pending, key=lambda t: {"high": 3, "medium": 2, "low": 1}.get(t.priority.value, 1))
+                goal_lines.append(f"• {g.title}: {pct}% — next: {next_task.title}")
+            else:
+                goal_lines.append(f"• {g.title}: {pct}%")
+
+    if goal_lines:
+        lines.append("\nGoals:")
+        lines.extend(goal_lines)
+
+    if not lines:
+        return "Nothing scheduled today."
+    return "\n".join(lines)
 
 
 def build_brief_speech() -> str:
     from app.models import Task
     from app.models.calendar import CalendarEvent
+    from app.models.goal import Goal
 
     now = datetime.now()
     today_str = now.date().isoformat()
@@ -93,6 +131,7 @@ def build_brief_speech() -> str:
                 ),
             )
         ).scalars().all()
+        goals = s.execute(select(Goal).where(Goal.status == "active")).scalars().all()
 
     timed: list[tuple[str, str]] = []
     untimed: list[str] = []
@@ -112,9 +151,17 @@ def build_brief_speech() -> str:
     timed.sort(key=lambda x: x[0])
     titles = [title for _, title in timed] + untimed
 
-    if not titles:
-        return "Good morning. Nothing scheduled today."
-    return "Good morning. " + ". ".join(titles) + "."
+    speech = "Good morning."
+    if titles:
+        speech += " " + ". ".join(titles) + "."
+
+    if goals:
+        sorted_goals = sorted(goals, key=lambda g: (g.target_date is None, g.target_date))
+        top = sorted_goals[:3]
+        top_titles = ", ".join(g.title for g in top)
+        speech += f" You have {len(goals)} active goals. Top goals: {top_titles}."
+
+    return speech
 
 
 def send_daily_brief() -> None:
