@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, union, literal_column, or_
 
 from app.db import get_session
 from app.models import Task
+from app.models.goal import Goal
 from app.schemas.task import TaskCreate, TaskUpdate, TaskRead
 from app.config import settings
 from app.scheduler import upsert_reminder, remove_reminder
@@ -13,17 +14,26 @@ router = APIRouter(prefix=f"{settings.api_prefix}/tasks", tags=["tasks"])
 
 @router.get("/lists", response_model=list[str])
 async def list_task_lists(session: AsyncSession = Depends(get_session)):
-    result = await session.execute(
-        select(Task.list_name).where(Task.list_name.isnot(None)).distinct().order_by(Task.list_name)
+    task_names = select(Task.list_name).where(Task.list_name.isnot(None))
+    goal_names = (
+        select(Goal.list_name)
+        .where(Goal.list_name.isnot(None))
+        .where(Goal.id.in_(select(Task.goal_id).where(Task.goal_id.isnot(None))))
     )
-    return [row for row in result.scalars().all()]
+    combined = union(task_names, goal_names).subquery()
+    result = await session.execute(
+        select(combined.c.list_name).order_by(combined.c.list_name)
+    )
+    return list(result.scalars().all())
 
 
 @router.get("/", response_model=list[TaskRead])
 async def list_tasks(list_name: str | None = None, session: AsyncSession = Depends(get_session)):
     stmt = select(Task).order_by(Task.created_at.desc())
     if list_name:
-        stmt = stmt.where(Task.list_name == list_name)
+        stmt = stmt.join(Goal, Task.goal_id == Goal.id, isouter=True).where(
+            or_(Task.list_name == list_name, Goal.list_name == list_name)
+        )
     result = await session.execute(stmt)
     return result.scalars().all()
 

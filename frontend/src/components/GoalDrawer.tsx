@@ -23,6 +23,8 @@ export default function GoalDrawer({ open, goal, onClose, onSave, onArchive }: P
   const [type, setType] = useState<GoalType>("career");
   const [description, setDescription] = useState("");
   const [targetDate, setTargetDate] = useState("");
+  const [listName, setListName] = useState("");
+  const [listOptions, setListOptions] = useState<string[]>([]);
   const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
@@ -31,7 +33,9 @@ export default function GoalDrawer({ open, goal, onClose, onSave, onArchive }: P
       setType(goal?.type ?? "career");
       setDescription(goal?.description ?? "");
       setTargetDate(goal?.target_date ?? "");
+      setListName(goal?.list_name ?? "");
       setShowConfirm(false);
+      fetch("/api/v1/tasks/lists").then(r => r.json()).then(setListOptions).catch(() => {});
     }
   }, [open, goal]);
 
@@ -41,6 +45,7 @@ export default function GoalDrawer({ open, goal, onClose, onSave, onArchive }: P
       type,
       description: description || undefined,
       target_date: targetDate || undefined,
+      list_name: listName || null,
     };
     await onSave(body, goal?.id);
     onClose();
@@ -114,6 +119,22 @@ export default function GoalDrawer({ open, goal, onClose, onSave, onArchive }: P
               value={targetDate}
               onChange={(e) => setTargetDate(e.target.value)}
             />
+          </div>
+
+          <div className="drawer-field">
+            <label htmlFor="goal-list">List</label>
+            <input
+              id="goal-list"
+              type="text"
+              list="goal-list-options"
+              value={listName}
+              onChange={(e) => setListName(e.target.value)}
+              placeholder="e.g. Work, Health, Personal"
+              autoComplete="off"
+            />
+            <datalist id="goal-list-options">
+              {listOptions.map((l) => <option key={l} value={l} />)}
+            </datalist>
           </div>
 
           <button type="button" className="btn-save" onClick={handleSave}>

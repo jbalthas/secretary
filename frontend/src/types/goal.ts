@@ -17,6 +17,7 @@ export interface Goal {
   target_date: string | null;
   status: GoalStatus;
   external_key: string | null;
+  list_name: string | null;
   created_at: string;
   updated_at: string;
   progress_pct: number;
@@ -28,6 +29,7 @@ export interface GoalCreate {
   type: GoalType;
   description?: string;
   target_date?: string;
+  list_name?: string | null;
 }
 
 export interface GoalUpdate {
@@ -36,6 +38,7 @@ export interface GoalUpdate {
   description?: string;
   target_date?: string;
   status?: GoalStatus;
+  list_name?: string | null;
 }
 
 export interface MilestoneCreate {

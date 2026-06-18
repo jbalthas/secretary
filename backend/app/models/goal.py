@@ -29,6 +29,7 @@ class Goal(Base):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     target_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     status: Mapped[GoalStatus] = mapped_column(SAEnum(GoalStatus), default=GoalStatus.active, nullable=False)
+    list_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )

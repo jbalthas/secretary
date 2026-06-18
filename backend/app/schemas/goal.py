@@ -30,6 +30,7 @@ class GoalCreate(BaseModel):
     description: str | None = None
     target_date: date | None = None
     external_key: str | None = None
+    list_name: str | None = None
 
 
 class GoalUpdate(BaseModel):
@@ -38,6 +39,7 @@ class GoalUpdate(BaseModel):
     description: str | None = None
     target_date: date | None = None
     status: GoalStatus | None = None
+    list_name: str | None = None
 
 
 class GoalRead(BaseModel):
@@ -48,6 +50,7 @@ class GoalRead(BaseModel):
     target_date: date | None
     status: GoalStatus
     external_key: str | None
+    list_name: str | None
     created_at: datetime
     updated_at: datetime
     progress_pct: int
