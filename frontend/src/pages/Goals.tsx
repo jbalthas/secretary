@@ -107,7 +107,23 @@ export default function Goals() {
           <h1 className="page-title" style={{ flex: 1 }}>
             {goal.title}
           </h1>
+          <button
+            type="button"
+            className="btn-text-accent"
+            onClick={() => {
+              setEditingGoal(goal);
+              setDrawerOpen(true);
+            }}
+          >
+            Edit
+          </button>
         </div>
+
+        {goal.list_name && (
+          <div className="goal-row-header">
+            <span className={`type-badge type-${goal.type}`}>{goal.list_name}</span>
+          </div>
+        )}
 
         <div className="section-label">Progress</div>
         <div className="goal-row-header">
@@ -228,6 +244,18 @@ export default function Goals() {
           onClose={() => setTaskDrawerOpen(false)}
           onSave={handleTaskSave}
           onDelete={deleteTask}
+        />
+
+        <GoalDrawer
+          open={drawerOpen}
+          goal={editingGoal}
+          onClose={() => setDrawerOpen(false)}
+          onSave={handleGoalSave}
+          onArchive={async (id) => {
+            await patchGoal(id, { status: "archived" });
+            setDrawerOpen(false);
+            setSelectedGoalId(null);
+          }}
         />
       </div>
     );
