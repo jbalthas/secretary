@@ -31,6 +31,7 @@ async def _to_read(goal: Goal, session: AsyncSession) -> GoalRead:
             "target_date": goal.target_date,
             "status": goal.status,
             "external_key": goal.external_key,
+            "list_name": goal.list_name,
             "created_at": goal.created_at,
             "updated_at": goal.updated_at,
             "progress_pct": progress["pct"],
