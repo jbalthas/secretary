@@ -4,6 +4,7 @@ import { useGoals } from "../hooks/useGoals";
 import TaskRow from "../components/TaskRow";
 import TaskDrawer from "../components/TaskDrawer";
 import FAB from "../components/FAB";
+import { buildTaskFilters, taskMatchesFilter } from "../lib/taskFilters";
 import type { Task, TaskCreate, Priority } from "../types/task";
 
 type Filter = "pending" | "completed";
@@ -35,21 +36,14 @@ export default function Tasks() {
   const [sort, setSort] = useState<Sort>("due");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [activeList, setActiveList] = useState<string | null>(null);
+  const [activeFilterKey, setActiveFilterKey] = useState<string | null>(null);
 
-  const goalListById = new Map(goals.map((g) => [g.id, g.list_name]));
-  function listsForTask(t: Task): string[] {
-    const lists: string[] = [];
-    if (t.list_name) lists.push(t.list_name);
-    const goalList = t.goal_id != null ? goalListById.get(t.goal_id) : null;
-    if (goalList && goalList !== t.list_name) lists.push(goalList);
-    return lists;
-  }
-
-  const listNames = Array.from(new Set(tasks.flatMap(listsForTask)));
-
-  const listFiltered = activeList
-    ? tasks.filter((t) => listsForTask(t).includes(activeList))
+  const taskFilters = buildTaskFilters(tasks, goals);
+  const activeTaskFilter = taskFilters.find(
+    (taskFilter) => taskFilter.key === activeFilterKey
+  );
+  const listFiltered = activeTaskFilter
+    ? tasks.filter((task) => taskMatchesFilter(task, activeTaskFilter, goals))
     : tasks;
   const filtered = listFiltered.filter((t) =>
     filter === "pending" ? !t.completed : t.completed
@@ -68,18 +62,21 @@ export default function Tasks() {
     <div className="page">
       <h1 className="page-title">Tasks</h1>
 
-      {listNames.length > 0 && (
+      {taskFilters.length > 0 && (
         <div className="list-chips">
           <button
-            className={"list-chip" + (!activeList ? " active" : "")}
-            onClick={() => setActiveList(null)}
+            className={"list-chip" + (!activeFilterKey ? " active" : "")}
+            onClick={() => setActiveFilterKey(null)}
           >All</button>
-          {listNames.map((l) => (
+          {taskFilters.map((taskFilter) => (
             <button
-              key={l}
-              className={"list-chip" + (activeList === l ? " active" : "")}
-              onClick={() => setActiveList(l)}
-            >{l}</button>
+              key={taskFilter.key}
+              className={
+                "list-chip" +
+                (activeFilterKey === taskFilter.key ? " active" : "")
+              }
+              onClick={() => setActiveFilterKey(taskFilter.key)}
+            >{taskFilter.label}</button>
           ))}
         </div>
       )}
