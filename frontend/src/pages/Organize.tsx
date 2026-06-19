@@ -89,7 +89,7 @@ export default function Organize() {
   const { blocks, loading, fetchBlocks, propose, approve, replan } = usePlan(todayKey);
   const { tasks, refresh: refreshTasks } = useTasks();
   const { events } = useCalendarEvents();
-  const { workStart, workEnd } = useWorkHours();
+  const { workStart, workEnd, loading: workHoursLoading } = useWorkHours();
 
   const [phase, setPhase] = useState<Phase>("loading");
   const [draftBlocks, setDraftBlocks] = useState<ProposedBlock[]>([]);
@@ -97,6 +97,9 @@ export default function Organize() {
   const [calendarFull, setCalendarFull] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [taskSort, setTaskSort] = useState<OrganizeTaskSort>("priority");
+  const [scheduleStart, setScheduleStart] = useState("09:00");
+  const [scheduleEnd, setScheduleEnd] = useState("18:00");
+  const [scheduleWindowReady, setScheduleWindowReady] = useState(false);
   const initialized = useRef(false);
   const planApprovedAt = useRef<Date | null>(null);
   const manuallyRemovedTaskIds = useRef(new Set<number>());
@@ -140,10 +143,17 @@ export default function Organize() {
     [sortedDrafts, timedEvents],
   );
 
+  const hasValidWindow = scheduleStart < scheduleEnd;
+
   async function loadProposal() {
+    if (!hasValidWindow) {
+      setError("Choose an end time that is later than the start time.");
+      setPhase("editing");
+      return;
+    }
     setError(null);
     setPhase("proposing");
-    const result = await propose(todayKey);
+    const result = await propose(todayKey, scheduleStart, scheduleEnd);
     if (!result) {
       setError("Could not build a plan. You can still add tasks manually.");
       setDraftBlocks([]);
@@ -156,7 +166,14 @@ export default function Organize() {
   }
 
   useEffect(() => {
-    if (loading || initialized.current) return;
+    if (workHoursLoading || scheduleWindowReady) return;
+    setScheduleStart(workStart || "09:00");
+    setScheduleEnd(workEnd || "18:00");
+    setScheduleWindowReady(true);
+  }, [scheduleWindowReady, workEnd, workHoursLoading, workStart]);
+
+  useEffect(() => {
+    if (loading || !scheduleWindowReady || initialized.current) return;
     initialized.current = true;
     if (blocks.length > 0) {
       planApprovedAt.current = blocks.reduce((latest, block) => {
@@ -172,7 +189,7 @@ export default function Organize() {
       void loadProposal();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading]);
+  }, [loading, scheduleWindowReady]);
 
   useEffect(() => {
     if (!initialized.current) return;
@@ -180,12 +197,13 @@ export default function Organize() {
       appendCurrentTasksToPlan(
         current,
         incompleteTasks.filter((task) => !manuallyRemovedTaskIds.current.has(task.id)),
-        workStart || "09:00",
+        scheduleStart,
         new Date(),
         planApprovedAt.current,
+        scheduleEnd,
       ),
     );
-  }, [incompleteTasks, workStart]);
+  }, [incompleteTasks, scheduleEnd, scheduleStart]);
 
   useEffect(() => {
     function refreshCurrentTasks() {
@@ -207,7 +225,7 @@ export default function Organize() {
   }, []);
 
   function nextStartTime(): string {
-    const fallback = workStart || "09:00";
+    const fallback = scheduleStart;
     if (draftBlocks.length === 0) return fallback;
     const latestEnd = draftBlocks.reduce((latest, block) => {
       const end = new Date(block.end_dt);
@@ -305,18 +323,49 @@ export default function Organize() {
           <h1 className="organize-title">Organize</h1>
           <p className="organize-date">{formatLongDate(today)}</p>
         </div>
-        <div className="organize-header-actions">
-          <button type="button" className="organize-secondary-button" onClick={() => void autoArrange()}>
-            <Sparkles size={16} /> Auto-arrange
-          </button>
-          <button
-            type="button"
-            className="organize-primary-button"
-            onClick={() => void savePlan()}
-            disabled={phase === "saving"}
-          >
-            <Check size={17} /> {phase === "saving" ? "Saving…" : isReplacement ? "Save changes" : "Save plan"}
-          </button>
+        <div className="organize-header-tools">
+          <fieldset className="organize-window">
+            <legend>Arrange between</legend>
+            <label>
+              <span>Start</span>
+              <input
+                type="time"
+                value={scheduleStart}
+                onChange={(event) => setScheduleStart(event.target.value)}
+                onInput={(event) => setScheduleStart(event.currentTarget.value)}
+                aria-label="Auto-arrange start time"
+              />
+            </label>
+            <span className="organize-window-separator">to</span>
+            <label>
+              <span>End</span>
+              <input
+                type="time"
+                value={scheduleEnd}
+                onChange={(event) => setScheduleEnd(event.target.value)}
+                onInput={(event) => setScheduleEnd(event.currentTarget.value)}
+                aria-label="Auto-arrange end time"
+              />
+            </label>
+          </fieldset>
+          <div className="organize-header-actions">
+            <button
+              type="button"
+              className="organize-secondary-button"
+              onClick={() => void autoArrange()}
+              disabled={!hasValidWindow}
+            >
+              <Sparkles size={16} /> Auto-arrange
+            </button>
+            <button
+              type="button"
+              className="organize-primary-button"
+              onClick={() => void savePlan()}
+              disabled={phase === "saving"}
+            >
+              <Check size={17} /> {phase === "saving" ? "Saving…" : isReplacement ? "Save changes" : "Save plan"}
+            </button>
+          </div>
         </div>
       </header>
 
@@ -395,7 +444,7 @@ export default function Organize() {
           <div className="organize-panel-heading organize-schedule-heading">
             <div>
               <h2>Today&apos;s schedule</h2>
-              <p>{workStart || "09:00"} – {workEnd || "18:00"} · {draftBlocks.length} flexible block{draftBlocks.length === 1 ? "" : "s"}</p>
+              <p>{scheduleStart} – {scheduleEnd} · {draftBlocks.length} flexible block{draftBlocks.length === 1 ? "" : "s"}</p>
             </div>
             <CalendarDays size={19} />
           </div>

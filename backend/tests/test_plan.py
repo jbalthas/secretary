@@ -246,6 +246,42 @@ def test_propose_is_read_only():
     assert blocks.json() == []
 
 
+def test_propose_accepts_a_request_specific_time_window(monkeypatch):
+    from app.schemas.plan import ProposedDayPlan
+
+    captured = {}
+
+    def fake_propose_day_plan(**kwargs):
+        captured.update(kwargs)
+        return ProposedDayPlan(
+            date=kwargs["target_date"],
+            blocks=[],
+            unplaced_task_ids=[],
+            fully_booked=False,
+        )
+
+    monkeypatch.setattr(
+        "app.routers.plan.planner_service.propose_day_plan",
+        fake_propose_day_plan,
+    )
+    d = "2099-01-10"
+    r = client.get(
+        f"/api/v1/plan/propose?date={d}&work_start=13:00&work_end=14:00"
+    )
+    assert r.status_code == 200, r.text
+    assert captured["work_start"] == time(13, 0)
+    assert captured["work_end"] == time(14, 0)
+
+
+def test_propose_rejects_a_reversed_time_window():
+    d = "2099-01-11"
+    r = client.get(
+        f"/api/v1/plan/propose?date={d}&work_start=18:00&work_end=09:00"
+    )
+    assert r.status_code == 422
+    assert r.json()["detail"] == "Planning start time must be before end time."
+
+
 def test_approve_idempotent_409():
     d = "2099-01-02"
     body = {

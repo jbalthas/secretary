@@ -88,4 +88,21 @@ describe("appendCurrentTasksToPlan", () => {
 
     expect(result.map(({ task_id }) => task_id)).toEqual([1, 3]);
   });
+
+  it("does not append suggestions past the selected end time", () => {
+    const result = appendCurrentTasksToPlan(
+      [block()],
+      [
+        task({ id: 2, title: "Fits", estimated_minutes: 30 }),
+        task({ id: 3, title: "Would spill over", estimated_minutes: 45 }),
+      ],
+      "09:00",
+      NOW,
+      null,
+      "10:30",
+    );
+
+    expect(result.map(({ task_id }) => task_id)).toEqual([1, 2]);
+    expect(result[1].end_dt).toBe("2026-06-18T15:00:00.000Z");
+  });
 });

@@ -63,6 +63,8 @@ async def _write_blocks(body: ApproveRequest, session: AsyncSession) -> list[Sch
 @router.get("/propose", response_model=ProposedDayPlan)
 async def propose(
     date_str: str = Query(alias="date"),
+    work_start: str | None = Query(default=None, pattern=r"^\d{2}:\d{2}$"),
+    work_end: str | None = Query(default=None, pattern=r"^\d{2}:\d{2}$"),
     session: AsyncSession = Depends(get_session),
 ):
     target_date = date.fromisoformat(date_str)
@@ -77,8 +79,13 @@ async def propose(
     sm = cfg.work_start_minute if cfg and cfg.work_start_minute is not None else 0
     eh = cfg.work_end_hour if cfg and cfg.work_end_hour is not None else 18
     em = cfg.work_end_minute if cfg and cfg.work_end_minute is not None else 0
-    ws = time(sh, sm)
-    we = time(eh, em)
+    try:
+        ws = time.fromisoformat(work_start) if work_start else time(sh, sm)
+        we = time.fromisoformat(work_end) if work_end else time(eh, em)
+    except ValueError as exc:
+        raise HTTPException(422, detail="Planning hours must use a valid HH:MM time.") from exc
+    if ws >= we:
+        raise HTTPException(422, detail="Planning start time must be before end time.")
 
     local_tz = os.environ.get("TZ", "UTC")
 

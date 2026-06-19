@@ -29,6 +29,7 @@ export function appendCurrentTasksToPlan(
   workStart = "09:00",
   now = new Date(),
   createdAfter?: Date | null,
+  workEnd?: string,
 ): ProposedBlock[] {
   const scheduledTaskIds = new Set(
     blocks.flatMap((block) => (block.task_id == null ? [] : [block.task_id])),
@@ -46,16 +47,25 @@ export function appendCurrentTasksToPlan(
   if (missingTasks.length === 0) return blocks;
 
   let cursor = initialCursor(blocks, workStart, now);
-  const additions = missingTasks.map((task) => {
+  const windowEnd = workEnd
+    ? (() => {
+        const end = new Date(now);
+        const [hours, minutes] = workEnd.split(":").map(Number);
+        end.setHours(hours, minutes, 0, 0);
+        return end;
+      })()
+    : null;
+  const additions = missingTasks.flatMap((task) => {
     const start = new Date(cursor);
     const end = new Date(start.getTime() + (task.estimated_minutes || 30) * 60000);
+    if (windowEnd && end > windowEnd) return [];
     cursor = end;
-    return {
+    return [{
       task_id: task.id,
       title: task.title,
       start_dt: start.toISOString(),
       end_dt: end.toISOString(),
-    };
+    }];
   });
 
   return [...blocks, ...additions];
