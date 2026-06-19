@@ -17,8 +17,15 @@ export function usePlan(dateKey: string) {
     }
   }
 
-  async function propose(date: string): Promise<ProposedDayPlan | null> {
-    const res = await fetch(`${API}/propose?date=${date}`);
+  async function propose(
+    date: string,
+    workStart?: string,
+    workEnd?: string,
+  ): Promise<ProposedDayPlan | null> {
+    const params = new URLSearchParams({ date });
+    if (workStart) params.set("work_start", workStart);
+    if (workEnd) params.set("work_end", workEnd);
+    const res = await fetch(`${API}/propose?${params.toString()}`);
     return res.ok ? await res.json() : null;
   }
 
