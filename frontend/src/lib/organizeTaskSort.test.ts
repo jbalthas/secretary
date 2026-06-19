@@ -37,4 +37,15 @@ describe("sortOrganizeTasks", () => {
 
     expect(sortOrganizeTasks(tasks, "list").map(({ id }) => id)).toEqual([4, 2, 3, 1]);
   });
+
+  it("moves a selected list to the top while preserving priority within groups", () => {
+    const tasks = [
+      task({ id: 1, title: "Career low", priority: "low", list_name: "Career" }),
+      task({ id: 2, title: "Home high", priority: "high", list_name: "Home" }),
+      task({ id: 3, title: "Career high", priority: "high", list_name: "career" }),
+      task({ id: 4, title: "Unlisted", priority: "medium", list_name: null }),
+    ];
+
+    expect(sortOrganizeTasks(tasks, "list", "Career").map(({ id }) => id)).toEqual([3, 1, 2, 4]);
+  });
 });

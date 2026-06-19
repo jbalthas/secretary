@@ -97,6 +97,7 @@ export default function Organize() {
   const [calendarFull, setCalendarFull] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [taskSort, setTaskSort] = useState<OrganizeTaskSort>("priority");
+  const [prioritizedList, setPrioritizedList] = useState("");
   const [scheduleStart, setScheduleStart] = useState("09:00");
   const [scheduleEnd, setScheduleEnd] = useState("18:00");
   const [scheduleWindowReady, setScheduleWindowReady] = useState(false);
@@ -109,10 +110,26 @@ export default function Organize() {
     () => new Set(draftBlocks.flatMap((block) => (block.task_id == null ? [] : [block.task_id]))),
     [draftBlocks],
   );
-  const queuedTasks = useMemo(() => {
-    const unscheduled = incompleteTasks.filter((task) => !scheduledTaskIds.has(task.id));
-    return sortOrganizeTasks(unscheduled, taskSort);
-  }, [incompleteTasks, scheduledTaskIds, taskSort]);
+  const unscheduledTasks = useMemo(
+    () => incompleteTasks.filter((task) => !scheduledTaskIds.has(task.id)),
+    [incompleteTasks, scheduledTaskIds],
+  );
+  const taskLists = useMemo(
+    () =>
+      Array.from(
+        new Map(
+          unscheduledTasks.flatMap((task) => {
+            const listName = task.list_name?.trim();
+            return listName ? [[listName.toLocaleLowerCase(), listName] as const] : [];
+          }),
+        ).values(),
+      ).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" })),
+    [unscheduledTasks],
+  );
+  const queuedTasks = useMemo(
+    () => sortOrganizeTasks(unscheduledTasks, taskSort, prioritizedList),
+    [prioritizedList, taskSort, unscheduledTasks],
+  );
   const timedEvents = useMemo(
     () =>
       events
@@ -403,6 +420,23 @@ export default function Organize() {
                   <option value="list">List</option>
                 </select>
               </label>
+              {taskSort === "list" && taskLists.length > 0 ? (
+                <label className="organize-sort-control">
+                  <span>List first</span>
+                  <select
+                    value={prioritizedList}
+                    onChange={(event) => setPrioritizedList(event.target.value)}
+                    aria-label="Prioritize task list"
+                  >
+                    <option value="">All lists</option>
+                    {taskLists.map((listName) => (
+                      <option key={listName.toLocaleLowerCase()} value={listName}>
+                        {listName}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
               <span className="organize-count">{queuedTasks.length}</span>
             </div>
           </div>
