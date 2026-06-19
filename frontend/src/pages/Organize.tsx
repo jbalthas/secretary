@@ -13,6 +13,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useCalendarEvents } from "../hooks/useCalendarEvents";
+import { useGoals } from "../hooks/useGoals";
 import { usePlan } from "../hooks/usePlan";
 import { useTasks } from "../hooks/useTasks";
 import { useWorkHours } from "../hooks/useWorkHours";
@@ -21,6 +22,7 @@ import {
   type OrganizeTaskSort,
 } from "../lib/organizeTaskSort";
 import { appendCurrentTasksToPlan } from "../lib/organizePlan";
+import { buildTaskFilters, taskMatchesFilter } from "../lib/taskFilters";
 import type { ProposedBlock } from "../types/plan";
 import type { Task } from "../types/task";
 
@@ -88,6 +90,7 @@ export default function Organize() {
   const todayKey = localDateKey(today);
   const { blocks, loading, fetchBlocks, propose, approve, replan } = usePlan(todayKey);
   const { tasks, refresh: refreshTasks } = useTasks();
+  const { goals } = useGoals();
   const { events } = useCalendarEvents();
   const { workStart, workEnd, loading: workHoursLoading } = useWorkHours();
 
@@ -97,7 +100,7 @@ export default function Organize() {
   const [calendarFull, setCalendarFull] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [taskSort, setTaskSort] = useState<OrganizeTaskSort>("priority");
-  const [prioritizedList, setPrioritizedList] = useState("");
+  const [prioritizedFilterKey, setPrioritizedFilterKey] = useState("");
   const [scheduleStart, setScheduleStart] = useState("09:00");
   const [scheduleEnd, setScheduleEnd] = useState("18:00");
   const [scheduleWindowReady, setScheduleWindowReady] = useState(false);
@@ -114,21 +117,22 @@ export default function Organize() {
     () => incompleteTasks.filter((task) => !scheduledTaskIds.has(task.id)),
     [incompleteTasks, scheduledTaskIds],
   );
-  const taskLists = useMemo(
-    () =>
-      Array.from(
-        new Map(
-          unscheduledTasks.flatMap((task) => {
-            const listName = task.list_name?.trim();
-            return listName ? [[listName.toLocaleLowerCase(), listName] as const] : [];
-          }),
-        ).values(),
-      ).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" })),
-    [unscheduledTasks],
+  const taskGroups = useMemo(
+    () => buildTaskFilters(unscheduledTasks, goals),
+    [goals, unscheduledTasks],
   );
+  const prioritizedTaskIds = useMemo(() => {
+    const selectedGroup = taskGroups.find((group) => group.key === prioritizedFilterKey);
+    if (!selectedGroup) return undefined;
+    return new Set(
+      unscheduledTasks
+        .filter((task) => taskMatchesFilter(task, selectedGroup, goals))
+        .map((task) => task.id),
+    );
+  }, [goals, prioritizedFilterKey, taskGroups, unscheduledTasks]);
   const queuedTasks = useMemo(
-    () => sortOrganizeTasks(unscheduledTasks, taskSort, prioritizedList),
-    [prioritizedList, taskSort, unscheduledTasks],
+    () => sortOrganizeTasks(unscheduledTasks, taskSort, prioritizedTaskIds),
+    [prioritizedTaskIds, taskSort, unscheduledTasks],
   );
   const timedEvents = useMemo(
     () =>
@@ -420,18 +424,18 @@ export default function Organize() {
                   <option value="list">List</option>
                 </select>
               </label>
-              {taskSort === "list" && taskLists.length > 0 ? (
+              {taskSort === "list" && taskGroups.length > 0 ? (
                 <label className="organize-sort-control">
                   <span>List first</span>
                   <select
-                    value={prioritizedList}
-                    onChange={(event) => setPrioritizedList(event.target.value)}
+                    value={prioritizedFilterKey}
+                    onChange={(event) => setPrioritizedFilterKey(event.target.value)}
                     aria-label="Prioritize task list"
                   >
                     <option value="">All lists</option>
-                    {taskLists.map((listName) => (
-                      <option key={listName.toLocaleLowerCase()} value={listName}>
-                        {listName}
+                    {taskGroups.map((group) => (
+                      <option key={group.key} value={group.key}>
+                        {group.label}
                       </option>
                     ))}
                   </select>

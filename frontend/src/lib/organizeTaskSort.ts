@@ -11,18 +11,16 @@ const PRIORITY_RANK: Record<Task["priority"], number> = {
 export function sortOrganizeTasks(
   tasks: Task[],
   sortBy: OrganizeTaskSort,
-  prioritizedList?: string,
+  prioritizedTaskIds?: ReadonlySet<number>,
 ): Task[] {
-  const normalizedPrioritizedList = prioritizedList?.trim().toLocaleLowerCase();
-
   return [...tasks].sort((a, b) => {
     if (sortBy === "list") {
       const aList = a.list_name?.trim();
       const bList = b.list_name?.trim();
 
-      if (normalizedPrioritizedList) {
-        const aIsPrioritized = aList?.toLocaleLowerCase() === normalizedPrioritizedList;
-        const bIsPrioritized = bList?.toLocaleLowerCase() === normalizedPrioritizedList;
+      if (prioritizedTaskIds?.size) {
+        const aIsPrioritized = prioritizedTaskIds.has(a.id);
+        const bIsPrioritized = prioritizedTaskIds.has(b.id);
         if (aIsPrioritized && !bIsPrioritized) return -1;
         if (!aIsPrioritized && bIsPrioritized) return 1;
       }
