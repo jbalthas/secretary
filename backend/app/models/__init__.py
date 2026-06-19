@@ -36,6 +36,7 @@ class Task(Base):
     estimated_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     list_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    parent_list_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
     goal: Mapped["Goal | None"] = relationship("Goal", back_populates="tasks", lazy="selectin")
 
 

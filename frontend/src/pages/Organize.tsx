@@ -117,6 +117,16 @@ export default function Organize() {
     () => incompleteTasks.filter((task) => !scheduledTaskIds.has(task.id)),
     [incompleteTasks, scheduledTaskIds],
   );
+  const sortableUnscheduledTasks = useMemo(() => {
+    const goalsById = new Map(goals.map((goal) => [goal.id, goal]));
+    return unscheduledTasks.map((task) => {
+      if (task.parent_list_name || task.list_name || task.goal_id == null) return task;
+      const goal = goalsById.get(task.goal_id);
+      return goal
+        ? { ...task, parent_list_name: goal.parent_list_name, list_name: goal.list_name }
+        : task;
+    });
+  }, [goals, unscheduledTasks]);
   const taskGroups = useMemo(
     () => buildTaskFilters(unscheduledTasks, goals),
     [goals, unscheduledTasks],
@@ -131,8 +141,8 @@ export default function Organize() {
     );
   }, [goals, prioritizedFilterKey, taskGroups, unscheduledTasks]);
   const queuedTasks = useMemo(
-    () => sortOrganizeTasks(unscheduledTasks, taskSort, prioritizedTaskIds),
-    [prioritizedTaskIds, taskSort, unscheduledTasks],
+    () => sortOrganizeTasks(sortableUnscheduledTasks, taskSort, prioritizedTaskIds),
+    [prioritizedTaskIds, sortableUnscheduledTasks, taskSort],
   );
   const timedEvents = useMemo(
     () =>
@@ -433,9 +443,9 @@ export default function Organize() {
                     aria-label="Prioritize task list"
                   >
                     <option value="">All lists</option>
-                    {taskGroups.map((group) => (
+                    {taskGroups.filter((group) => group.kind !== "goal").map((group) => (
                       <option key={group.key} value={group.key}>
-                        {group.label}
+                        {group.kind === "list" ? `↳ ${group.label}` : group.label}
                       </option>
                     ))}
                   </select>
@@ -461,7 +471,9 @@ export default function Organize() {
                         {priorityLabel(task)}
                       </span>
                       <span><Clock3 size={13} /> {task.estimated_minutes || 30} min</span>
-                      {task.list_name ? <span>{task.list_name}</span> : null}
+                      {task.parent_list_name || task.list_name ? (
+                        <span>{[task.parent_list_name, task.list_name].filter(Boolean).join(" › ")}</span>
+                      ) : null}
                     </div>
                   </div>
                   <button

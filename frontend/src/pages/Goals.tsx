@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Upload, ChevronLeft } from "lucide-react";
 import { useGoals } from "../hooks/useGoals";
 import { useTasks } from "../hooks/useTasks";
+import { useTaskLists } from "../hooks/useTaskLists";
 import GoalDrawer from "../components/GoalDrawer";
 import TaskDrawer from "../components/TaskDrawer";
 import TaskRow from "../components/TaskRow";
@@ -38,6 +39,7 @@ export default function Goals() {
   const navigate = useNavigate();
   const { goals, refresh: refreshGoals, createGoal, patchGoal } = useGoals();
   const { tasks, createTask, patchTask, deleteTask } = useTasks();
+  const { listGroups, refresh: refreshLists } = useTaskLists();
 
   const [filter, setFilter] = useState<Filter>("active");
   const [selectedGoalId, setSelectedGoalId] = useState<number | null>(null);
@@ -57,6 +59,7 @@ export default function Goals() {
     } else {
       await createGoal(body as GoalCreate);
     }
+    await refreshLists();
   }
 
   async function handleTaskSave(body: TaskCreate, id?: number) {
@@ -65,6 +68,7 @@ export default function Goals() {
     } else {
       await createTask(body);
     }
+    await refreshLists();
   }
 
   async function toggleMilestone(goalId: number, msId: number, done: boolean) {
@@ -119,9 +123,11 @@ export default function Goals() {
           </button>
         </div>
 
-        {goal.list_name && (
+        {(goal.parent_list_name || goal.list_name) && (
           <div className="goal-row-header">
-            <span className={`type-badge type-${goal.type}`}>{goal.list_name}</span>
+            <span className={`type-badge type-${goal.type}`}>
+              {[goal.parent_list_name, goal.list_name].filter(Boolean).join(" › ")}
+            </span>
           </div>
         )}
 
@@ -241,6 +247,7 @@ export default function Goals() {
           open={taskDrawerOpen}
           task={editingTask}
           goals={goals}
+          listGroups={listGroups}
           onClose={() => setTaskDrawerOpen(false)}
           onSave={handleTaskSave}
           onDelete={deleteTask}
@@ -249,6 +256,7 @@ export default function Goals() {
         <GoalDrawer
           open={drawerOpen}
           goal={editingGoal}
+          listGroups={listGroups}
           onClose={() => setDrawerOpen(false)}
           onSave={handleGoalSave}
           onArchive={async (id) => {
@@ -263,6 +271,13 @@ export default function Goals() {
 
   // ----- LIST VIEW -----
   const filtered = goals.filter((g) => g.status === filter);
+  const groupedGoals = filtered.reduce((groups, goal) => {
+    const heading = goal.parent_list_name || goal.list_name || "Other";
+    const current = groups.get(heading) ?? [];
+    current.push(goal);
+    groups.set(heading, current);
+    return groups;
+  }, new Map<string, Goal[]>());
 
   return (
     <div className="page">
@@ -311,24 +326,32 @@ export default function Goals() {
           )}
         </div>
       ) : (
-        <div role="list">
-          {filtered.map((g) => (
-            <div
-              className="goal-row"
-              role="listitem"
-              key={g.id}
-              onClick={() => setSelectedGoalId(g.id)}
-            >
-              <div className="goal-row-header">
-                <span className="goal-row-title">{g.title}</span>
-                <span className={`type-badge type-${g.type}`}>{TYPE_LABELS[g.type]}</span>
-                <span className="goal-row-pct">{g.progress_pct}%</span>
-              </div>
-              <ProgressBar pct={g.progress_pct} />
-            </div>
+        <div className="goal-list-groups" role="list">
+          {[...groupedGoals.entries()].map(([heading, groupGoals]) => (
+            <section className="goal-list-group" key={heading}>
+              <h2 className="goal-list-group-title">{heading}</h2>
+              {groupGoals.map((g) => (
+                <div
+                  className="goal-row"
+                  role="listitem"
+                  key={g.id}
+                  onClick={() => setSelectedGoalId(g.id)}
+                >
+                  <div className="goal-row-header">
+                    <span className="goal-row-title">{g.title}</span>
+                    {g.parent_list_name && g.list_name ? (
+                      <span className="type-badge">{g.list_name}</span>
+                    ) : (
+                      <span className={`type-badge type-${g.type}`}>{TYPE_LABELS[g.type]}</span>
+                    )}
+                    <span className="goal-row-pct">{g.progress_pct}%</span>
+                  </div>
+                  <ProgressBar pct={g.progress_pct} />
+                </div>
+              ))}
+            </section>
           ))}
-        </div>
-      )}
+        </div>      )}
 
       <FAB
         onClick={() => {
@@ -340,6 +363,7 @@ export default function Goals() {
       <GoalDrawer
         open={drawerOpen}
         goal={editingGoal}
+        listGroups={listGroups}
         onClose={() => setDrawerOpen(false)}
         onSave={handleGoalSave}
         onArchive={async (id) => {

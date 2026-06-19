@@ -48,4 +48,13 @@ describe("sortOrganizeTasks", () => {
 
     expect(sortOrganizeTasks(tasks, "list", new Set([1, 3])).map(({ id }) => id)).toEqual([3, 1, 2, 4]);
   });
+  it("sorts umbrellas before their sub-lists", () => {
+    const tasks = [
+      task({ id: 1, title: "Robotics", parent_list_name: "Career", list_name: "Robotics" }),
+      task({ id: 2, title: "Home", list_name: "Home" }),
+      task({ id: 3, title: "Optics", parent_list_name: "Career", list_name: "Optics" }),
+    ];
+
+    expect(sortOrganizeTasks(tasks, "list").map(({ id }) => id)).toEqual([3, 1, 2]);
+  });
 });

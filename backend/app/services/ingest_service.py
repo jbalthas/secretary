@@ -24,6 +24,8 @@ async def _upsert_goal(g: GoalImport, session: AsyncSession) -> tuple[Goal, bool
         existing.description = g.description
         existing.target_date = g.target_date
         existing.type = g.type
+        existing.list_name = g.list_name
+        existing.parent_list_name = g.parent_list_name
         # existing.status is preserved — user controls archive/complete (D-08)
         # Reconcile milestones: match by title, append new ones; do NOT flip done on existing
         existing_titles = {m.title: m for m in existing.milestones}
@@ -40,6 +42,8 @@ async def _upsert_goal(g: GoalImport, session: AsyncSession) -> tuple[Goal, bool
             type=g.type,
             description=g.description,
             target_date=g.target_date,
+            list_name=g.list_name,
+            parent_list_name=g.parent_list_name,
             status=GoalStatus.active,
             milestones=[
                 Milestone(title=m.title, target_date=m.target_date, done=m.done)
@@ -60,6 +64,8 @@ async def _upsert_task(t: TaskImport, goal_id: int | None, session: AsyncSession
         existing.priority = t.priority
         existing.due_date = t.due_date
         existing.goal_id = goal_id
+        existing.list_name = t.list_name
+        existing.parent_list_name = t.parent_list_name
         # NEVER overwrite completed or reminder_at (D-08)
         return existing, False
     else:
@@ -70,6 +76,8 @@ async def _upsert_task(t: TaskImport, goal_id: int | None, session: AsyncSession
             due_date=t.due_date,
             description=t.description,
             goal_id=goal_id,
+            list_name=t.list_name,
+            parent_list_name=t.parent_list_name,
             is_habit=False,
         )
         session.add(row)
@@ -110,6 +118,8 @@ async def _upsert_habit(h: HabitImport, goal_id: int | None, session: AsyncSessi
         existing.recurrence_cron = h.recurrence_cron
         existing.goal_id = goal_id
         existing.is_habit = True
+        existing.list_name = h.list_name
+        existing.parent_list_name = h.parent_list_name
         # NEVER overwrite completed or reminder_at (D-08)
         return existing, False
     else:
@@ -121,6 +131,8 @@ async def _upsert_habit(h: HabitImport, goal_id: int | None, session: AsyncSessi
             recurrence_cron=h.recurrence_cron,
             goal_id=goal_id,
             is_habit=True,
+            list_name=h.list_name,
+            parent_list_name=h.parent_list_name,
         )
         session.add(row)
         return row, True

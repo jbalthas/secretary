@@ -32,6 +32,8 @@ class GoalImport(BaseModel):
     type: GoalType
     description: str | None = Field(None, max_length=2000)
     target_date: date | None = None
+    list_name: str | None = Field(None, max_length=100)
+    parent_list_name: str | None = Field(None, max_length=100)
     milestones: list[MilestoneImport] = []
 
 
@@ -44,6 +46,8 @@ class TaskImport(BaseModel):
     priority: Priority = Priority.medium
     due_date: datetime | None = None
     description: str | None = Field(None, max_length=2000)
+    list_name: str | None = Field(None, max_length=100)
+    parent_list_name: str | None = Field(None, max_length=100)
 
 
 class RoutineImport(BaseModel):
@@ -70,6 +74,8 @@ class HabitImport(BaseModel):
     recurrence_cron: str
     priority: Priority = Priority.medium
     description: str | None = Field(None, max_length=2000)
+    list_name: str | None = Field(None, max_length=100)
+    parent_list_name: str | None = Field(None, max_length=100)
 
     @field_validator("recurrence_cron")
     @classmethod

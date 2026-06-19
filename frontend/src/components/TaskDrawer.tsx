@@ -2,12 +2,14 @@ import { useState, useEffect } from "react";
 import { X, ChevronDown, ChevronRight } from "lucide-react";
 import type { Task, TaskCreate, Priority } from "../types/task";
 import type { Goal } from "../types/goal";
+import type { TaskListGroup } from "../types/taskList";
 import GoalSelect from "./GoalSelect";
 
 interface Props {
   open: boolean;
   task: Task | null;
   goals: Goal[];
+  listGroups: TaskListGroup[];
   onClose: () => void;
   onSave: (body: TaskCreate, id?: number) => Promise<void>;
   onDelete: (id: number) => Promise<void>;
@@ -63,12 +65,12 @@ function Collapsible({ label, children }: CollapsibleProps) {
   );
 }
 
-export default function TaskDrawer({ open, task, goals, onClose, onSave, onDelete }: Props) {
+export default function TaskDrawer({ open, task, goals, listGroups, onClose, onSave, onDelete }: Props) {
   const [title, setTitle] = useState("");
   const [priority, setPriority] = useState<Priority>("medium");
   const [goalId, setGoalId] = useState<number | null>(null);
+  const [parentListName, setParentListName] = useState("");
   const [listName, setListName] = useState("");
-  const [listOptions, setListOptions] = useState<string[]>([]);
   const [dueDate, setDueDate] = useState("");
   const [dueTime, setDueTime] = useState("");
   const [description, setDescription] = useState("");
@@ -84,8 +86,8 @@ export default function TaskDrawer({ open, task, goals, onClose, onSave, onDelet
       setTitle(task?.title ?? "");
       setPriority(task?.priority ?? "medium");
       setGoalId(task?.goal_id ?? null);
+      setParentListName(task?.parent_list_name ?? "");
       setListName(task?.list_name ?? "");
-      fetch("/api/v1/tasks/lists").then((r) => r.json()).then(setListOptions).catch(() => {});
       setDueDate(isoToDateInput(task?.due_date));
       setDueTime(isoToTimeInput(task?.due_date));
       setDescription(task?.description ?? "");
@@ -112,7 +114,8 @@ export default function TaskDrawer({ open, task, goals, onClose, onSave, onDelet
       priority,
       due_date: combineDatetime(dueDate, dueTime),
       goal_id: goalId,
-      list_name: listName || undefined,
+      list_name: listName || null,
+      parent_list_name: parentListName || null,
       description: description || undefined,
       estimated_minutes: estimatedMinutes ? Number(estimatedMinutes) : undefined,
       reminder_at: reminderAt ? `${reminderAt}:00Z` : undefined,
@@ -179,19 +182,39 @@ export default function TaskDrawer({ open, task, goals, onClose, onSave, onDelet
           </div>
 
           <div className="drawer-field">
-            <label htmlFor="task-list">List</label>
+            <label htmlFor="task-parent-list">Umbrella list</label>
+            <input
+              id="task-parent-list"
+              type="text"
+              list="task-parent-list-options"
+              value={parentListName}
+              onChange={(e) => setParentListName(e.target.value)}
+              placeholder="e.g. Career"
+              autoComplete="off"
+            />
+            <datalist id="task-parent-list-options">
+              {listGroups.map((group) => <option key={group.name} value={group.name} />)}
+            </datalist>
+          </div>
+
+          <div className="drawer-field">
+            <label htmlFor="task-list">Sub-list</label>
             <input
               id="task-list"
               type="text"
               list="task-list-options"
               value={listName}
               onChange={(e) => setListName(e.target.value)}
-              placeholder="e.g. Grocery, Work, Life"
+              placeholder={parentListName ? "e.g. Optics" : "Optional standalone list"}
               autoComplete="off"
             />
             <datalist id="task-list-options">
-              {listOptions.map((l) => <option key={l} value={l} />)}
+              {listGroups
+                .filter((group) => !parentListName || group.name === parentListName)
+                .flatMap((group) => group.children)
+                .map((name) => <option key={name} value={name} />)}
             </datalist>
+            <small className="field-hint">Use an umbrella by itself or add a sub-list beneath it.</small>
           </div>
 
           <div className="drawer-field">

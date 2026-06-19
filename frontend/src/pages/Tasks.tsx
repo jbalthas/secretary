@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTasks } from "../hooks/useTasks";
 import { useGoals } from "../hooks/useGoals";
+import { useTaskLists } from "../hooks/useTaskLists";
 import TaskRow from "../components/TaskRow";
 import TaskDrawer from "../components/TaskDrawer";
 import FAB from "../components/FAB";
@@ -32,6 +33,7 @@ function sortTasks(tasks: Task[], sort: Sort): Task[] {
 export default function Tasks() {
   const { tasks, createTask, patchTask, deleteTask } = useTasks();
   const { goals } = useGoals();
+  const { listGroups, refresh: refreshLists } = useTaskLists();
   const [filter, setFilter] = useState<Filter>("pending");
   const [sort, setSort] = useState<Sort>("due");
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -56,6 +58,7 @@ export default function Tasks() {
     } else {
       await createTask(body);
     }
+    await refreshLists();
   }
 
   return (
@@ -63,24 +66,53 @@ export default function Tasks() {
       <h1 className="page-title">Tasks</h1>
 
       {taskFilters.length > 0 && (
-        <div className="list-chips">
+        <div className="list-filter-panel">
           <button
             className={"list-chip" + (!activeFilterKey ? " active" : "")}
             onClick={() => setActiveFilterKey(null)}
           >All</button>
-          {taskFilters.map((taskFilter) => (
-            <button
-              key={taskFilter.key}
-              className={
-                "list-chip" +
-                (activeFilterKey === taskFilter.key ? " active" : "")
-              }
-              onClick={() => setActiveFilterKey(taskFilter.key)}
-            >{taskFilter.label}</button>
-          ))}
+          {taskFilters
+            .filter((item) => item.kind === "parent-list")
+            .map((parentFilter) => {
+              const children = taskFilters.filter(
+                (item) => item.kind === "list" && item.parentName === parentFilter.label
+              );
+              return (
+                <div className="list-filter-group" key={parentFilter.key}>
+                  <button
+                    className={"list-chip list-chip-parent" + (activeFilterKey === parentFilter.key ? " active" : "")}
+                    onClick={() => setActiveFilterKey(parentFilter.key)}
+                  >{parentFilter.label}</button>
+                  {children.length > 0 && (
+                    <div className="list-filter-children">
+                      {children.map((child) => (
+                        <button
+                          key={child.key}
+                          className={"list-chip list-chip-child" + (activeFilterKey === child.key ? " active" : "")}
+                          onClick={() => setActiveFilterKey(child.key)}
+                        >{child.label}</button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          {taskFilters.some((item) => item.kind === "goal") && (
+            <div className="list-filter-group list-filter-goals">
+              <span className="list-filter-label">Goals</span>
+              <div className="list-filter-children">
+                {taskFilters.filter((item) => item.kind === "goal").map((goalFilter) => (
+                  <button
+                    key={goalFilter.key}
+                    className={"list-chip list-chip-child" + (activeFilterKey === goalFilter.key ? " active" : "")}
+                    onClick={() => setActiveFilterKey(goalFilter.key)}
+                  >{goalFilter.label}</button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
-
       <div className="filter-sort-row">
         <div className="filter-tabs">
           <button
@@ -148,6 +180,7 @@ export default function Tasks() {
         open={drawerOpen}
         task={editingTask}
         goals={goals}
+        listGroups={listGroups}
         onClose={() => setDrawerOpen(false)}
         onSave={handleSave}
         onDelete={deleteTask}

@@ -8,6 +8,13 @@ const PRIORITY_RANK: Record<Task["priority"], number> = {
   low: 2,
 };
 
+function listPath(task: Task): string[] {
+  const parent = task.parent_list_name?.trim();
+  const child = task.list_name?.trim();
+  if (parent) return child ? [parent, child] : [parent];
+  return child ? [child] : [];
+}
+
 export function sortOrganizeTasks(
   tasks: Task[],
   sortBy: OrganizeTaskSort,
@@ -15,9 +22,6 @@ export function sortOrganizeTasks(
 ): Task[] {
   return [...tasks].sort((a, b) => {
     if (sortBy === "list") {
-      const aList = a.list_name?.trim();
-      const bList = b.list_name?.trim();
-
       if (prioritizedTaskIds?.size) {
         const aIsPrioritized = prioritizedTaskIds.has(a.id);
         const bIsPrioritized = prioritizedTaskIds.has(b.id);
@@ -25,13 +29,17 @@ export function sortOrganizeTasks(
         if (!aIsPrioritized && bIsPrioritized) return 1;
       }
 
-      if (aList && !bList) return -1;
-      if (!aList && bList) return 1;
+      const aPath = listPath(a);
+      const bPath = listPath(b);
+      if (aPath.length > 0 && bPath.length === 0) return -1;
+      if (aPath.length === 0 && bPath.length > 0) return 1;
 
-      const listComparison = (aList ?? "").localeCompare(bList ?? "", undefined, {
-        sensitivity: "base",
-      });
-      if (listComparison !== 0) return listComparison;
+      const pathComparison = aPath.join("\u0000").localeCompare(
+        bPath.join("\u0000"),
+        undefined,
+        { sensitivity: "base" },
+      );
+      if (pathComparison !== 0) return pathComparison;
     }
 
     const priorityComparison = PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority];

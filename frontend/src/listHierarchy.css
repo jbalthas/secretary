@@ -1,0 +1,57 @@
+.list-filter-panel {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 16px;
+  overflow-x: auto;
+  padding: 2px 0 8px;
+}
+
+.list-filter-group {
+  display: grid;
+  gap: 6px;
+  min-width: max-content;
+}
+
+.list-filter-children {
+  display: flex;
+  gap: 6px;
+  padding-left: 12px;
+}
+
+.list-chip-parent {
+  font-weight: 700;
+}
+
+.list-chip-child {
+  font-size: 0.78rem;
+}
+
+.list-filter-label,
+.field-hint {
+  color: var(--text-muted, #6b7280);
+  font-size: 0.78rem;
+}
+
+.list-filter-goals {
+  border-left: 1px solid var(--border, #e5e7eb);
+  padding-left: 12px;
+}
+
+.goal-list-groups,
+.goal-list-group {
+  display: grid;
+  gap: 10px;
+}
+
+.goal-list-groups {
+  gap: 22px;
+}
+
+.goal-list-group-title {
+  color: var(--text-muted, #6b7280);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  margin: 0;
+  text-transform: uppercase;
+}
