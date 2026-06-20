@@ -207,12 +207,15 @@ def _spoken_time(value: datetime, local_tz: ZoneInfo) -> str:
 
 def build_tomorrow_speech() -> str:
     """Build an on-demand spoken summary from tomorrow's saved itinerary."""
+    from app.models import Task
     from app.models.calendar import CalendarEvent
     from app.models.plan import ScheduledBlock
 
     local_tz = _configured_timezone()
     tomorrow = datetime.now(local_tz).date() + timedelta(days=1)
     tomorrow_str = tomorrow.isoformat()
+    tomorrow_start_naive = datetime.combine(tomorrow, datetime.min.time())
+    tomorrow_end_naive = tomorrow_start_naive + timedelta(days=1)
     tomorrow_start = datetime.combine(tomorrow, datetime.min.time(), tzinfo=local_tz)
     tomorrow_end = tomorrow_start + timedelta(days=1)
     tomorrow_start_utc = tomorrow_start.astimezone(timezone.utc)
@@ -223,6 +226,14 @@ def build_tomorrow_speech() -> str:
             select(ScheduledBlock)
             .where(ScheduledBlock.date_key == tomorrow_str)
             .order_by(ScheduledBlock.start_dt)
+        ).scalars().all()
+        tasks = s.execute(
+            select(Task).where(
+                Task.completed == False,
+                Task.due_date.isnot(None),
+                Task.due_date >= tomorrow_start_naive,
+                Task.due_date < tomorrow_end_naive,
+            )
         ).scalars().all()
         events = s.execute(
             select(CalendarEvent).where(
@@ -237,19 +248,42 @@ def build_tomorrow_speech() -> str:
             )
         ).scalars().all()
 
+    scheduled_task_ids = {block.task_id for block in blocks if block.task_id is not None}
+    scheduled_titles = {block.title.casefold() for block in blocks}
+    due_tasks = [
+        task
+        for task in tasks
+        if task.id not in scheduled_task_ids and task.title.casefold() not in scheduled_titles
+    ]
     all_day = sorted(
         (event.title for event in events if event.all_day or event.start_dt is None),
         key=str.casefold,
     )
+    untimed_tasks = sorted(
+        (task.title for task in due_tasks if task.due_date.hour == 0 and task.due_date.minute == 0),
+        key=str.casefold,
+    )
     timed = [(block.start_dt, block.title) for block in blocks]
+    timed.extend(
+        (task.due_date, task.title)
+        for task in due_tasks
+        if task.due_date.hour != 0 or task.due_date.minute != 0
+    )
     timed.extend(
         (event.start_dt, event.title)
         for event in events
         if not event.all_day and event.start_dt is not None
     )
-    timed.sort(key=lambda item: item[0])
+    timed.sort(
+        key=lambda item: (
+            item[0].astimezone(local_tz).replace(tzinfo=None)
+            if item[0].tzinfo is not None
+            else item[0]
+        )
+    )
 
     entries = [f"all day, {title}" for title in all_day]
+    entries.extend(f"task, {title}" for title in untimed_tasks)
     entries.extend(
         f"at {_spoken_time(start, local_tz)}, {title}" for start, title in timed
     )

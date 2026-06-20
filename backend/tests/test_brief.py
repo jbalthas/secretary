@@ -282,6 +282,7 @@ def test_brief_tts_failure_swallowed():
 
 
 def test_build_tomorrow_speech_reads_saved_itinerary_in_order():
+    from app.models import Task
     from app.models.calendar import CalendarEvent
     from app.models.plan import ScheduledBlock
     from app.services.brief import build_tomorrow_speech
@@ -293,9 +294,15 @@ def test_build_tomorrow_speech_reads_saved_itinerary_in_order():
     with SyncSession() as s:
         s.query(ScheduledBlock).filter_by(date_key=tomorrow.isoformat()).delete()
         s.query(CalendarEvent).filter_by(google_id="tomorrow-calendar-event").delete()
+        s.query(Task).filter(Task.title.in_(["Work out", "Already scheduled", "Completed task"])).delete(
+            synchronize_session=False
+        )
         s.add_all([
+            Task(title="Work out", due_date=midnight + timedelta(hours=8), completed=False),
+            Task(title="Already scheduled", due_date=midnight + timedelta(hours=10), completed=False),
+            Task(title="Completed task", due_date=midnight + timedelta(hours=8, minutes=30), completed=True),
             ScheduledBlock(
-                title="Write project outline",
+                title="Already scheduled",
                 start_dt=midnight + timedelta(hours=10),
                 end_dt=midnight + timedelta(hours=11),
                 date_key=tomorrow.isoformat(),
@@ -317,12 +324,16 @@ def test_build_tomorrow_speech_reads_saved_itinerary_in_order():
         speech = build_tomorrow_speech()
 
     assert speech.startswith("Tomorrow, you have ")
+    assert "at 8 A M, Work out" in speech
     assert "at 9:30 A M, Dentist appointment" in speech
-    assert "at 10 A M, Write project outline" in speech
-    assert speech.index("Dentist appointment") < speech.index("Write project outline")
+    assert speech.count("Already scheduled") == 1
+    assert "Completed task" not in speech
+    assert speech.index("Work out") < speech.index("Dentist appointment")
+    assert speech.index("Dentist appointment") < speech.index("Already scheduled")
 
 
 def test_build_tomorrow_speech_empty():
+    from app.models import Task
     from app.models.calendar import CalendarEvent
     from app.models.plan import ScheduledBlock
     from app.services.brief import build_tomorrow_speech
@@ -334,6 +345,9 @@ def test_build_tomorrow_speech_empty():
 
     with SyncSession() as s:
         s.query(ScheduledBlock).filter_by(date_key=tomorrow.isoformat()).delete()
+        s.query(Task).filter(
+            (Task.due_date >= day_start) & (Task.due_date < day_end)
+        ).delete(synchronize_session=False)
         s.query(CalendarEvent).filter(
             (CalendarEvent.start_date == tomorrow.isoformat())
             | ((CalendarEvent.start_dt >= day_start) & (CalendarEvent.start_dt < day_end))
