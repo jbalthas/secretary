@@ -12,28 +12,29 @@ export function useTasks() {
   }
 
   async function createTask(body: TaskCreate) {
-    await fetch(API + "/", {
+    const res = await fetch(API + "/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
+    if (!res.ok) throw new Error("Could not create task");
     await refresh();
   }
-
   async function patchTask(id: number, body: Partial<Task>) {
-    await fetch(`${API}/${id}`, {
+    const res = await fetch(`${API}/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
+    if (!res.ok) throw new Error("Could not update task");
     await refresh();
   }
 
   async function deleteTask(id: number) {
-    await fetch(`${API}/${id}`, { method: "DELETE" });
+    const res = await fetch(`${API}/${id}`, { method: "DELETE" });
+    if (!res.ok) throw new Error("Could not delete task");
     await refresh();
   }
-
   useEffect(() => {
     refresh();
   }, []);

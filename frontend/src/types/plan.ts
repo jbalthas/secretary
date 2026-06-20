@@ -20,5 +20,6 @@ export interface ScheduledBlock {
   end_dt: string;
   date_key: string;
   approved_at: string;
+  completed: boolean;
   conflict_with: string | null;
 }

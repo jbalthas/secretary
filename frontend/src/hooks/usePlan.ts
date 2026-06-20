@@ -49,7 +49,18 @@ export function usePlan(dateKey: string) {
   }
 
   async function deleteBlock(id: number) {
-    await fetch(`${API}/blocks/${id}`, { method: "DELETE" });
+    const res = await fetch(`${API}/blocks/${id}`, { method: "DELETE" });
+    if (!res.ok) throw new Error("Could not delete plan block");
+    await fetchBlocks();
+  }
+
+  async function patchBlock(id: number, completed: boolean) {
+    const res = await fetch(`${API}/blocks/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ completed }),
+    });
+    if (!res.ok) throw new Error("Could not update plan block");
     await fetchBlocks();
   }
 
@@ -58,5 +69,5 @@ export function usePlan(dateKey: string) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateKey]);
 
-  return { blocks, loading, fetchBlocks, propose, approve, replan, deleteBlock };
+  return { blocks, loading, fetchBlocks, propose, approve, replan, deleteBlock, patchBlock };
 }

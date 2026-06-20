@@ -373,3 +373,37 @@ def test_delete_block():
 
     remaining = client.get(f"/api/v1/plan/blocks?date={d}").json()
     assert all(b["id"] != block_id for b in remaining)
+
+
+def test_complete_block_persists_and_completes_linked_task():
+    d = "2099-01-06"
+    task = client.post(
+        "/api/v1/tasks/",
+        json={"title": "Persist plan completion"},
+    ).json()
+    approve_body = {
+        "date": d,
+        "blocks": [
+            {
+                "task_id": task["id"],
+                "title": task["title"],
+                "start_dt": f"{d}T09:00:00Z",
+                "end_dt": f"{d}T10:00:00Z",
+            },
+        ],
+    }
+    created = client.post("/api/v1/plan/approve", json=approve_body).json()
+
+    updated = client.patch(
+        f"/api/v1/plan/blocks/{created[0]['id']}",
+        json={"completed": True},
+    )
+    assert updated.status_code == 200, updated.text
+    assert updated.json()["completed"] is True
+
+    reloaded = client.get(f"/api/v1/plan/blocks?date={d}").json()
+    assert reloaded[0]["completed"] is True
+
+    tasks = client.get("/api/v1/tasks/").json()
+    linked = next(row for row in tasks if row["id"] == task["id"])
+    assert linked["completed"] is True

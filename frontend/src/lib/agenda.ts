@@ -85,7 +85,7 @@ function buildDayItems(
       priority: linkedTask?.priority ?? null,
       isEvent: false,
       isBlock: true,
-      completed: linkedTask?.completed ?? false,
+      completed: linkedTask?.completed ?? b.completed,
       taskId: b.task_id ?? undefined,
       blockId: b.id,
       conflict_with: b.conflict_with,

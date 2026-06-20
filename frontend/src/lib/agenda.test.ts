@@ -40,6 +40,7 @@ function makeBlock(overrides: Partial<ScheduledBlock>): ScheduledBlock {
     end_dt: `${TODAY}T10:30:00Z`,
     date_key: TODAY,
     approved_at: `${TODAY}T08:00:00Z`,
+    completed: false,
     conflict_with: null,
     ...overrides,
   };
@@ -178,6 +179,19 @@ describe("buildAgenda", () => {
     expect(item?.priority).toBe("high");
   });
 
+  it("uses persisted plan-block completion after a reload", () => {
+    const block = makeBlock({
+      id: 88,
+      task_id: null,
+      title: "Finished plan block",
+      completed: true,
+    });
+
+    const item = buildAgenda([], [], NOW, [block]).find((entry) => entry.id === "block-88");
+
+    expect(item?.completed).toBe(true);
+    expect(item?.blockId).toBe(88);
+  });
   it("leaves custom planned blocks without a task target", () => {
     const block = makeBlock({ id: 8, task_id: null });
 

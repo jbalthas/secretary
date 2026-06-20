@@ -10,7 +10,13 @@ from app.db import get_session
 from app.models import Task, AppSettings
 from app.models.calendar import CalendarEvent
 from app.models.plan import ScheduledBlock
-from app.schemas.plan import ProposedDayPlan, ApproveRequest, ScheduledBlockRead
+from app.schemas.plan import (
+    ProposedDayPlan,
+    ApproveRequest,
+    ScheduledBlockRead,
+    ScheduledBlockUpdate,
+)
+from app.scheduler import remove_reminder, upsert_reminder
 from app.services import planner_service
 
 router = APIRouter(prefix=f"{settings.api_prefix}/plan", tags=["plan"])
@@ -162,3 +168,36 @@ async def delete_block(
         raise HTTPException(404)
     await session.delete(block)
     await session.commit()
+
+
+@router.patch("/blocks/{block_id}", response_model=ScheduledBlockRead)
+async def update_block(
+    block_id: int,
+    body: ScheduledBlockUpdate,
+    session: AsyncSession = Depends(get_session),
+):
+    block = await session.get(ScheduledBlock, block_id)
+    if block is None:
+        raise HTTPException(404)
+
+    block.completed = body.completed
+    task = await session.get(Task, block.task_id) if block.task_id is not None else None
+    if task is not None:
+        was_completed = task.completed
+        task.completed = body.completed
+        if body.completed and not was_completed:
+            task.completed_at = datetime.now(timezone.utc)
+
+    await session.commit()
+    await session.refresh(block)
+
+    if task is not None:
+        if task.completed:
+            remove_reminder(task.id)
+        else:
+            upsert_reminder(task)
+
+    read = ScheduledBlockRead.model_validate(block)
+    events = await _fetch_events_for_date(date.fromisoformat(block.date_key), session)
+    read.conflict_with = _is_stale(block, events)
+    return read

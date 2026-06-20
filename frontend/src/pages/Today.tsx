@@ -87,12 +87,14 @@ export default function Today() {
   const { tasks, patchTask } = useTasks();
   const { events, patchEvent } = useCalendarEvents();
   const todayKey = localDateKey(new Date());
-  const { blocks } = usePlan(todayKey);
+  const { blocks, patchBlock } = usePlan(todayKey);
   const { task: nextBest } = useNextBestTask();
   const groups = buildWeekAgenda(tasks, events, new Date(), blocks);
 
   async function handleToggle(item: AgendaItemType, completed: boolean) {
-    if (item.isEvent && item.googleId) {
+    if (item.isBlock && item.blockId != null) {
+      await patchBlock(item.blockId, completed);
+    } else if (item.isEvent && item.googleId) {
       await patchEvent(item.googleId, completed);
     } else if (item.taskId != null) {
       await patchTask(item.taskId, { completed });

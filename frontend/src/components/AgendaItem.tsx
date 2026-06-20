@@ -24,11 +24,11 @@ export default function AgendaItem({ item, onToggle }: Props) {
 
   const timeLabel = item.time ? formatTime(item.time) : null;
 
-  const isPlannedBlock = item.isBlock && item.taskId == null && item.googleId == null;
+  const isUnsavedPlannedBlock = item.isBlock && item.blockId == null;
 
   async function handleToggle(e: React.ChangeEvent<HTMLInputElement>) {
     e.stopPropagation();
-    if (isPlannedBlock) return;
+    if (isUnsavedPlannedBlock) return;
     const newValue = !localCompleted;
     setLocalCompleted(newValue);
     setError(null);
@@ -69,7 +69,7 @@ export default function AgendaItem({ item, onToggle }: Props) {
       <input
         type="checkbox"
         checked={localCompleted}
-        disabled={isPlannedBlock}
+        disabled={isUnsavedPlannedBlock}
         aria-label={
           localCompleted
             ? `Mark '${item.title}' incomplete`
