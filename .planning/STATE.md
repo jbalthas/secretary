@@ -19,7 +19,7 @@ progress:
 Phase: 11
 Plan: Not started
 Status: Ready to execute
-Last activity: 2026-06-19 - Completed quick task 260619-hier: Add hierarchical umbrella lists
+Last activity: 2026-06-20 - Completed quick task 260619-u0n: Include tomorrow's due tasks in the Google Home briefing
 
 ---
 
@@ -131,6 +131,7 @@ None
 | 260618-dbv | Add task lists (list_name nullable string): migration 0011, model, schemas, GET /tasks/lists, list_name filter on GET /tasks/, TaskDrawer autocomplete input, Tasks page chip row filter | 2026-06-18 | 5d6bbd5 | [260618-dbv-add-task-lists-a-simple-list-name-string](./quick/260618-dbv-add-task-lists-a-simple-list-name-string/) |
 | 260618-mlt | Let Organize prioritize a specifically selected task list | 2026-06-18 | pending | [260618-mlt-let-organize-prioritize-a-specifically-s](./quick/260618-mlt-let-organize-prioritize-a-specifically-s/) |
 | 260619-hier | Add hierarchical umbrella lists across tasks, goals, ingest, filters, and Organize | 2026-06-19 | pending | [260619-hier-hierarchical-umbrella-lists](./quick/260619-hier-hierarchical-umbrella-lists/) |
+| 260619-u0n | Include tomorrow's due tasks in the Google Home briefing | 2026-06-20 | eddb8b2 | [260619-u0n-include-tomorrow-s-due-tasks-in-the-goog](./quick/260619-u0n-include-tomorrow-s-due-tasks-in-the-goog/) |
 
 ### Todos
 
