@@ -39,6 +39,27 @@ tailscale status --json | python3 -c "import sys,json;print(json.load(sys.stdin)
 bash scripts/smoke-test.sh <tailscale-hostname>
 ```
 
+## Ask Google Home about tomorrow
+
+The secret-guarded webhook can cast tomorrow's approved itinerary and calendar
+commitments to the configured Google Home:
+
+```text
+POST https://<hostname>.ts.net/api/v1/webhooks/brief?range=tomorrow
+X-Webhook-Secret: <WEBHOOK_SECRET>
+```
+
+In IFTTT, use the Google Assistant V2 **Activate scene** trigger with a scene
+name such as `tomorrow plans`, then use the Webhooks action to make this request.
+The direct command is "Hey Google, activate tomorrow plans." If your Google Home
+app offers a custom Household Routine starter, you can map "What are my plans
+for tomorrow?" to that scene command.
+
+The response is read from the Google Home selected in Settings.
+`WEBHOOK_SECRET`, the Google Home device, and TTS must be configured first. See
+the current [IFTTT Google Assistant integration](https://ifttt.com/google_assistant_v2)
+for trigger availability.
+
 ## Development
 
 See `backend/` for the FastAPI service and `frontend/` for the React app.

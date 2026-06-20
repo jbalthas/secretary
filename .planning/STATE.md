@@ -19,7 +19,7 @@ progress:
 Phase: 11
 Plan: Not started
 Status: Ready to execute
-Last activity: 2026-06-18
+Last activity: 2026-06-19 - Completed quick task 260619-hier: Add hierarchical umbrella lists
 
 ---
 
@@ -129,6 +129,8 @@ None
 | 260617-bvj | Fix task→goal unlink: send goal_id explicitly (null) from TaskDrawer; widen TaskCreate type; backend regression test | 2026-06-17 | a3f65fa | [260617-bvj-fix-task-to-goal-unlink-in-taskdrawer-se](./quick/260617-bvj-fix-task-to-goal-unlink-in-taskdrawer-se/) |
 | 260617-ldm | Add per-task estimated_minutes (Duration) field: backend TaskCreate schema + frontend types + TaskDrawer Collapsible input; planner block sizing without re-ingest | 2026-06-17 | 361915a | [260617-ldm-add-per-task-estimated-minutes-duration-](./quick/260617-ldm-add-per-task-estimated-minutes-duration-/) |
 | 260618-dbv | Add task lists (list_name nullable string): migration 0011, model, schemas, GET /tasks/lists, list_name filter on GET /tasks/, TaskDrawer autocomplete input, Tasks page chip row filter | 2026-06-18 | 5d6bbd5 | [260618-dbv-add-task-lists-a-simple-list-name-string](./quick/260618-dbv-add-task-lists-a-simple-list-name-string/) |
+| 260618-mlt | Let Organize prioritize a specifically selected task list | 2026-06-18 | pending | [260618-mlt-let-organize-prioritize-a-specifically-s](./quick/260618-mlt-let-organize-prioritize-a-specifically-s/) |
+| 260619-hier | Add hierarchical umbrella lists across tasks, goals, ingest, filters, and Organize | 2026-06-19 | pending | [260619-hier-hierarchical-umbrella-lists](./quick/260619-hier-hierarchical-umbrella-lists/) |
 
 ### Todos
 
@@ -140,3 +142,4 @@ None
 
 Last session: 2026-06-18T14:48:15.194Z
 Next action: Run `/gsd:plan-phase 8` to break Phase 8 (Goals + Ingest Backend) into executable plans
+| 2026-06-18 | fast | Fix goals 500 (list_name serialization) | done |

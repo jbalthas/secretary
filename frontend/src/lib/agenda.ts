@@ -75,14 +75,18 @@ function buildDayItems(
     if (b.date_key !== dateKey) continue;
     const d = new Date(b.start_dt);
     const time = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+    const linkedTask = b.task_id == null
+      ? undefined
+      : tasks.find((task) => task.id === b.task_id);
     timedItems.push({
       id: `block-${b.id}`,
       title: b.title,
       time,
-      priority: null,
+      priority: linkedTask?.priority ?? null,
       isEvent: false,
       isBlock: true,
-      completed: false,
+      completed: linkedTask?.completed ?? false,
+      taskId: b.task_id ?? undefined,
       blockId: b.id,
       conflict_with: b.conflict_with,
     });

@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, timezone, timedelta
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from sqlalchemy import create_engine, select, or_, and_, func, case
 from sqlalchemy.orm import sessionmaker
 from app.config import settings as app_settings
@@ -181,6 +182,95 @@ def send_daily_brief() -> None:
             TTSClient().speak(speech)
     except Exception:
         logging.getLogger(__name__).exception("TTS brief failed")
+
+
+def _configured_timezone() -> ZoneInfo:
+    try:
+        return ZoneInfo(app_settings.timezone)
+    except ZoneInfoNotFoundError:
+        logging.getLogger(__name__).warning(
+            "Unknown configured timezone %s; using UTC", app_settings.timezone
+        )
+        return ZoneInfo("UTC")
+
+
+def _spoken_time(value: datetime, local_tz: ZoneInfo) -> str:
+    """Format a time naturally for speech, e.g. 09:30 -> '9:30 A M'."""
+    local_value = value.astimezone(local_tz) if value.tzinfo else value
+    hour = local_value.strftime("%I").lstrip("0") or "12"
+    minute = local_value.strftime("%M")
+    suffix = "A M" if local_value.hour < 12 else "P M"
+    if minute == "00":
+        return f"{hour} {suffix}"
+    return f"{hour}:{minute} {suffix}"
+
+
+def build_tomorrow_speech() -> str:
+    """Build an on-demand spoken summary from tomorrow's saved itinerary."""
+    from app.models.calendar import CalendarEvent
+    from app.models.plan import ScheduledBlock
+
+    local_tz = _configured_timezone()
+    tomorrow = datetime.now(local_tz).date() + timedelta(days=1)
+    tomorrow_str = tomorrow.isoformat()
+    tomorrow_start = datetime.combine(tomorrow, datetime.min.time(), tzinfo=local_tz)
+    tomorrow_end = tomorrow_start + timedelta(days=1)
+    tomorrow_start_utc = tomorrow_start.astimezone(timezone.utc)
+    tomorrow_end_utc = tomorrow_end.astimezone(timezone.utc)
+
+    with _Session() as s:
+        blocks = s.execute(
+            select(ScheduledBlock)
+            .where(ScheduledBlock.date_key == tomorrow_str)
+            .order_by(ScheduledBlock.start_dt)
+        ).scalars().all()
+        events = s.execute(
+            select(CalendarEvent).where(
+                CalendarEvent.cancelled == False,
+                or_(
+                    CalendarEvent.start_date == tomorrow_str,
+                    and_(
+                        CalendarEvent.start_dt >= tomorrow_start_utc,
+                        CalendarEvent.start_dt < tomorrow_end_utc,
+                    ),
+                ),
+            )
+        ).scalars().all()
+
+    all_day = sorted(
+        (event.title for event in events if event.all_day or event.start_dt is None),
+        key=str.casefold,
+    )
+    timed = [(block.start_dt, block.title) for block in blocks]
+    timed.extend(
+        (event.start_dt, event.title)
+        for event in events
+        if not event.all_day and event.start_dt is not None
+    )
+    timed.sort(key=lambda item: item[0])
+
+    entries = [f"all day, {title}" for title in all_day]
+    entries.extend(
+        f"at {_spoken_time(start, local_tz)}, {title}" for start, title in timed
+    )
+
+    if not entries:
+        return "You have nothing planned for tomorrow."
+    return "Tomorrow, you have " + "; ".join(entries) + "."
+
+
+def send_tomorrow_brief() -> None:
+    """Cast tomorrow's itinerary without also creating a Pushover notification."""
+    try:
+        if not _tts_settings.get_tts_enabled():
+            return
+        try:
+            speech = build_tomorrow_speech()
+        except Exception:
+            speech = "I could not load tomorrow's itinerary."
+        TTSClient().speak(speech)
+    except Exception:
+        logging.getLogger(__name__).exception("Tomorrow itinerary TTS failed")
 
 
 def _day_entries(s, day_start_naive: datetime) -> tuple[list[tuple[str, str]], list[str]]:
