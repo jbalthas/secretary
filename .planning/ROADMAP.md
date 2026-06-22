@@ -238,7 +238,13 @@ Plans:
 2. Posting an update that is ambiguous (multiple plausible matches) or matches nothing returns an `ambiguous` or `no_match` status with candidate list, never silently applying an action or dropping the input.
 3. A mid-day check-in Pushover notification fires at the configured time (default 12:00) with a deep-link URL into the Today update view; the job is registered via APScheduler SQLAlchemyJobStore and survives a Pi reboot.
 4. The existing ingest endpoint accepts an `intra_day_update` payload type — validated against a versioned Pydantic schema — and applies it idempotently; posting the same update payload twice produces no double-mutation.
-**Plans:** TBD
+**Plans:** 4 plans
+
+Plans:
+- [ ] 12-01-PLAN.md — Wave 0: rapidfuzz dep + schema/service stubs + migration 0015 (check-in cols + update_log) + main wiring + 10 red tests (Wave 1)
+- [ ] 12-02-PLAN.md — Resolution engine: resolve_update (WRatio + intent) + POST /updates/resolve (UPDATE-02, UPDATE-03) (Wave 2)
+- [ ] 12-03-PLAN.md — Check-in scheduler: PushoverClient url + checkin_service + schedule_checkin + /settings/check-in-time (NOTIF-07) (Wave 2)
+- [ ] 12-04-PLAN.md — Ingest extension: IntraDayUpdateImport + idempotent apply (done/drop stateless, reschedule via UpdateLog) (INGEST-08) (Wave 2)
 **UI hint**: no
 
 ---
