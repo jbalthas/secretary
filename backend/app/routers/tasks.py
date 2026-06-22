@@ -112,6 +112,14 @@ async def create_task(body: TaskCreate, session: AsyncSession = Depends(get_sess
     return task
 
 
+@router.get("/{task_id}", response_model=TaskRead)
+async def get_task(task_id: int, session: AsyncSession = Depends(get_session)):
+    task = await session.get(Task, task_id)
+    if not task:
+        raise HTTPException(404)
+    return task
+
+
 @router.patch("/{task_id}", response_model=TaskRead)
 async def update_task(task_id: int, body: TaskUpdate, session: AsyncSession = Depends(get_session)):
     from datetime import datetime, timezone

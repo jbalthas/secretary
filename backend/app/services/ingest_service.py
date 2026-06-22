@@ -1,8 +1,11 @@
+from datetime import datetime, timezone
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Task, Routine
+from app.models import Task, Routine, UpdateLog
 from app.models.goal import Goal, Milestone, GoalStatus
+from app.models.plan import ScheduledBlock
 from app.schemas.ingest import (
     IngestPayload,
     GoalImport,
@@ -12,6 +15,8 @@ from app.schemas.ingest import (
     IngestResult,
     IngestPreviewResult,
     EntityDiff,
+    IntraDayUpdateImport,
+    UpdateAction,
 )
 
 
@@ -138,6 +143,42 @@ async def _upsert_habit(h: HabitImport, goal_id: int | None, session: AsyncSessi
         return row, True
 
 
+async def _apply_update(u: IntraDayUpdateImport, session: AsyncSession) -> None:
+    # reschedule idempotency via UpdateLog unique update_id (stateless not safe for reschedule)
+    if u.action == UpdateAction.reschedule:
+        seen = await session.execute(select(UpdateLog).where(UpdateLog.update_id == u.update_id))
+        if seen.scalar_one_or_none() is not None:
+            return  # already applied
+
+    if u.entity_type == "task":
+        row = await session.get(Task, u.entity_id)
+    else:
+        row = await session.get(ScheduledBlock, u.entity_id)
+
+    if row is None:
+        return
+
+    if u.action == UpdateAction.done:
+        # stateless idempotent: only stamp completed_at on transition
+        if not row.completed:
+            row.completed = True
+            if hasattr(row, "completed_at"):
+                row.completed_at = datetime.now(timezone.utc)
+    elif u.action == UpdateAction.drop:
+        # stateless idempotent: dropping = mark completed/handled (no hard delete)
+        # INTENTIONAL v2.1 mapping: drop reuses completed=True (no separate drop flag/column).
+        # Phase 13 slipped-vs-done rollup must not treat completed=True as unambiguously "done".
+        row.completed = True
+    elif u.action == UpdateAction.reschedule:
+        if u.reschedule_to is not None and hasattr(row, "start_dt"):
+            delta = row.end_dt - row.start_dt
+            row.start_dt = u.reschedule_to
+            row.end_dt = u.reschedule_to + delta
+        elif u.reschedule_to is not None and hasattr(row, "due_date"):
+            row.due_date = u.reschedule_to
+        session.add(UpdateLog(update_id=u.update_id))
+
+
 async def _exists(model, external_key: str, session: AsyncSession) -> bool:
     result = await session.execute(select(model).where(model.external_key == external_key))
     return result.scalar_one_or_none() is not None
@@ -202,5 +243,9 @@ async def apply_import(payload: IngestPayload, session: AsyncSession) -> IngestR
             goal_id = goal_key_to_id.get(h.goal_key) if h.goal_key else None
             _, was_created = await _upsert_habit(h, goal_id, session)
             (created if was_created else updated)["habits"] += 1
+
+        # Phase 5: intra-day updates (idempotent)
+        for u in payload.updates:
+            await _apply_update(u, session)
 
     return IngestResult(created=created, updated=updated)
