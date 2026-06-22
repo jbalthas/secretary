@@ -1,3 +1,4 @@
+import enum
 from datetime import date, datetime
 from typing import Literal
 
@@ -83,14 +84,31 @@ class HabitImport(BaseModel):
         return _validate_cron(v)
 
 
+class UpdateAction(str, enum.Enum):
+    done = "done"
+    reschedule = "reschedule"
+    drop = "drop"
+
+
+class IntraDayUpdateImport(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    update_id: str = Field(..., max_length=200)
+    entity_type: Literal["task", "block"]
+    entity_id: int
+    action: UpdateAction
+    reschedule_to: datetime | None = None
+
+
 class IngestPayload(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    schema_version: Literal["1.0"]
+    schema_version: Literal["1.0", "1.1"]
     goals: list[GoalImport] = []
     tasks: list[TaskImport] = []
     routines: list[RoutineImport] = []
     habits: list[HabitImport] = []
+    updates: list[IntraDayUpdateImport] = []
 
 
 class IngestResult(BaseModel):
