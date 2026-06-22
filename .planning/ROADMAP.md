@@ -21,7 +21,7 @@
 | 9 | Goals + Ingest UI | User can manage goals, link tasks, and submit LLM payloads from the web UI | GOAL-04, GOAL-05, INGEST-03, INGEST-05 | 4 |
 | 10 | Day Auto-Organize | 4/4 | Complete   | 2026-06-17 |
 | 11 | Goal-Guided Guidance | 2/4 | Complete    | 2026-06-18 |
-| 12 | Update Resolution Engine | 4/4 | Complete   | 2026-06-22 |
+| 12 | Update Resolution Engine | 4/4 | Complete    | 2026-06-22 |
 | 13 | Update Loop UI | User-facing quick-update box, confirmation flow, end-of-day rollup, and check-in settings | UPDATE-01, UPDATE-03, UPDATE-04, NOTIF-08 | 4 |
 
 ---
