@@ -1,8 +1,8 @@
 ---
 phase: 12
 slug: update-resolution-engine
-status: draft
-nyquist_compliant: false
+status: ready
+nyquist_compliant: true
 wave_0_complete: false
 created: 2026-06-22
 ---
@@ -38,16 +38,18 @@ created: 2026-06-22
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| TBD | — | — | UPDATE-02 | unit | `pytest tests/test_updates.py::test_resolve_clear_match -x` | ❌ W0 | ⬜ pending |
-| TBD | — | — | UPDATE-02 | unit | `pytest tests/test_updates.py::test_no_http_call -x` | ❌ W0 | ⬜ pending |
-| TBD | — | — | UPDATE-03 | unit | `pytest tests/test_updates.py::test_resolve_ambiguous -x` | ❌ W0 | ⬜ pending |
-| TBD | — | — | UPDATE-03 | unit | `pytest tests/test_updates.py::test_resolve_no_match -x` | ❌ W0 | ⬜ pending |
-| TBD | — | — | NOTIF-07 | unit | `pytest tests/test_updates.py::test_schedule_checkin_registers_job -x` | ❌ W0 | ⬜ pending |
-| TBD | — | — | NOTIF-07 | integration | `pytest tests/test_updates.py::test_checkin_time_settings_roundtrip -x` | ❌ W0 | ⬜ pending |
-| TBD | — | — | INGEST-08 | integration | `pytest tests/test_updates.py::test_ingest_intra_day_update_applies -x` | ❌ W0 | ⬜ pending |
-| TBD | — | — | INGEST-08 | integration | `pytest tests/test_updates.py::test_ingest_update_idempotent -x` | ❌ W0 | ⬜ pending |
+| 12-02-T1 | 12-02 | 2 | UPDATE-02 | unit | `pytest tests/test_updates.py::test_resolve_clear_match -x` | ❌ W0 | ⬜ pending |
+| 12-02-T1 | 12-02 | 2 | UPDATE-02 | unit | `pytest tests/test_updates.py::test_no_http_call -x` | ❌ W0 | ⬜ pending |
+| 12-02-T1 | 12-02 | 2 | UPDATE-03 | unit | `pytest tests/test_updates.py::test_resolve_ambiguous -x` | ❌ W0 | ⬜ pending |
+| 12-02-T1 | 12-02 | 2 | UPDATE-03 | unit | `pytest tests/test_updates.py::test_resolve_no_match -x` | ❌ W0 | ⬜ pending |
+| 12-03-T1 | 12-03 | 2 | NOTIF-07 | unit | `pytest tests/test_updates.py::test_schedule_checkin_registers_job -x` | ❌ W0 | ⬜ pending |
+| 12-03-T1 | 12-03 | 2 | NOTIF-07 | unit | `pytest tests/test_updates.py::test_checkin_notification_includes_url -x` | ❌ W0 | ⬜ pending |
+| 12-03-T2 | 12-03 | 2 | NOTIF-07 | integration | `pytest tests/test_updates.py::test_checkin_time_settings_roundtrip -x` | ❌ W0 | ⬜ pending |
+| 12-04-T2 | 12-04 | 2 | INGEST-08 | integration | `pytest tests/test_updates.py::test_ingest_intra_day_update_applies -x` | ❌ W0 | ⬜ pending |
+| 12-04-T2 | 12-04 | 2 | INGEST-08 | integration | `pytest tests/test_updates.py::test_ingest_update_idempotent -x` | ❌ W0 | ⬜ pending |
+| 12-04-T1 | 12-04 | 2 | INGEST-08 | integration | `pytest tests/test_updates.py::test_ingest_v10_still_valid -x` | ❌ W0 | ⬜ pending |
 
-*Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky. Planner refines Task IDs/Plan/Wave during planning.*
+*Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky. All 10 named tests are authored RED in Wave 0 (12-01 Task 3) and turned green by the Wave 2 plans referenced above.*
 
 ---
 
@@ -72,11 +74,11 @@ created: 2026-06-22
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 30s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 30s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** ready
