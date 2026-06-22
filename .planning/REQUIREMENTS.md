@@ -181,3 +181,11 @@
 | GUIDE-01 | Phase 11 — Goal-Guided Guidance | Complete |
 | GUIDE-02 | Phase 11 — Goal-Guided Guidance | Complete |
 | GUIDE-03 | Phase 11 — Goal-Guided Guidance | Complete |
+| UPDATE-02 | Phase 12 — Update Resolution Engine | Pending |
+| UPDATE-03 | Phase 12 — Update Resolution Engine | Pending |
+| NOTIF-07 | Phase 12 — Update Resolution Engine | Pending |
+| INGEST-08 | Phase 12 — Update Resolution Engine | Pending |
+| UPDATE-01 | Phase 13 — Update Loop UI | Pending |
+| UPDATE-03 | Phase 13 — Update Loop UI | Pending |
+| UPDATE-04 | Phase 13 — Update Loop UI | Pending |
+| NOTIF-08 | Phase 13 — Update Loop UI | Pending |

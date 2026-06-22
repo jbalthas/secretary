@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Close the Loop
-status: defining_requirements
+status: roadmap_complete
 last_updated: "2026-06-22T00:00:00.000Z"
 last_activity: 2026-06-22
 progress:
-  total_phases: 0
+  total_phases: 2
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -16,10 +16,10 @@ progress:
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: Phase 12 — Update Resolution Engine (not started)
 Plan: —
-Status: Defining requirements
-Last activity: 2026-06-22 — Milestone v2.1 "Close the Loop" started
+Status: Roadmap created; ready for phase planning
+Last activity: 2026-06-22 — v2.1 roadmap created (Phases 12–13)
 
 ---
 
@@ -27,7 +27,7 @@ Last activity: 2026-06-22 — Milestone v2.1 "Close the Loop" started
 
 **Core value:** One place to manage your schedule and tasks — reachable from any device, voice-controllable via Google Home, and proactive enough to push reminders before you have to think about them.
 
-**Current focus:** Phase 11 — goal-guided-guidance
+**Current focus:** v2.1 — Close the Loop (intra-day update loop; Phases 12–13)
 
 ---
 
@@ -35,10 +35,19 @@ Last activity: 2026-06-22 — Milestone v2.1 "Close the Loop" started
 
 | Phase | Name | Requirements | Status |
 |-------|------|--------------|--------|
-| 8 | Goals + Ingest Backend | GOAL-01, GOAL-02, GOAL-03, GOAL-06, INGEST-01, INGEST-02, INGEST-04, INGEST-06, INGEST-07 | Not started |
-| 9 | Goals + Ingest UI | GOAL-04, GOAL-05, INGEST-03, INGEST-05 | Not started |
+| 8 | Goals + Ingest Backend | GOAL-01, GOAL-02, GOAL-03, GOAL-06, INGEST-01, INGEST-02, INGEST-04, INGEST-06, INGEST-07 | Complete |
+| 9 | Goals + Ingest UI | GOAL-04, GOAL-05, INGEST-03, INGEST-05 | Complete |
 | 10 | Day Auto-Organize | PLAN-01, PLAN-02 | Complete |
-| 11 | Goal-Guided Guidance | GUIDE-01, GUIDE-02, GUIDE-03 | Not started |
+| 11 | Goal-Guided Guidance | GUIDE-01, GUIDE-02, GUIDE-03 | Complete |
+
+---
+
+## v2.1 Phase Map
+
+| Phase | Name | Requirements | Status |
+|-------|------|--------------|--------|
+| 12 | Update Resolution Engine | UPDATE-02, UPDATE-03, NOTIF-07, INGEST-08 | Not started |
+| 13 | Update Loop UI | UPDATE-01, UPDATE-03, UPDATE-04, NOTIF-08 | Not started |
 
 ---
 
@@ -48,6 +57,7 @@ Last activity: 2026-06-22 — Milestone v2.1 "Close the Loop" started
 
 - Phase 7 added: Outlook Calendar ICS feed integration (separate concurrent effort, do not modify)
 - Phases 8–11 added: v2.0 Ingest, Organize, Guide (2026-06-15)
+- Phases 12–13 added: v2.1 Close the Loop (2026-06-22)
 
 ### Decisions Made
 
@@ -106,6 +116,10 @@ Last activity: 2026-06-22 — Milestone v2.1 "Close the Loop" started
 - [Phase 10]: [10-04] fully_booked has two causes (packed vs. past work-hours end); Organize empty-state copy branches on isAfterWorkHours(workEnd) — frontend-only, no schema change
 - [Phase 11]: [11-01] completed_at nullable no server_default; stall_threshold_days coalesces None->7 on read; Wave 0 test stubs use deferred imports
 - [Phase 11-goal-guided-guidance]: [11-02] get_stalled_goals() is public API for tests; send_stall_nudge() returns False on rate-limit; brief goal queries inside existing _Session block
+- [v2.1 roadmap]: UPDATE-03 spans Phases 12+13 — Phase 12 owns the backend ambiguity signal (return status + candidates), Phase 13 owns the frontend confirmation UI; requirement assigned to Phase 13 (observable user behavior)
+- [v2.1 roadmap]: Check-in Pushover notification includes a deep-link URL (app relative path /today?update=1); no new dependency — URL string built in Python
+- [v2.1 roadmap]: INGEST-08 extends existing ingest Pydantic schema with a schema_version Literal bump or new payload_type discriminator; server only validates JSON, no LLM parsing
+- [v2.1 roadmap]: No new Alembic migration needed for NOTIF-07/08 if check-in time stored in existing app_settings table (new nullable columns); migration needed if new columns added — continue chain from 0011+
 
 ### Open Questions (Live Verification Required)
 
@@ -114,6 +128,7 @@ Last activity: 2026-06-22 — Milestone v2.1 "Close the Loop" started
 - Does pychromecast work with specific Google Home/Nest device? (Phase 6 fallback: Home Assistant)
 - Stall threshold: 7 vs 14 days — make it a user setting, not hardcoded (decide in Phase 11)
 - `user_timezone` as explicit DB setting vs. relying on Pi system tz (decide in Phase 10)
+- Current Alembic HEAD: verify latest migration number before writing Phase 12 migrations (known: 0011+ from task-lists quick task)
 
 ### Blockers
 
@@ -141,6 +156,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-06-18T14:48:15.194Z
-Next action: Run `/gsd:plan-phase 8` to break Phase 8 (Goals + Ingest Backend) into executable plans
-| 2026-06-18 | fast | Fix goals 500 (list_name serialization) | done |
+Last session: 2026-06-22T00:00:00.000Z
+Next action: Run `/gsd:plan-phase 12` to break Phase 12 (Update Resolution Engine) into executable plans

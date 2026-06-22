@@ -2,7 +2,7 @@
 
 ## Overview
 
-10 phases | 45 requirements | Infrastructure → Task UI → Reminders → Calendar Sync → Routines/Brief → Google Home TTS → Goals+Ingest Backend → Goals+Ingest UI → Day Organize → Guidance
+13 phases | 52 requirements | Infrastructure → Task UI → Reminders → Calendar Sync → Routines/Brief → Google Home TTS → Goals+Ingest Backend → Goals+Ingest UI → Day Organize → Guidance → v2.1 Update Engine → v2.1 Update Loop UI
 
 ---
 
@@ -21,6 +21,8 @@
 | 9 | Goals + Ingest UI | User can manage goals, link tasks, and submit LLM payloads from the web UI | GOAL-04, GOAL-05, INGEST-03, INGEST-05 | 4 |
 | 10 | Day Auto-Organize | 4/4 | Complete   | 2026-06-17 |
 | 11 | Goal-Guided Guidance | 2/4 | Complete    | 2026-06-18 |
+| 12 | Update Resolution Engine | No-LLM backend that resolves quick updates + check-in scheduler + ingest extension | UPDATE-02, UPDATE-03, NOTIF-07, INGEST-08 | 4 |
+| 13 | Update Loop UI | User-facing quick-update box, confirmation flow, end-of-day rollup, and check-in settings | UPDATE-01, UPDATE-03, UPDATE-04, NOTIF-08 | 4 |
 
 ---
 
@@ -221,6 +223,40 @@ Plans:
 
 ---
 
+## v2.1 Phases — Close the Loop
+
+> Phases continue at 12. Requirements: UPDATE-01..04, NOTIF-07..08, INGEST-08 (7 total). Hard constraints: no new dependencies, no server-side LLM, minimize API/token cost.
+
+---
+
+### Phase 12: Update Resolution Engine
+**Goal:** The backend can receive a free-text progress update, resolve it to a concrete action (mark done / reschedule / drop) by fuzzy-matching today's scheduled blocks and tasks without any LLM call, and fire a configurable mid-day check-in notification that survives reboots.
+**Depends on:** Phase 10 (ScheduledBlock rows, plan router), Phase 11 (completed_at stamp)
+**Requirements:** UPDATE-02, UPDATE-03, NOTIF-07, INGEST-08
+**Success Criteria** (what must be TRUE):
+1. Posting a free-text update that clearly names a task or block causes the backend to return a resolved action (done/reschedule/drop) with the matched entity — no LLM call made, verified by absence of any external HTTP request in tests.
+2. Posting an update that is ambiguous (multiple plausible matches) or matches nothing returns an `ambiguous` or `no_match` status with candidate list, never silently applying an action or dropping the input.
+3. A mid-day check-in Pushover notification fires at the configured time (default 12:00) with a deep-link URL into the Today update view; the job is registered via APScheduler SQLAlchemyJobStore and survives a Pi reboot.
+4. The existing ingest endpoint accepts an `intra_day_update` payload type — validated against a versioned Pydantic schema — and applies it idempotently; posting the same update payload twice produces no double-mutation.
+**Plans:** TBD
+**UI hint**: no
+
+---
+
+### Phase 13: Update Loop UI
+**Goal:** User can log progress in seconds from the Today tab, see ambiguous matches to confirm, review what slipped at end of day, and toggle/schedule the check-in notification from Settings — all without leaving the app.
+**Depends on:** Phase 12 (update resolution API, check-in scheduler API)
+**Requirements:** UPDATE-01, UPDATE-03, UPDATE-04, NOTIF-08
+**Success Criteria** (what must be TRUE):
+1. A quick-update text box is visible on the Today tab; the user can type (or use phone keyboard dictation) and submit a free-text update without opening any task form; the result is reflected in the Today view immediately.
+2. When the backend returns an ambiguous or no-match status, the user sees the candidate list and can confirm the correct match or dismiss — the update is never silently dropped.
+3. After the end of the current work day, the Today tab shows a rollup card listing completed vs. slipped items; unfinished items appear in the next day's brief and plan via the existing rollover path.
+4. From Settings, the user can enable/disable the mid-day check-in and change its time(s); the new schedule takes effect without a server restart and persists across reboots.
+**Plans:** TBD
+**UI hint**: yes
+
+---
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -236,3 +272,5 @@ Plans:
 | 9. Goals + Ingest UI | 0/? | Not started | - |
 | 10. Day Auto-Organize | 0/? | Not started | - |
 | 11. Goal-Guided Guidance | 0/? | Not started | - |
+| 12. Update Resolution Engine | 0/? | Not started | - |
+| 13. Update Loop UI | 0/? | Not started | - |
