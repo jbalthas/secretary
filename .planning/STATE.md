@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Phases — Ingest, Organize, Guide
 status: executing
-last_updated: "2026-06-22T16:27:59.409Z"
+last_updated: "2026-06-22T16:29:13.710Z"
 last_activity: 2026-06-22
 progress:
   total_phases: 11
@@ -17,7 +17,7 @@ progress:
 ## Current Position
 
 Phase: 12 (update-resolution-engine) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Ready to execute
 Last activity: 2026-06-22
 
@@ -122,6 +122,8 @@ Last activity: 2026-06-22
 - [v2.1 roadmap]: No new Alembic migration needed for NOTIF-07/08 if check-in time stored in existing app_settings table (new nullable columns); migration needed if new columns added — continue chain from 0011+
 - [Phase 12-01]: [12-01] Wave 0 test strategy: 10 RED tests in test_updates.py, deferred imports prevent collection errors, schedule_checkin stub in scheduler.py, check-in lifespan block logs failures (NOTIF-07 guard)
 - [Phase 12-03]: [12-03] checkin_service.py uses module-alias import (import app.services.pushover as _pushover) not from-import, so unittest.mock.patch on app.services.pushover.PushoverClient intercepts the runtime reference
+- [Phase 12-02]: [12-02] Strip intent/stop words from query before rapidfuzz matching — WRatio on full text dilutes score with 'done', 'with', etc.
+- [Phase 12-02]: [12-02] Tie-break: if multiple candidates score >= CONFIDENT_THRESHOLD, return ambiguous — prevents wrong pick on near-duplicate titles like 'Team sync A' vs 'Team sync B'
 
 ### Open Questions (Live Verification Required)
 
@@ -158,5 +160,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-06-22T16:23:18.708Z
+Last session: 2026-06-22T16:29:13.707Z
 Next action: Run `/gsd:plan-phase 12` to break Phase 12 (Update Resolution Engine) into executable plans
