@@ -79,12 +79,34 @@
 
 ---
 
+## Milestone v2.1 Requirements — Close the Loop
+
+> Intra-day update loop: the secretary checks in, the user logs progress in seconds, the schedule self-corrects. HARD CONSTRAINTS (locked since v2.0): no new dependencies, no server-side LLM, minimize API/token cost. REQ-IDs continue in NOTIF/INGEST and a new UPDATE category. Phase numbering continues from v2.0 (starts at Phase 12).
+
+### Intra-day Updates (UPDATE)
+
+- [ ] **UPDATE-01**: User can log progress via a quick-update box on the Today view by typing or phone keyboard dictation (free text), without opening any task form
+- [ ] **UPDATE-02**: System resolves simple updates — mark a task/block done, reschedule it, or drop it — by fuzzy-matching the text against today's existing scheduled blocks/tasks, with no LLM call
+- [ ] **UPDATE-03**: A quick update that is ambiguous or matches nothing is surfaced to the user to confirm/correct, never guessed at or silently dropped
+- [ ] **UPDATE-04**: At end of day, user sees a rollup of completed vs. slipped items, and unfinished items carry forward into the next day via the existing brief/rollover path
+
+### Notifications & Google Home (NOTIF) — continued
+
+- [ ] **NOTIF-07**: User receives a configurable mid-day check-in notification (Pushover, optionally announced on Google Home) prompting them to log progress, with a link that deep-links into the Today update view
+- [ ] **NOTIF-08**: User can configure the check-in time(s) and enable/disable them from the web UI; the schedule persists across reboots (APScheduler SQLAlchemyJobStore)
+
+### Ingest (INGEST) — continued
+
+- [ ] **INGEST-08**: The import contract supports an "intra-day update" payload type (mark done / reschedule / drop against today's plan) that the ingest endpoint validates and applies idempotently — letting the user route a messy multi-intent spoken dump through any external LLM
+
+---
+
 ## Future / Backlog (post-v2.0)
 
 > Items below were deferred from v1.0 or flagged P3 during v2.0 research; not in the current milestone.
 
 - Energy-aware day planning (peak-hours setting) + automatic buffer blocks between tasks — deferred from v2.0 Organize
-- Mid-day re-plan button (re-propose remaining time) — P3
+- ~~Mid-day re-plan button (re-propose remaining time) — P3~~ → promoted into v2.1 (UPDATE + NOTIF-07)
 - Weekly goal digest (automated Friday/Sunday review) — deferred from v2.0 Guidance (partially served by the existing weekly voice readout, quick task 260615-bse)
 - Per-item ingest conflict report (resolve title conflicts on re-import) — P3
 - Google Calendar write-back for approved plan blocks — needs write OAuth scope + conflict/undo handling
