@@ -1,12 +1,15 @@
+import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from starlette.concurrency import run_in_threadpool
 from starlette.middleware.sessions import SessionMiddleware
 from app.config import settings
 from fastapi.staticfiles import StaticFiles
-from app.routers import tasks, auth, calendar_status, events, settings as settings_router, routines, tts, webhooks, goals, ingest, plan, guidance
+from app.routers import tasks, auth, calendar_status, events, settings as settings_router, routines, tts, webhooks, goals, ingest, plan, guidance, updates
 from app.services.tts import CACHE_DIR
 from app.scheduler import scheduler, schedule_calendar_sync, schedule_daily_brief, schedule_outlook_ics_sync, schedule_stall_check
+
+logger = logging.getLogger("app.main")
 
 
 @asynccontextmanager
@@ -40,6 +43,22 @@ async def lifespan(app: FastAPI):
     except Exception:
         schedule_daily_brief(8, 0)
     schedule_stall_check()
+    try:
+        from app.scheduler import schedule_checkin
+        from sqlalchemy import create_engine
+        from sqlalchemy.orm import sessionmaker
+        from app.config import settings as cfg_settings
+        from app.models import AppSettings
+        _url = cfg_settings.database_url.replace("+aiosqlite", "")
+        _eng = create_engine(_url)
+        with sessionmaker(_eng)() as s:
+            row = s.get(AppSettings, 1)
+        ch = row.check_in_hour if row and row.check_in_hour is not None else 12
+        cm = row.check_in_minute if row and row.check_in_minute is not None else 0
+        _eng.dispose()
+        schedule_checkin(ch, cm)
+    except Exception:
+        logger.exception("mid-day check-in registration failed")
     yield
     scheduler.shutdown()
 
@@ -60,6 +79,7 @@ app.include_router(goals.router)
 app.include_router(ingest.router)
 app.include_router(plan.router)
 app.include_router(guidance.router)
+app.include_router(updates.router)
 
 CACHE_DIR.mkdir(exist_ok=True)
 app.mount("/tts-audio", StaticFiles(directory=CACHE_DIR), name="tts-audio")

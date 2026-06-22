@@ -100,6 +100,10 @@ def schedule_stall_check(hour: int = 8, minute: int = 5) -> None:
     )
 
 
+def schedule_checkin(hour: int, minute: int) -> None:
+    raise NotImplementedError  # implemented in 12-03
+
+
 def schedule_calendar_sync() -> None:
     from apscheduler.triggers.interval import IntervalTrigger
     from app.services.sync import sync_calendar
