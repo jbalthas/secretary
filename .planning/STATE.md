@@ -2,8 +2,8 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Phases — Ingest, Organize, Guide
-status: executing
-last_updated: "2026-06-22T16:29:13.710Z"
+status: verifying
+last_updated: "2026-06-22T16:30:07.885Z"
 last_activity: 2026-06-22
 progress:
   total_phases: 11
@@ -18,7 +18,7 @@ progress:
 
 Phase: 12 (update-resolution-engine) — EXECUTING
 Plan: 4 of 4
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-06-22
 
 ---
@@ -124,6 +124,8 @@ Last activity: 2026-06-22
 - [Phase 12-03]: [12-03] checkin_service.py uses module-alias import (import app.services.pushover as _pushover) not from-import, so unittest.mock.patch on app.services.pushover.PushoverClient intercepts the runtime reference
 - [Phase 12-02]: [12-02] Strip intent/stop words from query before rapidfuzz matching — WRatio on full text dilutes score with 'done', 'with', etc.
 - [Phase 12-02]: [12-02] Tie-break: if multiple candidates score >= CONFIDENT_THRESHOLD, return ambiguous — prevents wrong pick on near-duplicate titles like 'Team sync A' vs 'Team sync B'
+- [Phase 12-04]: drop reuses completed=True (no separate drop flag/column) — Phase 13 slipped-vs-done rollup must treat completed=True as ambiguous
+- [Phase 12-04]: GET /tasks/{task_id} added to tasks router — test verification required it, omitted from plan
 
 ### Open Questions (Live Verification Required)
 
@@ -160,5 +162,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-06-22T16:29:13.707Z
+Last session: 2026-06-22T16:30:07.882Z
 Next action: Run `/gsd:plan-phase 12` to break Phase 12 (Update Resolution Engine) into executable plans
