@@ -86,18 +86,18 @@
 ### Intra-day Updates (UPDATE)
 
 - [ ] **UPDATE-01**: User can log progress via a quick-update box on the Today view by typing or phone keyboard dictation (free text), without opening any task form
-- [ ] **UPDATE-02**: System resolves simple updates — mark a task/block done, reschedule it, or drop it — by fuzzy-matching the text against today's existing scheduled blocks/tasks, with no LLM call
-- [ ] **UPDATE-03**: A quick update that is ambiguous or matches nothing is surfaced to the user to confirm/correct, never guessed at or silently dropped
+- [x] **UPDATE-02**: System resolves simple updates — mark a task/block done, reschedule it, or drop it — by fuzzy-matching the text against today's existing scheduled blocks/tasks, with no LLM call
+- [x] **UPDATE-03**: A quick update that is ambiguous or matches nothing is surfaced to the user to confirm/correct, never guessed at or silently dropped
 - [ ] **UPDATE-04**: At end of day, user sees a rollup of completed vs. slipped items, and unfinished items carry forward into the next day via the existing brief/rollover path
 
 ### Notifications & Google Home (NOTIF) — continued
 
-- [ ] **NOTIF-07**: User receives a configurable mid-day check-in notification (Pushover, optionally announced on Google Home) prompting them to log progress, with a link that deep-links into the Today update view
+- [x] **NOTIF-07**: User receives a configurable mid-day check-in notification (Pushover, optionally announced on Google Home) prompting them to log progress, with a link that deep-links into the Today update view
 - [ ] **NOTIF-08**: User can configure the check-in time(s) and enable/disable them from the web UI; the schedule persists across reboots (APScheduler SQLAlchemyJobStore)
 
 ### Ingest (INGEST) — continued
 
-- [ ] **INGEST-08**: The import contract supports an "intra-day update" payload type (mark done / reschedule / drop against today's plan) that the ingest endpoint validates and applies idempotently — letting the user route a messy multi-intent spoken dump through any external LLM
+- [x] **INGEST-08**: The import contract supports an "intra-day update" payload type (mark done / reschedule / drop against today's plan) that the ingest endpoint validates and applies idempotently — letting the user route a messy multi-intent spoken dump through any external LLM
 
 ---
 
@@ -181,11 +181,11 @@
 | GUIDE-01 | Phase 11 — Goal-Guided Guidance | Complete |
 | GUIDE-02 | Phase 11 — Goal-Guided Guidance | Complete |
 | GUIDE-03 | Phase 11 — Goal-Guided Guidance | Complete |
-| UPDATE-02 | Phase 12 — Update Resolution Engine | Pending |
-| UPDATE-03 | Phase 12 — Update Resolution Engine | Pending |
-| NOTIF-07 | Phase 12 — Update Resolution Engine | Pending |
-| INGEST-08 | Phase 12 — Update Resolution Engine | Pending |
+| UPDATE-02 | Phase 12 — Update Resolution Engine | Complete |
+| UPDATE-03 | Phase 12 — Update Resolution Engine | Complete |
+| NOTIF-07 | Phase 12 — Update Resolution Engine | Complete |
+| INGEST-08 | Phase 12 — Update Resolution Engine | Complete |
 | UPDATE-01 | Phase 13 — Update Loop UI | Pending |
-| UPDATE-03 | Phase 13 — Update Loop UI | Pending |
+| UPDATE-03 | Phase 13 — Update Loop UI | Complete |
 | UPDATE-04 | Phase 13 — Update Loop UI | Pending |
 | NOTIF-08 | Phase 13 — Update Loop UI | Pending |

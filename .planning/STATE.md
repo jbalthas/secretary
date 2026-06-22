@@ -1,25 +1,25 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.1
-milestone_name: Close the Loop
-status: roadmap_complete
-last_updated: "2026-06-22T00:00:00.000Z"
+milestone: v2.0
+milestone_name: Phases — Ingest, Organize, Guide
+status: executing
+last_updated: "2026-06-22T16:23:18.711Z"
 last_activity: 2026-06-22
 progress:
-  total_phases: 2
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_phases: 11
+  completed_phases: 11
+  total_plans: 42
+  completed_plans: 42
 ---
 
 # Project State
 
 ## Current Position
 
-Phase: Phase 12 — Update Resolution Engine (not started)
-Plan: —
-Status: Roadmap created; ready for phase planning
-Last activity: 2026-06-22 — v2.1 roadmap created (Phases 12–13)
+Phase: 12 (update-resolution-engine) — EXECUTING
+Plan: 2 of 4
+Status: Ready to execute
+Last activity: 2026-06-22
 
 ---
 
@@ -27,7 +27,7 @@ Last activity: 2026-06-22 — v2.1 roadmap created (Phases 12–13)
 
 **Core value:** One place to manage your schedule and tasks — reachable from any device, voice-controllable via Google Home, and proactive enough to push reminders before you have to think about them.
 
-**Current focus:** v2.1 — Close the Loop (intra-day update loop; Phases 12–13)
+**Current focus:** Phase 12 — update-resolution-engine
 
 ---
 
@@ -120,6 +120,7 @@ Last activity: 2026-06-22 — v2.1 roadmap created (Phases 12–13)
 - [v2.1 roadmap]: Check-in Pushover notification includes a deep-link URL (app relative path /today?update=1); no new dependency — URL string built in Python
 - [v2.1 roadmap]: INGEST-08 extends existing ingest Pydantic schema with a schema_version Literal bump or new payload_type discriminator; server only validates JSON, no LLM parsing
 - [v2.1 roadmap]: No new Alembic migration needed for NOTIF-07/08 if check-in time stored in existing app_settings table (new nullable columns); migration needed if new columns added — continue chain from 0011+
+- [Phase 12-01]: [12-01] Wave 0 test strategy: 10 RED tests in test_updates.py, deferred imports prevent collection errors, schedule_checkin stub in scheduler.py, check-in lifespan block logs failures (NOTIF-07 guard)
 
 ### Open Questions (Live Verification Required)
 
@@ -156,5 +157,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-06-22T00:00:00.000Z
+Last session: 2026-06-22T16:23:18.708Z
 Next action: Run `/gsd:plan-phase 12` to break Phase 12 (Update Resolution Engine) into executable plans
