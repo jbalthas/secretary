@@ -101,7 +101,15 @@ def schedule_stall_check(hour: int = 8, minute: int = 5) -> None:
 
 
 def schedule_checkin(hour: int, minute: int) -> None:
-    raise NotImplementedError  # implemented in 12-03
+    from apscheduler.triggers.cron import CronTrigger
+    from app.services.checkin_service import send_checkin_notification
+    scheduler.add_job(
+        send_checkin_notification,
+        CronTrigger(hour=hour, minute=minute, timezone=settings.timezone),
+        id="mid_day_checkin",
+        replace_existing=True,
+        misfire_grace_time=None,
+    )
 
 
 def schedule_calendar_sync() -> None:
