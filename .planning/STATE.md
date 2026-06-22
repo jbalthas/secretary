@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Phases — Ingest, Organize, Guide
 status: executing
-last_updated: "2026-06-22T16:23:18.711Z"
+last_updated: "2026-06-22T16:27:59.409Z"
 last_activity: 2026-06-22
 progress:
   total_phases: 11
@@ -17,7 +17,7 @@ progress:
 ## Current Position
 
 Phase: 12 (update-resolution-engine) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-06-22
 
@@ -121,6 +121,7 @@ Last activity: 2026-06-22
 - [v2.1 roadmap]: INGEST-08 extends existing ingest Pydantic schema with a schema_version Literal bump or new payload_type discriminator; server only validates JSON, no LLM parsing
 - [v2.1 roadmap]: No new Alembic migration needed for NOTIF-07/08 if check-in time stored in existing app_settings table (new nullable columns); migration needed if new columns added — continue chain from 0011+
 - [Phase 12-01]: [12-01] Wave 0 test strategy: 10 RED tests in test_updates.py, deferred imports prevent collection errors, schedule_checkin stub in scheduler.py, check-in lifespan block logs failures (NOTIF-07 guard)
+- [Phase 12-03]: [12-03] checkin_service.py uses module-alias import (import app.services.pushover as _pushover) not from-import, so unittest.mock.patch on app.services.pushover.PushoverClient intercepts the runtime reference
 
 ### Open Questions (Live Verification Required)
 
