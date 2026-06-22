@@ -8,22 +8,22 @@ A self-hosted personal secretary running on a Raspberry Pi 5. It handles schedul
 
 One place to manage your schedule and tasks — reachable from any device, voice-controllable via Google Home, and proactive enough to push reminders before you have to think about them.
 
-## Current Milestone: v2.0 "Ingest, Organize, Guide"
+## Current Milestone: v2.1 "Close the Loop"
 
-**Goal:** The secretary ingests LLM-produced structured payloads into first-class goals, tasks, and routines; tracks progress toward those goals; and proactively guides the day by proposing an approved schedule around calendar events.
+**Goal:** Keep the day's plan accurate as it unfolds — the secretary checks in, the user logs progress in seconds (no manual reorganizing), and the schedule self-corrects.
 
 **Target features:**
-- **Import contract** — a stable, versioned JSON schema plus a documented prompt the user runs in any LLM, which emits the payload
-- **Ingest flow** — a validating endpoint and UI to paste/upload the payload, preview what it will create, confirm, then write goals/tasks/routines
-- **Goals entity** — first-class career/life goals with target dates, linked tasks/routines, and progress reporting
-- **Day auto-organize** — proposes time-blocks around synced calendar events; the user approves before anything commits
-- **Goal-guided guidance** — surfaces goal progress and next-best actions (augmented daily brief / dedicated view / proactive nudges)
+- **Mid-day check-in** — configurable Pushover (+ optional Google Home TTS) reminder(s) prompting the user to log what they've done, deep-linking into the app
+- **Quick-update capture** — an in-app box on the Today tab; phone keyboard dictation is the voice path (zero new dependencies)
+- **No-LLM update resolution** — most updates (mark done / reschedule / drop) resolved by fuzzy-matching against today's existing scheduled blocks/tasks with pure server-side logic
+- **Messy-dump escape hatch** — multi-intent updates routed through the existing external-LLM ingest contract, extended with an "intra-day update" payload type (server only validates JSON)
+- **End-of-day rollup** — surfaces what slipped and feeds the existing rollover logic so unfinished items carry forward
 
 **Key context:**
-- External LLM flow — no API key or cost in v2.0; built-in server-side chat deferred to a future milestone
-- Suggest-then-approve scheduling — no silent auto-commit
-- Builds on existing Task/Routine/Calendar models; adds Goals + Ingest + Planning as new layers
-- Phase 7 (Outlook ICS) is owned by a separate concurrent effort — v2.0 numbering starts at Phase 8
+- HARD CONSTRAINTS (locked since v2.0): no new dependencies; **no server-side LLM**; minimize API/token cost
+- Reuse Pydantic v2, SQLAlchemy/Alembic, native React, APScheduler, Pushover/TTS — all already in the codebase
+- Builds directly on shipped pieces: plan-task completion, scheduled_blocks, the planner, the daily brief, and the ingest pipeline
+- Phase numbering continues from v2.0 — this milestone starts at Phase 12
 
 ## Context
 
@@ -56,12 +56,19 @@ One place to manage your schedule and tasks — reachable from any device, voice
 
 ### Active
 
-**v2.0 — Ingest, Organize, Guide:**
+**v2.1 — Close the Loop (requirements defined in REQUIREMENTS.md):**
+- [ ] Mid-day check-in reminder(s) — configurable Pushover/TTS prompt to log progress, deep-links into app
+- [ ] Quick-update capture box on Today (keyboard-dictation voice path, no new deps)
+- [ ] No-LLM update resolution — fuzzy-match mark done / reschedule / drop against today's blocks/tasks
+- [ ] Messy-dump escape hatch — intra-day update payload type on the existing external-LLM ingest contract
+- [ ] End-of-day rollup feeding existing rollover logic
+
+**v2.0 — Ingest, Organize, Guide (complete):**
 - [x] Stable versioned import contract (JSON schema) + documented LLM prompt — Phase 8 backend
 - [x] Validating ingest endpoint + UI (paste/upload → preview → confirm → write) — backend (Phase 8) + UI (Phase 9)
 - [x] First-class Goals entity with target dates, linked tasks/routines, progress reporting — backend (Phase 8) + UI (Phase 9)
-- [ ] Day auto-organize: propose time-blocks around calendar events, user approves before commit
-- [ ] Goal-guided guidance: progress + next-best-action surfacing
+- [x] Day auto-organize: propose time-blocks around calendar events, user approves before commit — Phase 10
+- [x] Goal-guided guidance: progress + next-best-action surfacing — Phase 11
 
 **v1.0 (carried over / pending validation):**
 - [ ] Pi OS and service setup (nginx, systemd, Python env)
@@ -111,4 +118,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-17 — Phase 9 complete (goals-ingest-ui): Goals page + drill-in detail, task/routine goal linking, Ingest page (paste/upload → preview → confirm)*
+*Last updated: 2026-06-22 — Milestone v2.1 "Close the Loop" started (intra-day update loop); v2.0 complete (Phases 8–11)*

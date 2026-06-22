@@ -1,25 +1,25 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.0
-milestone_name: Phases — Ingest, Organize, Guide
-status: executing
-last_updated: "2026-06-18T15:28:54.210Z"
-last_activity: 2026-06-18
+milestone: v2.1
+milestone_name: Close the Loop
+status: defining_requirements
+last_updated: "2026-06-22T00:00:00.000Z"
+last_activity: 2026-06-22
 progress:
-  total_phases: 11
-  completed_phases: 11
-  total_plans: 42
-  completed_plans: 42
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
 
 ## Current Position
 
-Phase: 11
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-06-20 - Completed quick task 260619-u0n: Include tomorrow's due tasks in the Google Home briefing
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-06-22 — Milestone v2.1 "Close the Loop" started
 
 ---
 
