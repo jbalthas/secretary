@@ -52,6 +52,17 @@ class AppSettings(Base):
     work_end_minute: Mapped[int] = mapped_column(Integer, default=0)
     stall_threshold_days: Mapped[int | None] = mapped_column(Integer, nullable=True)
     last_guidance_sent_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    check_in_hour: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    check_in_minute: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+
+class UpdateLog(Base):
+    __tablename__ = "update_log"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    update_id: Mapped[str] = mapped_column(String(200), unique=True, nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
 
 
 class RoutineAction(str, enum.Enum):
