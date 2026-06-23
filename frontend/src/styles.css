@@ -1073,3 +1073,93 @@ body {
   .organize-task-card,
   .organize-loading svg { transition: none; animation: none; }
 }
+
+/* Phase 13 — Update Loop UI */
+.update-input-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  align-items: flex-end;
+}
+.update-input {
+  flex: 1;
+  min-height: 52px;
+  max-height: 120px;
+  resize: none;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  padding: 8px 12px;
+  font-size: 16px;
+  font-family: inherit;
+}
+.btn-save--inline {
+  padding: 12px 16px;
+  height: 44px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  font-size: 14px;
+  width: auto;
+}
+.candidate-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.candidate-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  min-height: 48px;
+}
+.btn-candidate-confirm {
+  padding: 8px 12px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.btn-candidate-skip {
+  padding: 8px 12px;
+  background: none;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.rollup-card {
+  background: var(--surface);
+  border-left: 3px solid var(--accent);
+  border-radius: 6px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.rollup-heading {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 8px;
+}
+.rollup-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.rollup-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  min-height: 44px;
+}
