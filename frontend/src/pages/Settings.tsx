@@ -7,6 +7,7 @@ import { useStallThreshold } from "../hooks/useStallThreshold";
 import { useGoogleHome } from "../hooks/useGoogleHome";
 import { useRoutines } from "../hooks/useRoutines";
 import { useGoals } from "../hooks/useGoals";
+import { useCheckInSettings } from "../hooks/useCheckInSettings";
 import RoutineDrawer from "../components/RoutineDrawer";
 
 const STATUS_URL = "/api/v1/calendar/status";
@@ -59,6 +60,12 @@ export default function Settings() {
   const [stallSaving, setStallSaving] = useState(false);
   const [stallError, setStallError] = useState<string | null>(null);
 
+  const { checkInTime, checkInEnabled, loading: ciLoading, error: ciLoadError, save: saveCheckIn } = useCheckInSettings();
+  const [ciTime, setCiTime] = useState("");
+  const [ciEnabled, setCiEnabled] = useState(true);
+  const [ciSaving, setCiSaving] = useState(false);
+  const [ciError, setCiError] = useState<string | null>(null);
+
   const { routines, loading: routinesLoading, create, update, remove } = useRoutines();
   const { goals } = useGoals();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -79,6 +86,10 @@ export default function Settings() {
   useEffect(() => {
     if (stallDays !== null) setStallInput(String(stallDays));
   }, [stallDays]);
+
+  // Sync check-in inputs when they load
+  useEffect(() => { if (checkInTime !== null) setCiTime(checkInTime); }, [checkInTime]);
+  useEffect(() => { setCiEnabled(checkInEnabled); }, [checkInEnabled]);
 
   async function loadStatus() {
     const res = await fetch(STATUS_URL);
@@ -148,6 +159,14 @@ export default function Settings() {
     } finally {
       setGhSpeaking(false);
     }
+  }
+
+  async function handleSaveCheckIn() {
+    setCiError(null); setCiSaving(true);
+    try {
+      const ok = await saveCheckIn(ciTime, ciEnabled);
+      if (!ok) setCiError("Failed to save. Check your connection and try again.");
+    } finally { setCiSaving(false); }
   }
 
   return (
@@ -488,6 +507,69 @@ export default function Settings() {
         >
           + Add Routine
         </button>
+      </section>
+
+      {/* Check-in Notification section */}
+      <section style={{ marginBottom: 24 }}>
+        <p style={SECTION_LABEL_STYLE}>Check-in Notification</p>
+
+        <div style={CARD_STYLE}>
+          {ciLoading && checkInTime === null ? (
+            <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: 14 }}>Loading…</p>
+          ) : ciLoadError ? (
+            <p style={{ margin: 0, fontSize: 12, color: "var(--destructive)" }}>{ciLoadError}</p>
+          ) : (
+            <>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+                <input
+                  id="checkin-enabled"
+                  type="checkbox"
+                  checked={ciEnabled}
+                  onChange={() => setCiEnabled(!ciEnabled)}
+                  style={{ accentColor: "var(--accent)" }}
+                />
+                <label htmlFor="checkin-enabled" style={{ fontSize: 14, color: "var(--text)", cursor: "pointer" }}>
+                  Enable mid-day check-in
+                </label>
+              </div>
+              <div className="drawer-field" style={{ marginBottom: 8 }}>
+                <label htmlFor="checkin-time">Check-in time</label>
+                <input
+                  id="checkin-time"
+                  type="time"
+                  value={ciTime}
+                  onChange={(e) => setCiTime(e.target.value)}
+                  disabled={!ciEnabled}
+                  style={{
+                    background: "var(--bg)",
+                    border: "1px solid var(--border)",
+                    borderRadius: 6,
+                    color: "var(--text)",
+                    padding: "8px 10px",
+                    fontSize: 16,
+                    width: "100%",
+                    boxSizing: "border-box",
+                  }}
+                />
+              </div>
+              <p style={{ margin: "0 0 12px", fontSize: 12, color: "var(--text-secondary)" }}>
+                A Pushover reminder to log progress. Default: 12:00.
+              </p>
+              {ciError && (
+                <p style={{ margin: "0 0 8px", fontSize: 12, color: "var(--destructive)" }}>{ciError}</p>
+              )}
+              <button
+                type="button"
+                className="btn-save"
+                onClick={handleSaveCheckIn}
+                disabled={ciSaving}
+                style={{ opacity: ciSaving ? 0.6 : 1, cursor: ciSaving ? "not-allowed" : "pointer" }}
+              >
+                {ciSaving ? "Saving…" : "Save Check-in Settings"}
+              </button>
+            </>
+          )}
+        </div>
       </section>
 
       <RoutineDrawer
