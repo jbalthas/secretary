@@ -3,6 +3,9 @@ from pydantic import BaseModel, Field
 
 class UpdateRequest(BaseModel):
     text: str = Field(..., min_length=1, max_length=500)
+    confirmed_id: int | None = None
+    confirmed_type: str | None = None     # "task" | "block"
+    confirmed_action: str | None = None   # "done" | "reschedule" | "drop"
 
 
 class UpdateCandidate(BaseModel):

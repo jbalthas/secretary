@@ -228,3 +228,56 @@ def test_ingest_v10_still_valid():
     }
     r = client.post("/api/v1/ingest/confirm", json=payload)
     assert r.status_code == 200
+
+
+# ---------------------------------------------------------------------------
+# Phase 13 Plan 02 — Task 1: resolver applies actions (UPDATE-03)
+# ---------------------------------------------------------------------------
+
+def test_resolve_applies_done():
+    """13-02 Task 1: POST /updates/resolve on a clear match sets task completed=True in DB."""
+    task = client.post("/api/v1/tasks/", json={"title": "Write release notes"}).json()
+    task_id = task["id"]
+
+    r = client.post("/api/v1/updates/resolve", json={"text": "done with write release notes"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["status"] == "resolved"
+
+    task_after = client.get(f"/api/v1/tasks/{task_id}").json()
+    assert task_after["completed"] is True
+
+
+def test_confirm_applies_done():
+    """13-02 Task 1: confirmed_id path bypasses fuzzy match and applies action."""
+    task = client.post("/api/v1/tasks/", json={"title": "Send weekly report"}).json()
+    task_id = task["id"]
+
+    r = client.post(
+        "/api/v1/updates/resolve",
+        json={
+            "text": "x",
+            "confirmed_id": task_id,
+            "confirmed_type": "task",
+            "confirmed_action": "done",
+        },
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert body["status"] == "resolved"
+
+    task_after = client.get(f"/api/v1/tasks/{task_id}").json()
+    assert task_after["completed"] is True
+
+
+def test_ambiguous_does_not_mutate():
+    """13-02 Task 1: ambiguous match never mutates either candidate."""
+    task_a = client.post("/api/v1/tasks/", json={"title": "Team sync A"}).json()
+    task_b = client.post("/api/v1/tasks/", json={"title": "Team sync B"}).json()
+
+    r = client.post("/api/v1/updates/resolve", json={"text": "team sync"})
+    assert r.status_code == 200
+    assert r.json()["status"] == "ambiguous"
+
+    assert client.get(f"/api/v1/tasks/{task_a['id']}").json()["completed"] is False
+    assert client.get(f"/api/v1/tasks/{task_b['id']}").json()["completed"] is False
