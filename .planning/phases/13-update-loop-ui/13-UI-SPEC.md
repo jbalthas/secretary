@@ -5,6 +5,8 @@ status: draft
 shadcn_initialized: false
 preset: none
 created: 2026-06-23
+revised: 2026-06-23
+revision_reason: ui-checker blocking issues — typography collapsed to 4 sizes, spacing snapped to multiples of 4, candidate CTA label updated
 ---
 
 # Phase 13 — UI Design Contract
@@ -55,17 +57,20 @@ Exceptions:
 
 ## Typography
 
-Extracted directly from `styles.css` and existing inline styles. No new sizes or weights introduced.
+Exactly 4 sizes, 2 weights. The codebase contains a 13px section-label pattern in `styles.css`; for Phase 13 new components that usage is collapsed to 12px (see note below).
 
 | Role | Size | Weight | Line Height | Usage |
 |------|------|--------|-------------|-------|
-| Body | 16px | 400 | 1.5 | Update input placeholder, candidate titles, rollup item titles |
-| Label | 14px | 400 | 1.5 | Candidate subtitles, rollup counts, helper text under inputs |
-| Label-bold | 14px | 600 | 1.5 | Section labels (`.section-label` pattern), candidate timestamps, status text |
 | Heading | 20px | 600 | 1.2 | `.page-title` and `.drawer-title` — reused verbatim, not new |
+| Body | 16px | 400 | 1.5 | Update input placeholder, candidate titles, rollup item titles |
+| Label | 14px | 400 | 1.5 | Candidate subtitles, rollup counts, helper text under inputs, check-in toggle label, loading states |
+| Label-bold | 14px | 600 | 1.5 | Status text, timestamps |
+| Secondary/helper | 12px | 400 | 1.5 | Error text below inputs, helper hint text, rollup heading (uppercase), candidate meta (time/date) |
 
-Section label style (reuse exactly from Settings.tsx `SECTION_LABEL_STYLE`):
-- `fontSize: 13, fontWeight: 600, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.05em"`
+> **Phase-13 normalization note:** `styles.css` uses `fontSize: 13` for `SECTION_LABEL_STYLE` in existing Settings.tsx components. Phase 13 new components use 12px for all secondary/helper/meta text rather than 13px. This is a deliberate normalization for new surfaces only — do NOT change the 13px value in any existing component.
+
+Section label style for new check-in section (Phase-13 normalized):
+- `fontSize: 12, fontWeight: 600, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.05em"`
 
 ---
 
@@ -77,12 +82,12 @@ Extracted from `styles.css` `:root` — all values already defined, none new.
 |------|-------|-------|
 | Dominant (60%) | `#0f172a` (`--bg`) | Page background, input fields background |
 | Secondary (30%) | `#1e293b` (`--surface`) | Cards (check-in settings card, rollup card, candidate list container), FocusBanner background |
-| Accent (10%) | `#6366f1` (`--accent`) | Submit button background, "Confirm" candidate action button, enabled toggle indicator, progress fill |
+| Accent (10%) | `#6366f1` (`--accent`) | Submit button background, "Confirm match" candidate action button, enabled toggle indicator, progress fill |
 | Destructive | `#ef4444` (`--destructive`) | "Dismiss" candidate action (text only, no background fill), validation error text, no-match warning |
 
 Accent reserved specifically for:
 1. The submit button on the quick-update input (`btn-save` class)
-2. The "Confirm" button on an individual candidate match
+2. The "Confirm match" button on an individual candidate match
 3. The enabled state of the check-in toggle (checkbox `accent-color`)
 4. The left-border of the rollup card (matches FocusBanner pattern: `borderLeft: "3px solid var(--accent)"`)
 
@@ -111,10 +116,12 @@ Four new UI surfaces. Each is described with layout, states, and class names to 
 ```
 
 - Container: `div.update-input-row` — `display: flex; gap: 8px; marginBottom: 16px; alignItems: flex-end`
-- Input: `textarea.update-input` — `flex: 1; minHeight: 52px; maxHeight: 120px; resize: none; background: var(--bg); border: 1px solid var(--border); borderRadius: 6px; color: var(--text); padding: 8px 10px; fontSize: 16px; fontFamily: inherit`
+- Input: `textarea.update-input` — `flex: 1; minHeight: 52px; maxHeight: 120px; resize: none; background: var(--bg); border: 1px solid var(--border); borderRadius: 6px; color: var(--text); padding: 8px 12px; fontSize: 16px; fontFamily: inherit`
+  - Phase-13 normalization: `padding: 8px 12px` (not `8px 10px` — 10 is not a multiple of 4)
 - Use `<textarea>` (not `<input type="text">`) so phone keyboard dictation microphone appears on iOS/Android
 - Placeholder text: `"What got done? e.g. finished standup"`
-- Submit button: `button.btn-save.btn-save--inline` — `padding: 10px 16px; height: 44px; borderRadius: 8px; flexShrink: 0; fontSize: 15px` (narrower variant of `.btn-save`)
+- Submit button: `button.btn-save.btn-save--inline` — `padding: 12px 16px; height: 44px; borderRadius: 8px; flexShrink: 0; fontSize: 14px`
+  - Phase-13 normalization: `padding: 12px 16px` (not `10px 16px` — 10 is not a multiple of 4); `fontSize: 14px` (not 15px — 15 is not in the 4-size scale)
 - Button label (idle): `"Log update"`
 - Button label (submitting): `"Logging…"` with `disabled` + `opacity: 0.6`
 - On successful `applied` response: clear textarea, show inline success flash `"Done"` for 1.5s beside the button
@@ -135,8 +142,8 @@ Four new UI surfaces. Each is described with layout, states, and class names to 
   or "No exact match — did you mean one of these?"
 
 [ Candidate list ]
-  [ candidate title           time/date ]  [Confirm]  [Skip]
-  [ candidate title           time/date ]  [Confirm]  [Skip]
+  [ candidate title           time/date ]  [Confirm match]  [Skip]
+  [ candidate title           time/date ]  [Confirm match]  [Skip]
 
 [ text button: "None of these — dismiss" ]
 ```
@@ -147,11 +154,14 @@ Four new UI surfaces. Each is described with layout, states, and class names to 
   - No-match copy: `"No exact match — did you mean:"`
 - Candidate row: `div.candidate-row` — `display: flex; alignItems: center; gap: 8px; padding: 8px 0; borderBottom: 1px solid var(--border); minHeight: 48px`
 - Candidate title: 16px / 400 / `var(--text)`
-- Candidate meta (time or "today"): 13px / 400 / `var(--text-secondary)` — right-aligned `flex-shrink: 0`
-- "Confirm" button: `button.btn-candidate-confirm` — `padding: 6px 12px; background: var(--accent); color: #fff; border: none; borderRadius: 6px; fontSize: 14px; cursor: pointer`
-- "Skip" button: `button.btn-candidate-skip` — `padding: 6px 12px; background: none; color: var(--text-secondary); border: 1px solid var(--border); borderRadius: 6px; fontSize: 14px; cursor: pointer`
+- Candidate meta (time or "today"): 12px / 400 / `var(--text-secondary)` — right-aligned `flex-shrink: 0`
+  - Phase-13 normalization: 12px (not 13px — collapsed to the secondary/helper size)
+- "Confirm match" button: `button.btn-candidate-confirm` — `padding: 8px 12px; background: var(--accent); color: #fff; border: none; borderRadius: 6px; fontSize: 14px; cursor: pointer`
+  - Phase-13 normalization: `padding: 8px 12px` (not `6px 12px` — 6 is not a multiple of 4)
+- "Skip" button: `button.btn-candidate-skip` — `padding: 8px 12px; background: none; color: var(--text-secondary); border: 1px solid var(--border); borderRadius: 6px; fontSize: 14px; cursor: pointer`
+  - Phase-13 normalization: `padding: 8px 12px` (not `6px 12px` — 6 is not a multiple of 4)
 - Dismiss link: `button.btn-text-accent` (existing class) — `"None of these — dismiss"` — calls `dismiss()` which clears state and textarea
-- After Confirm: re-call `POST /updates/resolve` with the confirmed `task_id` or `block_id`; on success show the same `"Done"` flash and clear; no modal
+- After Confirm match: re-call `POST /updates/resolve` with the confirmed `task_id` or `block_id`; on success show the same `"Done"` flash and clear; no modal
 
 ### 3. End-of-Day Rollup Card (Today tab, below agenda when past work-hours end)
 
@@ -170,7 +180,8 @@ Four new UI surfaces. Each is described with layout, states, and class names to 
 ```
 
 - Container: `div.rollup-card` — `background: var(--surface); borderLeft: 3px solid var(--accent); borderRadius: 6px; padding: 16px; marginBottom: 16px`
-- Heading: `p.rollup-heading` — `fontSize: 13px; fontWeight: 600; color: var(--text-secondary); textTransform: uppercase; letterSpacing: 0.05em; margin: 0 0 6px`; copy: `"Day Rollup"`
+- Heading: `p.rollup-heading` — `fontSize: 12px; fontWeight: 600; color: var(--text-secondary); textTransform: uppercase; letterSpacing: 0.05em; margin: 0 0 8px`; copy: `"Day Rollup"`
+  - Phase-13 normalization: `fontSize: 12px` (not 13px — collapsed to secondary/helper size); `margin: 0 0 8px` (not `0 0 6px` — 6 is not a multiple of 4)
 - Summary line: `p` — `fontSize: 14px; color: var(--text-secondary); margin: 0 0 12px` — `"{N} completed  •  {M} slipped"`
 - Item list: `div.rollup-list` — `display: flex; flexDirection: column; gap: 0`
 - Rollup item row: `div.rollup-item` — `display: flex; alignItems: center; gap: 8px; padding: 8px 0; borderBottom: 1px solid var(--border); minHeight: 44px`
@@ -194,9 +205,10 @@ CHECK-IN NOTIFICATION
   [ error text if save fails ]
 ```
 
-- Section label copy: `"Check-in Notification"` (rendered via `SECTION_LABEL_STYLE`)
+- Section label copy: `"Check-in Notification"` (rendered via `SECTION_LABEL_STYLE` — existing 13px pattern in Settings.tsx; do not change existing usage)
 - Card: `div` with `CARD_STYLE` (background: var(--surface), border: 1px solid var(--border), borderRadius: 12, padding: "16px 16px")
-- Toggle row: `div` — `display: flex; alignItems: center; gap: 10px; marginBottom: 12`
+- Toggle row: `div` — `display: flex; alignItems: center; gap: 8px; marginBottom: 12`
+  - Phase-13 normalization: `gap: 8px` (not `gap: 10px` — 10 is not a multiple of 4)
   - Checkbox: `<input type="checkbox" id="checkin-enabled" accent-color: var(--accent)>` — label: `"Enable mid-day check-in"`
   - Font: 14px / `var(--text)`
 - Time input: wrapped in `div.drawer-field` (existing class), `<input type="time" id="checkin-time">` — same inline style as Brief Time input in Settings.tsx
@@ -217,7 +229,7 @@ CHECK-IN NOTIFICATION
 | Submit success flash | `"Done"` (1.5s inline, then cleared) |
 | Ambiguous banner | `"Multiple matches — pick the right one:"` |
 | No-match banner | `"No exact match — did you mean:"` |
-| Candidate confirm button | `"Confirm"` |
+| Candidate confirm button | `"Confirm match"` |
 | Candidate skip button | `"Skip"` |
 | Candidate dismiss link | `"None of these — dismiss"` |
 | Rollup card heading | `"Day Rollup"` |
@@ -266,7 +278,7 @@ user types in textarea
 ### Candidate confirmation flow
 
 ```
-user clicks "Confirm" on candidate:
+user clicks "Confirm match" on candidate:
   → POST /api/v1/updates/resolve { text, confirmed_id: task_id|block_id }
   → on success: flash "Done", clear textarea, remove CandidateCard, re-fetch
 
@@ -336,7 +348,7 @@ No new npm packages. No third-party component registries. The `lucide-react` ico
 | CSS variable palette (`--bg`, `--surface`, `--accent`, `--border`, `--text`, `--text-secondary`, `--destructive`) | `frontend/src/styles.css` |
 | Inline-style + CSS class hybrid pattern | `frontend/src/pages/Settings.tsx`, `frontend/src/pages/Today.tsx` |
 | Spacing values (8/16/24/32/48) | `frontend/src/styles.css` — `.page`, `.drawer-body`, sections |
-| Typography scale (12/13/14/16/20px, weights 400+600) | `frontend/src/styles.css` — explicit rules |
+| Typography scale (12/14/16/20px, weights 400+600) — Phase-13 normalized to 4 sizes | `frontend/src/styles.css` — explicit rules; 13px usages collapsed to 12px for new components |
 | FocusBanner pattern (left-accent card) | `frontend/src/pages/Today.tsx` — `FocusBanner` component |
 | Settings card pattern (`CARD_STYLE`, `SECTION_LABEL_STYLE`) | `frontend/src/pages/Settings.tsx` |
 | `isAfterWorkHours` rollup gate | Phase 10 decision — `[10-04]` accumulated context |
@@ -345,6 +357,23 @@ No new npm packages. No third-party component registries. The `lucide-react` ico
 | `PATCH /api/v1/settings/check-in-time` endpoint | Phase 12 complete (NOTIF-07) |
 | Textarea for dictation (not input[type=text]) | REQUIREMENTS.md UPDATE-01: "phone keyboard dictation" |
 | Confirm-or-dismiss (never silently drop) | REQUIREMENTS.md UPDATE-03 + Phase 12 success criterion 2 |
+
+---
+
+## Phase-13 Normalization Summary
+
+The following values diverge intentionally from `frontend/src/styles.css` for new components only. Executors must use the Phase-13 values for new surfaces and must NOT change existing components.
+
+| Location | Original value | Phase-13 value | Reason |
+|----------|---------------|----------------|--------|
+| `.update-input` padding | `8px 10px` | `8px 12px` | 10 is not a multiple of 4 |
+| `.btn-save--inline` padding | `10px 16px` | `12px 16px` | 10 is not a multiple of 4 |
+| `.btn-save--inline` font-size | `15px` | `14px` | 15 is not in the 4-size scale |
+| `.btn-candidate-confirm` / `.btn-candidate-skip` padding | `6px 12px` | `8px 12px` | 6 is not a multiple of 4 |
+| `.rollup-heading` margin | `0 0 6px` | `0 0 8px` | 6 is not a multiple of 4 |
+| Check-in toggle row gap | `10px` | `8px` | 10 is not a multiple of 4 |
+| `.rollup-heading` / candidate meta font-size | `13px` | `12px` | 13 is not in the 4-size scale; collapsed to secondary/helper tier |
+| Candidate confirm button label | `"Confirm"` | `"Confirm match"` | Single-word CTA too ambiguous |
 
 ---
 
