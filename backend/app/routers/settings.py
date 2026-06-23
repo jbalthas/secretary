@@ -4,7 +4,7 @@ from app.db import get_session
 from app.models import AppSettings
 from app.schemas.settings import BriefTimeRead, BriefTimeUpdate, WorkHoursRead, WorkHoursUpdate, StallThresholdRead, StallThresholdUpdate, CheckInTimeRead, CheckInTimeUpdate
 from app.config import settings
-from app.scheduler import schedule_daily_brief, schedule_checkin
+from app.scheduler import schedule_daily_brief, schedule_checkin, remove_checkin
 
 router = APIRouter(prefix=f"{settings.api_prefix}/settings", tags=["settings"])
 
@@ -82,18 +82,23 @@ async def get_check_in_time(session: AsyncSession = Depends(get_session)):
     cfg = await session.get(AppSettings, 1)
     h = cfg.check_in_hour if cfg and cfg.check_in_hour is not None else 12
     m = cfg.check_in_minute if cfg and cfg.check_in_minute is not None else 0
-    return CheckInTimeRead(hour=h, minute=m)
+    enabled = cfg.check_in_enabled if cfg and cfg.check_in_enabled is not None else True
+    return CheckInTimeRead(hour=h, minute=m, enabled=enabled)
 
 
 @router.put("/check-in-time", response_model=CheckInTimeRead)
 async def set_check_in_time(body: CheckInTimeUpdate, session: AsyncSession = Depends(get_session)):
     cfg = await session.get(AppSettings, 1)
     if cfg is None:
-        cfg = AppSettings(id=1, check_in_hour=body.hour, check_in_minute=body.minute)
+        cfg = AppSettings(id=1, check_in_hour=body.hour, check_in_minute=body.minute, check_in_enabled=body.enabled)
         session.add(cfg)
     else:
         cfg.check_in_hour = body.hour
         cfg.check_in_minute = body.minute
+        cfg.check_in_enabled = body.enabled
     await session.commit()
-    schedule_checkin(body.hour, body.minute)
-    return CheckInTimeRead(hour=body.hour, minute=body.minute)
+    if body.enabled:
+        schedule_checkin(body.hour, body.minute)
+    else:
+        remove_checkin()
+    return CheckInTimeRead(hour=body.hour, minute=body.minute, enabled=body.enabled)

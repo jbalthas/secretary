@@ -44,7 +44,7 @@ async def lifespan(app: FastAPI):
         schedule_daily_brief(8, 0)
     schedule_stall_check()
     try:
-        from app.scheduler import schedule_checkin
+        from app.scheduler import schedule_checkin, remove_checkin
         from sqlalchemy import create_engine
         from sqlalchemy.orm import sessionmaker
         from app.config import settings as cfg_settings
@@ -55,8 +55,12 @@ async def lifespan(app: FastAPI):
             row = s.get(AppSettings, 1)
         ch = row.check_in_hour if row and row.check_in_hour is not None else 12
         cm = row.check_in_minute if row and row.check_in_minute is not None else 0
+        ce = row.check_in_enabled if row and row.check_in_enabled is not None else True
         _eng.dispose()
-        schedule_checkin(ch, cm)
+        if ce:
+            schedule_checkin(ch, cm)
+        else:
+            remove_checkin()
     except Exception:
         logger.exception("mid-day check-in registration failed")
     yield

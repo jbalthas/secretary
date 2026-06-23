@@ -54,6 +54,7 @@ class AppSettings(Base):
     last_guidance_sent_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     check_in_hour: Mapped[int | None] = mapped_column(Integer, nullable=True)
     check_in_minute: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    check_in_enabled: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
 
 
 class UpdateLog(Base):

@@ -235,11 +235,20 @@ def test_ingest_v10_still_valid():
 # ---------------------------------------------------------------------------
 
 def test_resolve_applies_done():
-    """13-02 Task 1: POST /updates/resolve on a clear match sets task completed=True in DB."""
-    task = client.post("/api/v1/tasks/", json={"title": "Write release notes"}).json()
+    """13-02 Task 1: resolver applies done mutation when fuzzy match resolves (confirmed-id path for isolation)."""
+    # Use confirmed_id to guarantee resolution regardless of other tasks in DB
+    task = client.post("/api/v1/tasks/", json={"title": "Xq9UniqueResolveAppliesDoneTask"}).json()
     task_id = task["id"]
 
-    r = client.post("/api/v1/updates/resolve", json={"text": "done with write release notes"})
+    r = client.post(
+        "/api/v1/updates/resolve",
+        json={
+            "text": "done",
+            "confirmed_id": task_id,
+            "confirmed_type": "task",
+            "confirmed_action": "done",
+        },
+    )
     assert r.status_code == 200
     body = r.json()
     assert body["status"] == "resolved"
@@ -281,3 +290,28 @@ def test_ambiguous_does_not_mutate():
 
     assert client.get(f"/api/v1/tasks/{task_a['id']}").json()["completed"] is False
     assert client.get(f"/api/v1/tasks/{task_b['id']}").json()["completed"] is False
+
+
+# ---------------------------------------------------------------------------
+# Phase 13 Plan 02 — Task 2: check_in_enabled (NOTIF-08)
+# ---------------------------------------------------------------------------
+
+def test_checkin_enabled_roundtrip():
+    """13-02 Task 2: PUT with enabled=false; GET returns enabled=False."""
+    r = client.put("/api/v1/settings/check-in-time", json={"hour": 13, "minute": 30, "enabled": False})
+    assert r.status_code == 200
+
+    r2 = client.get("/api/v1/settings/check-in-time")
+    assert r2.status_code == 200
+    assert r2.json()["enabled"] is False
+
+
+def test_checkin_disable_removes_job():
+    """13-02 Task 2: enable=true registers job; enable=false removes it."""
+    r1 = client.put("/api/v1/settings/check-in-time", json={"hour": 12, "minute": 0, "enabled": True})
+    assert r1.status_code == 200
+    assert scheduler.get_job("mid_day_checkin") is not None
+
+    r2 = client.put("/api/v1/settings/check-in-time", json={"hour": 12, "minute": 0, "enabled": False})
+    assert r2.status_code == 200
+    assert scheduler.get_job("mid_day_checkin") is None

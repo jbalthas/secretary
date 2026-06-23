@@ -35,9 +35,11 @@ class StallThresholdUpdate(BaseModel):
 class CheckInTimeRead(BaseModel):
     hour: int
     minute: int
+    enabled: bool
     model_config = {"from_attributes": True}
 
 
 class CheckInTimeUpdate(BaseModel):
     hour: int = Field(ge=0, le=23)
     minute: int = Field(ge=0, le=59)
+    enabled: bool = True

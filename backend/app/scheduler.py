@@ -100,6 +100,13 @@ def schedule_stall_check(hour: int = 8, minute: int = 5) -> None:
     )
 
 
+def remove_checkin() -> None:
+    try:
+        scheduler.remove_job("mid_day_checkin")
+    except Exception:
+        pass
+
+
 def schedule_checkin(hour: int, minute: int) -> None:
     from apscheduler.triggers.cron import CronTrigger
     from app.services.checkin_service import send_checkin_notification
