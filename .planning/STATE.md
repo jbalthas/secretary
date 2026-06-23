@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Phases — Close the Loop
 status: executing
-last_updated: "2026-06-23T19:20:24.871Z"
+last_updated: "2026-06-23T19:26:00.015Z"
 last_activity: 2026-06-23
 progress:
   total_phases: 9
   completed_phases: 8
   total_plans: 34
-  completed_plans: 32
+  completed_plans: 33
 ---
 
 # Project State
@@ -17,7 +17,7 @@ progress:
 ## Current Position
 
 Phase: 13 (update-loop-ui) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Ready to execute
 Last activity: 2026-06-23
 
@@ -130,6 +130,8 @@ Last activity: 2026-06-23
 - [Phase 13]: confirmed_id/confirmed_type/confirmed_action added to UpdateRequest (optional); confirmed_id bypasses fuzzy match for UPDATE-03 confirm flow
 - [Phase 13]: [13-02] reschedule=tomorrow via timedelta(days=1) from utc now; delta-preserving for blocks; due_date for tasks
 - [Phase 13]: [13-02] check_in_enabled nullable Boolean; None coalesces to True; GET check-in-time returns 'enabled' field (plans 03/04 wire the toggle)
+- [Phase 13-update-loop-ui]: useUpdate hook is stateless — Today.tsx owns all update-flow state (text, phase, candidates, candStatus, updError)
+- [Phase 13-update-loop-ui]: CandidateCard uses local Set<number> for skipped candidates — avoids lifting skip state to Today.tsx
 
 ### Open Questions (Live Verification Required)
 
@@ -166,5 +168,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-06-23T19:20:24.868Z
+Last session: 2026-06-23T19:26:00.010Z
 Next action: Run `/gsd:plan-phase 12` to break Phase 12 (Update Resolution Engine) into executable plans
