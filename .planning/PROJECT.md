@@ -53,14 +53,15 @@ One place to manage your schedule and tasks — reachable from any device, voice
 - Reminders and the daily brief announce on the Google Home speaker alongside Pushover, ad-hoc TTS is triggerable from the web UI, and a secret-guarded webhook triggers the brief (Validated in Phase 6: google-home-tts — NOTIF-03, NOTIF-04, NOTIF-05, NOTIF-06; code + 53 backend tests verified, hardware speaker gate pending human test on Pi deploy)
 - Goals, milestones, and habits are first-class DB entities; the versioned import contract is live; the ingest endpoint validates, commits atomically, and is idempotent (Validated in Phase 8: goals-ingest-backend — GOAL-01/02/03/06, INGEST-01/02/04/06/07; 20 phase tests green, live Pushover+TTS celebration delivery pending human test on Pi)
 - Goals are manageable from the web UI (list, drill-in detail, milestones, archive); tasks and routines link to goals via a shared dropdown; the Ingest page paste/uploads an LLM JSON payload, previews a per-entity dry-run diff, then confirms (Validated in Phase 9: goals-ingest-ui — GOAL-04/05, INGEST-03/05; 18/18 verifier must-haves, golden-path human UAT approved)
+- The backend resolves free-text progress updates to mark done / reschedule / drop by fuzzy-matching today's blocks and tasks with no LLM call, fires a configurable mid-day check-in notification that survives reboots, and accepts an intra-day update payload on the ingest contract (Validated in Phase 12: update-resolution-engine — UPDATE-02/03, NOTIF-07, INGEST-08; 12/12 verifier must-haves, 10 phase tests green)
 
 ### Active
 
 **v2.1 — Close the Loop (requirements defined in REQUIREMENTS.md):**
-- [ ] Mid-day check-in reminder(s) — configurable Pushover/TTS prompt to log progress, deep-links into app
+- [x] Mid-day check-in reminder(s) — configurable Pushover/TTS prompt to log progress, deep-links into app — Phase 12 (NOTIF-07)
 - [ ] Quick-update capture box on Today (keyboard-dictation voice path, no new deps)
-- [ ] No-LLM update resolution — fuzzy-match mark done / reschedule / drop against today's blocks/tasks
-- [ ] Messy-dump escape hatch — intra-day update payload type on the existing external-LLM ingest contract
+- [x] No-LLM update resolution — fuzzy-match mark done / reschedule / drop against today's blocks/tasks — Phase 12 (UPDATE-02/03)
+- [x] Messy-dump escape hatch — intra-day update payload type on the existing external-LLM ingest contract — Phase 12 (INGEST-08)
 - [ ] End-of-day rollup feeding existing rollover logic
 
 **v2.0 — Ingest, Organize, Guide (complete):**
