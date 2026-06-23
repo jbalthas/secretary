@@ -1,15 +1,15 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.0
-milestone_name: Phases — Ingest, Organize, Guide
-status: verifying
-last_updated: "2026-06-22T16:35:31.797Z"
-last_activity: 2026-06-22
+milestone: v2.1
+milestone_name: Phases — Close the Loop
+status: in_progress
+last_updated: "2026-06-23T00:00:00.000Z"
+last_activity: 2026-06-23
 progress:
-  total_phases: 11
-  completed_phases: 11
-  total_plans: 42
-  completed_plans: 42
+  total_phases: 13
+  completed_phases: 12
+  total_plans: 46
+  completed_plans: 46
 ---
 
 # Project State

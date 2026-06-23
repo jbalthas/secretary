@@ -1,10 +1,11 @@
 ---
 phase: 13
 slug: update-loop-ui
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-06-23
+reviewed_at: 2026-06-23
 revised: 2026-06-23
 revision_reason: ui-checker blocking issues — typography collapsed to 4 sizes, spacing snapped to multiples of 4, candidate CTA label updated
 ---
