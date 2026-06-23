@@ -22,7 +22,7 @@
 | 10 | Day Auto-Organize | 4/4 | Complete   | 2026-06-17 |
 | 11 | Goal-Guided Guidance | 2/4 | Complete    | 2026-06-18 |
 | 12 | Update Resolution Engine | 4/4 | Complete    | 2026-06-22 |
-| 13 | Update Loop UI | User-facing quick-update box, confirmation flow, end-of-day rollup, and check-in settings | UPDATE-01, UPDATE-03, UPDATE-04, NOTIF-08 | 4 |
+| 13 | Update Loop UI | 1/4 | In Progress|  |
 
 ---
 
@@ -263,10 +263,10 @@ Plans:
 2. When the backend returns an ambiguous or no-match status, the user sees the candidate list and can confirm the correct match or dismiss — the update is never silently dropped.
 3. After the end of the current work day, the Today tab shows a rollup card listing completed vs. slipped items; unfinished items appear in the next day's brief and plan via the existing rollover path.
 4. From Settings, the user can enable/disable the mid-day check-in and change its time(s); the new schedule takes effect without a server restart and persists across reboots.
-**Plans:** 4 plans
+**Plans:** 1/4 plans executed
 
 Plans:
-- [ ] 13-01-PLAN.md — Wave 0 pure-lib stubs + tests: isAfterWorkHours + deriveRollup (UPDATE-01, UPDATE-04)
+- [x] 13-01-PLAN.md — Wave 0 pure-lib stubs + tests: isAfterWorkHours + deriveRollup (UPDATE-01, UPDATE-04)
 - [ ] 13-02-PLAN.md — Backend: resolver apply-step + confirmed_id path + check_in_enabled migration 0016 (UPDATE-01, UPDATE-03, NOTIF-08)
 - [ ] 13-03-PLAN.md — Today quick-update box + CandidateCard + rollup card + CSS (UPDATE-01, UPDATE-03, UPDATE-04)
 - [ ] 13-04-PLAN.md — useCheckInSettings + Settings check-in section + golden-path checkpoint (NOTIF-08)

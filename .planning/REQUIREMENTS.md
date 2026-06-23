@@ -85,10 +85,10 @@
 
 ### Intra-day Updates (UPDATE)
 
-- [ ] **UPDATE-01**: User can log progress via a quick-update box on the Today view by typing or phone keyboard dictation (free text), without opening any task form
+- [x] **UPDATE-01**: User can log progress via a quick-update box on the Today view by typing or phone keyboard dictation (free text), without opening any task form
 - [x] **UPDATE-02**: System resolves simple updates — mark a task/block done, reschedule it, or drop it — by fuzzy-matching the text against today's existing scheduled blocks/tasks, with no LLM call
 - [x] **UPDATE-03**: A quick update that is ambiguous or matches nothing is surfaced to the user to confirm/correct, never guessed at or silently dropped
-- [ ] **UPDATE-04**: At end of day, user sees a rollup of completed vs. slipped items, and unfinished items carry forward into the next day via the existing brief/rollover path
+- [x] **UPDATE-04**: At end of day, user sees a rollup of completed vs. slipped items, and unfinished items carry forward into the next day via the existing brief/rollover path
 
 ### Notifications & Google Home (NOTIF) — continued
 
@@ -185,7 +185,7 @@
 | UPDATE-03 | Phase 12 — Update Resolution Engine | Complete |
 | NOTIF-07 | Phase 12 — Update Resolution Engine | Complete |
 | INGEST-08 | Phase 12 — Update Resolution Engine | Complete |
-| UPDATE-01 | Phase 13 — Update Loop UI | Pending |
+| UPDATE-01 | Phase 13 — Update Loop UI | Complete |
 | UPDATE-03 | Phase 13 — Update Loop UI | Complete |
-| UPDATE-04 | Phase 13 — Update Loop UI | Pending |
+| UPDATE-04 | Phase 13 — Update Loop UI | Complete |
 | NOTIF-08 | Phase 13 — Update Loop UI | Pending |

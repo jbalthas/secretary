@@ -2,23 +2,23 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Phases — Close the Loop
-status: verifying
-last_updated: "2026-06-23T15:13:52.777Z"
+status: executing
+last_updated: "2026-06-23T19:13:34.583Z"
 last_activity: 2026-06-23
 progress:
-  total_phases: 11
-  completed_phases: 11
-  total_plans: 42
-  completed_plans: 42
+  total_phases: 9
+  completed_phases: 8
+  total_plans: 34
+  completed_plans: 31
 ---
 
 # Project State
 
 ## Current Position
 
-Phase: 13
-Plan: Not started
-Status: UI-SPEC approved — ready to plan (Phase 12 backend complete; formal verification still outstanding)
+Phase: 13 (update-loop-ui) — EXECUTING
+Plan: 2 of 4
+Status: Ready to execute
 Last activity: 2026-06-23
 
 ---
@@ -27,7 +27,7 @@ Last activity: 2026-06-23
 
 **Core value:** One place to manage your schedule and tasks — reachable from any device, voice-controllable via Google Home, and proactive enough to push reminders before you have to think about them.
 
-**Current focus:** Phase 13 — update-loop-ui (v2.1 Close the Loop)
+**Current focus:** Phase 13 — update-loop-ui
 
 ---
 
@@ -126,6 +126,7 @@ Last activity: 2026-06-23
 - [Phase 12-02]: [12-02] Tie-break: if multiple candidates score >= CONFIDENT_THRESHOLD, return ambiguous — prevents wrong pick on near-duplicate titles like 'Team sync A' vs 'Team sync B'
 - [Phase 12-04]: drop reuses completed=True (no separate drop flag/column) — Phase 13 slipped-vs-done rollup must treat completed=True as ambiguous
 - [Phase 12-04]: GET /tasks/{task_id} added to tasks router — test verification required it, omitted from plan
+- [Phase 13]: isAfterWorkHours uses >= boundary for exact-minute match; deriveRollup treats completed=true as done per UI-SPEC (Phase 12-04 ambiguity noted in code)
 
 ### Open Questions (Live Verification Required)
 
@@ -162,5 +163,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-06-23T15:13:52.774Z
+Last session: 2026-06-23T19:13:34.579Z
 Next action: Run `/gsd:plan-phase 12` to break Phase 12 (Update Resolution Engine) into executable plans
