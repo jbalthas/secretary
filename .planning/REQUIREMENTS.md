@@ -93,7 +93,7 @@
 ### Notifications & Google Home (NOTIF) — continued
 
 - [x] **NOTIF-07**: User receives a configurable mid-day check-in notification (Pushover, optionally announced on Google Home) prompting them to log progress, with a link that deep-links into the Today update view
-- [ ] **NOTIF-08**: User can configure the check-in time(s) and enable/disable them from the web UI; the schedule persists across reboots (APScheduler SQLAlchemyJobStore)
+- [x] **NOTIF-08**: User can configure the check-in time(s) and enable/disable them from the web UI; the schedule persists across reboots (APScheduler SQLAlchemyJobStore)
 
 ### Ingest (INGEST) — continued
 
@@ -188,4 +188,4 @@
 | UPDATE-01 | Phase 13 — Update Loop UI | Complete |
 | UPDATE-03 | Phase 13 — Update Loop UI | Complete |
 | UPDATE-04 | Phase 13 — Update Loop UI | Complete |
-| NOTIF-08 | Phase 13 — Update Loop UI | Pending |
+| NOTIF-08 | Phase 13 — Update Loop UI | Complete |
