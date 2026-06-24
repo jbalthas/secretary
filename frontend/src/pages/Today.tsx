@@ -6,11 +6,15 @@ import { useNextBestTask } from "../hooks/useNextBestTask";
 import { useWorkHours } from "../hooks/useWorkHours";
 import { useUpdate } from "../hooks/useUpdate";
 import { buildWeekAgenda } from "../lib/agenda";
+import { deriveMomentum, nextEventLabel, currentHHMM } from "../lib/nowView";
 import type { DayGroup } from "../lib/agenda";
 import AgendaItem from "../components/AgendaItem";
 import CandidateCard from "../components/CandidateCard";
 import RollupCard from "../components/RollupCard";
-import type { AgendaItem as AgendaItemType, Task } from "../types/task";
+import NowHero from "../components/NowHero";
+import MomentumStrip from "../components/MomentumStrip";
+import TodayTimeline from "../components/TodayTimeline";
+import type { AgendaItem as AgendaItemType } from "../types/task";
 import type { UpdateCandidate } from "../types/update";
 
 interface DaySectionProps {
@@ -66,22 +70,6 @@ function DaySection({ group, onToggle }: DaySectionProps) {
         </>
       )}
     </section>
-  );
-}
-
-function FocusBanner({ task }: { task: Task | null }) {
-  if (!task) return null;
-  return (
-    <div role="region" aria-label="Suggested focus" style={{
-      background: "var(--surface)",
-      borderLeft: "3px solid var(--accent)",
-      borderRadius: 6,
-      padding: 12,
-      marginBottom: 16,
-    }}>
-      <p className="focus-banner-label" style={{ margin: 0, fontSize: 14, fontWeight: 600, color: "var(--text-secondary)" }}>Focus on</p>
-      <p className="focus-banner-title" style={{ margin: "2px 0 0", fontSize: 16, fontWeight: 400, color: "var(--text)" }}>{task.title}</p>
-    </div>
   );
 }
 
@@ -174,9 +162,20 @@ export default function Today() {
   const submitLabel =
     phase === "submitting" ? "Logging…" : phase === "success-flash" ? "Done" : "Log update";
 
+  const now = new Date();
+  const momentum = deriveMomentum(tasks, blocks, todayKey);
+  const nowHHMM = currentHHMM(now);
+  const contextLine = nextEventLabel(events, now);
+  const todayGroup = groups[0];
+  const restOfWeek = groups.slice(1);
+
   return (
     <div className="page">
-      <h1 className="page-title">This Week</h1>
+      <h1 className="page-title">Now</h1>
+
+      <NowHero task={nextBest} contextLine={contextLine} />
+
+      <MomentumStrip doneToday={momentum.doneToday} remainingToday={momentum.remainingToday} />
 
       {candStatus ? (
         <CandidateCard
@@ -218,11 +217,15 @@ export default function Today() {
         </>
       )}
 
-      <FocusBanner task={nextBest} />
-
       <RollupCard tasks={tasks} blocks={blocks} todayKey={todayKey} workEnd={workEnd} />
 
-      {groups.map((group) => (
+      <TodayTimeline
+        items={todayGroup?.items ?? []}
+        nowHHMM={nowHHMM}
+        onToggle={handleToggle}
+      />
+
+      {restOfWeek.map((group) => (
         <DaySection key={group.dateKey} group={group} onToggle={handleToggle} />
       ))}
     </div>
