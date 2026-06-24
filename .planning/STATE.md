@@ -19,7 +19,7 @@ progress:
 Phase: 13 (update-loop-ui) — EXECUTING
 Plan: 4 of 4
 Status: Ready to execute
-Last activity: 2026-06-23
+Last activity: 2026-06-24 - Completed quick task 260624-kmx: Now view redesign (hero, momentum strip, timeline rail)
 
 ---
 
@@ -159,6 +159,7 @@ None
 | 260618-mlt | Let Organize prioritize a specifically selected task list | 2026-06-18 | pending | [260618-mlt-let-organize-prioritize-a-specifically-s](./quick/260618-mlt-let-organize-prioritize-a-specifically-s/) |
 | 260619-hier | Add hierarchical umbrella lists across tasks, goals, ingest, filters, and Organize | 2026-06-19 | pending | [260619-hier-hierarchical-umbrella-lists](./quick/260619-hier-hierarchical-umbrella-lists/) |
 | 260619-u0n | Include tomorrow's due tasks in the Google Home briefing | 2026-06-20 | eddb8b2 | [260619-u0n-include-tomorrow-s-due-tasks-in-the-goog](./quick/260619-u0n-include-tomorrow-s-due-tasks-in-the-goog/) |
+| 260624-kmx | Redesign Today page into a Now view: hero next-best task card, momentum strip, timeline rail with now-marker | 2026-06-24 | b30c1db | [260624-kmx-redesign-today-page-into-a-now-view-hero](./quick/260624-kmx-redesign-today-page-into-a-now-view-hero/) |
 
 ### Todos
 
