@@ -293,7 +293,9 @@ Plans:
 1. After the weekly APScheduler job fires, one `goal_progress_snapshots` row per active goal exists in the DB, capturing that week's `progress_pct`, `milestones_done`, `tasks_completed_week`, and `tasks_slipped_week`; firing the job twice on the same day produces no duplicate rows (idempotent via UNIQUE index on `(goal_id, snapshotted_on)`).
 2. The snapshot job is a plain sync function (no `async def`, no `await`) following the `brief.py` / `guidance_service.py` pattern — verified by the test running it directly and asserting no `asyncio` event loop is touched.
 3. User can trigger an on-demand snapshot from the `/advisor` Sync page (via `POST /api/v1/export/snapshot`) without waiting for the weekly job, so trend data accumulates from first setup.
-**Plans:** TBD
+**Plans:**
+- [x] 14-01-PLAN.md - Snapshot persistence: ORM model, migration 0017, synchronous snapshot/retention service, and service tests
+- [x] 14-02-PLAN.md - Operational wiring: weekly/monthly scheduler jobs, synchronous trigger endpoint, startup registration, and integration tests
 **UI hint**: no
 
 ---

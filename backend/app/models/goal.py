@@ -1,6 +1,6 @@
 import enum
 from datetime import date, datetime, timezone
-from sqlalchemy import String, Boolean, DateTime, Date, Text, Enum as SAEnum, ForeignKey, Integer
+from sqlalchemy import String, Boolean, DateTime, Date, Text, Enum as SAEnum, ForeignKey, Integer, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db import Base
 
@@ -57,3 +57,23 @@ class Milestone(Base):
     done: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     goal: Mapped["Goal"] = relationship("Goal", back_populates="milestones")
+
+
+class GoalProgressSnapshot(Base):
+    __tablename__ = "goal_progress_snapshots"
+    __table_args__ = (
+        Index("ix_snapshot_goal_date", "goal_id", "snapshotted_on", unique=True),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    goal_id: Mapped[int] = mapped_column(
+        ForeignKey("goals.id", ondelete="CASCADE"), nullable=False
+    )
+    snapshotted_on: Mapped[date] = mapped_column(Date, nullable=False)
+    progress_pct: Mapped[int] = mapped_column(Integer, nullable=False)
+    milestones_done: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    tasks_completed_week: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    tasks_slipped_week: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
+    )

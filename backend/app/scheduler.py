@@ -141,3 +141,32 @@ def schedule_outlook_ics_sync() -> None:
         replace_existing=True,
         misfire_grace_time=300,
     )
+
+
+def schedule_weekly_snapshot() -> None:
+    from apscheduler.triggers.cron import CronTrigger
+    from app.services.snapshot_service import take_progress_snapshot
+    scheduler.add_job(
+        take_progress_snapshot,
+        CronTrigger(
+            day_of_week="sun",
+            hour=23,
+            minute=50,
+            timezone=settings.timezone,
+        ),
+        id="snapshot_progress",
+        replace_existing=True,
+        misfire_grace_time=None,
+    )
+
+
+def schedule_snapshot_cleanup() -> None:
+    from apscheduler.triggers.cron import CronTrigger
+    from app.services.snapshot_service import cleanup_progress_snapshots
+    scheduler.add_job(
+        cleanup_progress_snapshots,
+        CronTrigger(day=1, hour=0, minute=10, timezone=settings.timezone),
+        id="snapshot_cleanup",
+        replace_existing=True,
+        misfire_grace_time=None,
+    )

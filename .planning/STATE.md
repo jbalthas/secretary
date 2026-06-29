@@ -1,25 +1,25 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.1
-milestone_name: Phases — Close the Loop
+milestone: v2.2
+milestone_name: LLM Advisory Loop
 status: planning
 last_updated: "2026-06-29T14:42:44.105Z"
 last_activity: 2026-06-29 — Milestone v2.2 roadmap written (Phases 14–16)
 progress:
-  total_phases: 12
+  total_phases: 16
   completed_phases: 8
-  total_plans: 34
-  completed_plans: 33
+  total_plans: 36
+  completed_plans: 35
 ---
 
 # Project State
 
 ## Current Position
 
-Phase: Phase 14 — Progression Substrate (not started)
-Plan: —
-Status: Roadmap complete — ready to plan Phase 14
-Last activity: 2026-06-29 — Milestone v2.2 roadmap written (Phases 14–16)
+Phase: Phase 14 - Progression Substrate (implementation complete)
+Plan: 2 of 2 complete
+Status: Phase 14 backend complete; ready to discuss Phase 15
+Last activity: 2026-06-29 - Phase 14 snapshot substrate implemented and verified
 
 > **v2.1 carry-over:** Phase 13 (update-loop-ui) left at plan 4 of 4 — Quick-update capture box + End-of-day rollup unfinished. Intentionally deferred at v2.2 start; resume separately if/when wanted.
 
@@ -196,4 +196,4 @@ None
 ## Session Continuity
 
 Last session: 2026-06-29T14:42:44.102Z
-Next action: Run `/gsd:plan-phase 14` to break Phase 14 (Progression Substrate) into executable plans
+Next action: Run /gsd:discuss-phase 15 after confirming whether advisory approval may create tasks

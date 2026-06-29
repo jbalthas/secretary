@@ -5,9 +5,9 @@ from starlette.concurrency import run_in_threadpool
 from starlette.middleware.sessions import SessionMiddleware
 from app.config import settings
 from fastapi.staticfiles import StaticFiles
-from app.routers import tasks, auth, calendar_status, events, settings as settings_router, routines, tts, webhooks, goals, ingest, plan, guidance, updates
+from app.routers import tasks, auth, calendar_status, events, settings as settings_router, routines, tts, webhooks, goals, ingest, plan, guidance, updates, export
 from app.services.tts import CACHE_DIR
-from app.scheduler import scheduler, schedule_calendar_sync, schedule_daily_brief, schedule_outlook_ics_sync, schedule_stall_check
+from app.scheduler import scheduler, schedule_calendar_sync, schedule_daily_brief, schedule_outlook_ics_sync, schedule_stall_check, schedule_weekly_snapshot, schedule_snapshot_cleanup
 
 logger = logging.getLogger("app.main")
 
@@ -43,6 +43,8 @@ async def lifespan(app: FastAPI):
     except Exception:
         schedule_daily_brief(8, 0)
     schedule_stall_check()
+    schedule_weekly_snapshot()
+    schedule_snapshot_cleanup()
     try:
         from app.scheduler import schedule_checkin, remove_checkin
         from sqlalchemy import create_engine
@@ -84,6 +86,7 @@ app.include_router(ingest.router)
 app.include_router(plan.router)
 app.include_router(guidance.router)
 app.include_router(updates.router)
+app.include_router(export.router)
 
 CACHE_DIR.mkdir(exist_ok=True)
 app.mount("/tts-audio", StaticFiles(directory=CACHE_DIR), name="tts-audio")
