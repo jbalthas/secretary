@@ -196,4 +196,4 @@ None
 ## Session Continuity
 
 Last session: 2026-06-29T14:42:44.102Z
-Next action: Run /gsd:discuss-phase 15 after confirming whether advisory approval may create tasks
+Next action: Run /gsd:discuss-phase 15 — advisory scope confirmed: approval MAY create new tasks (ADVISE-08, create-only); ADVISE-03 relaxed accordingly

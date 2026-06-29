@@ -305,6 +305,7 @@ Plans:
 **Depends on:** Phase 14 (goal_progress_snapshots rows for trend section; degrades to `no_data` if absent), Phase 11 (guidance_service.get_stalled_goals()), Phase 10 (ScheduledBlock for planned-vs-actual)
 **Requirements:** EXPORT-01, EXPORT-02, EXPORT-03, EXPORT-04, EXPORT-05, EXPORT-06, PROMPT-01
 **Note on PROMPT-01:** The advisor prompt is delivered here with a placeholder `[SCHEMA BLOCK]` in place of the auto-generated advisory JSON schema. The schema block is regenerated from `AdvisoryPayload.model_json_schema()` at the end of Phase 16. Plan-phase 15 must flag this as a known one-line update deferred to Phase 16.
+**Note on task creation (ADVISE-08):** The advisor prompt's scope section must state the LLM MAY propose *new* tasks (title required; optional description/due_date/priority/estimated_minutes) linked to a goal by `external_key`, each with a `rationale` — and MUST NOT edit/complete/delete existing tasks or change goal status/title/type. The example payload should include at least one new-task item.
 **Success Criteria** (what must be TRUE):
 1. User can tap one button on the Sync page (`/advisor`) and have the complete advisor brief copied to the clipboard, ready to paste into an external LLM; the bundle header contains `generated_at` and a `session_id`.
 2. The exported bundle lists each active goal with title, type, target date and days remaining, live-computed `progress_pct`, a milestone list, top-3 active tasks (title/priority/due date), overdue task count, a 4-week progress trend array with velocity label (`accelerating` / `steady` / `stalling` / `no_data`), and career/learning-type goals ordered first.
@@ -318,19 +319,21 @@ Plans:
 ### Phase 16: Advisory Ingest + Sync Review UI
 **Goal:** User can paste an LLM advisory JSON response into the Sync page, preview a per-item diff with rationale, accept or reject individual rows, and confirm the accepted subset — applied atomically and idempotently — closing the full advisory loop.
 **Depends on:** Phase 14 (migration 0017 in place), Phase 15 (Sync page shell, useExport hook, advisorPrompt.ts placeholder)
-**Requirements:** ADVISE-01, ADVISE-02, ADVISE-03, ADVISE-04, ADVISE-05, ADVISE-06, ADVISE-07, SYNC-01, SYNC-02
-**Note on PROMPT-01 update:** This phase finalizes `AdvisoryPayload` and its nested models. The last plan of this phase regenerates the schema block in `advisorPrompt.ts` from `AdvisoryPayload.model_json_schema()`, completing PROMPT-01.
+**Requirements:** ADVISE-01, ADVISE-02, ADVISE-03, ADVISE-04, ADVISE-05, ADVISE-06, ADVISE-07, ADVISE-08, SYNC-01, SYNC-02
+**Note on PROMPT-01 update:** This phase finalizes `AdvisoryPayload` and its nested models (`GoalAdjustment`, `MilestoneAdjustment`, `TaskCreation`). The last plan of this phase regenerates the schema block in `advisorPrompt.ts` from `AdvisoryPayload.model_json_schema()`, completing PROMPT-01.
 **Critical correctness gates (must be in plan):**
 - `await session.flush()` + `goal_key_to_id` map helper shared with `apply_import` (no fork)
-- `advisory_id` idempotency via `AdvisoryLog` table (migration 0018, mirrors `UpdateLog` pattern)
+- New-task creation (ADVISE-08) reuses the `apply_import` task-creation path (no fork); apply order is goals → milestones → tasks so new tasks resolve their `goal_id` from the flushed `goal_key_to_id` map
+- `advisory_id` idempotency via `AdvisoryLog` table (migration 0018, mirrors `UpdateLog` pattern); new tasks additionally carry a stable advisory-derived `external_key`, with `Task.external_key` UNIQUE guarding row-level duplicates on re-confirm
 - Backward-compat regression test: existing `payload_type="standard"` / `schema_version 1.x` payloads still validate
-- `rationale: str` required (non-null) on every `GoalAdjustment` and `MilestoneAdjustment`
+- `rationale: str` required (non-null) on every `GoalAdjustment`, `MilestoneAdjustment`, and `TaskCreation`
+- `TaskCreation` is create-only — schema has no task `id`/`external_key`-match field and `extra="forbid"`, so edits/completion/deletion of existing tasks are rejected at validation
 - CI / grep guard: `grep -r "anthropic\|openai\|litellm" backend/app/` must return zero
 **Success Criteria** (what must be TRUE):
-1. User can paste an LLM advisory JSON payload into the Sync page and see a per-item diff — entity, field, old value, new value, rationale — with no DB writes; an advisory payload that omits `rationale` on any item, references an unknown `external_key`, or includes fields outside the advisory schema (goal status/title/type, task fields) is rejected at validation with field-level 422 errors.
+1. User can paste an LLM advisory JSON payload into the Sync page and see a per-item diff — entity, field, old value, new value, rationale (new tasks shown as add-rows) — with no DB writes; an advisory payload that omits `rationale` on any item, references an unknown goal `external_key`, or attempts a forbidden operation (create goal, change goal status/title/type, or edit/complete/delete an existing task) is rejected at validation with field-level 422 errors.
 2. User can accept or reject individual diff rows; clicking Confirm applies only the accepted subset in a single atomic transaction — injecting a DB error mid-apply leaves zero changes persisted.
-3. Confirmed advisory changes are idempotent on a stable `advisory_id`: confirming the same advisory payload a second time returns the original result with no duplicate rows or milestone entries.
-4. Goal target dates and priority ranks adjusted by the advisory are visible in the Goals view immediately after confirm; the advisor's free-text `notes` field is displayed prominently on the Sync page before confirm and is never written to goal or milestone entities.
+3. Confirmed advisory changes are idempotent on a stable `advisory_id`: confirming the same advisory payload a second time returns the original result with no duplicate goal/milestone rows and no duplicate tasks created.
+4. Goal target dates and priority ranks adjusted by the advisory, and any new tasks it created (linked to their goal), are visible in the Goals view immediately after confirm; the advisor's free-text `notes` field is displayed prominently on the Sync page before confirm and is never written to goal, milestone, or task entities.
 5. The Sync page shows "last advisor sync: N days ago" (reads `AppSettings.last_advisory_at` stamped on confirm) and displays a non-blocking warning when a pasted payload's `session_id` is older than 7 days.
 **Plans:** TBD
 **UI hint**: yes

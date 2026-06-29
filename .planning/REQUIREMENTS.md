@@ -123,11 +123,12 @@
 
 - [ ] **ADVISE-01**: The import contract accepts an advisory payload (distinguished by a `payload_type` discriminator, default-compatible with existing payloads) validated against a published schema, returning field-level errors on malformed input; undocumented fields are rejected (`extra="forbid"`)
 - [ ] **ADVISE-02**: An advisory payload can adjust goal `target_date` and `priority_rank`, and milestone `target_date`/`done`/`title`, each item carrying a REQUIRED `rationale`; goals matched by `external_key`, milestones by `(goal, title)`
-- [ ] **ADVISE-03**: An advisory payload cannot create goals, change goal status/title/type, or modify any task field — these are blocked by schema validation with clear errors
+- [ ] **ADVISE-03**: An advisory payload cannot create goals, change goal status/title/type, or modify/complete/delete *existing* tasks — these are blocked by schema validation with clear errors. It MAY create *new* tasks per ADVISE-08.
 - [ ] **ADVISE-04**: User can preview an advisory payload as a per-item diff (entity, field, old → new value, rationale) with no DB writes
 - [ ] **ADVISE-05**: User can confirm and have the accepted advisory changes applied in a single atomic transaction, idempotent on a stable `advisory_id` (AdvisoryLog), stamping `last_advisory_at`
 - [ ] **ADVISE-06**: A top-level free-text `notes` field from the advisor is surfaced prominently before confirm and is never written to goal/milestone entities
 - [ ] **ADVISE-07**: User can accept/reject individual diff rows and confirm only the accepted subset
+- [ ] **ADVISE-08**: An advisory payload can create *new* tasks (`title` required; optional `description`, `due_date`, `priority`, `estimated_minutes`), each linked to a goal by `external_key` and carrying a REQUIRED `rationale`. Created tasks surface as add-rows in the diff (ADVISE-04), are applied via the shared `apply_import` task-creation path (no fork) in the goals → milestones → tasks order, and are idempotent on a stable advisory-derived `external_key` so re-confirming the same `advisory_id` creates no duplicates
 
 ### Sync Review UI (SYNC)
 
@@ -244,5 +245,6 @@
 | ADVISE-05 | Phase 16 — Advisory Ingest + Sync Review UI | Pending |
 | ADVISE-06 | Phase 16 — Advisory Ingest + Sync Review UI | Pending |
 | ADVISE-07 | Phase 16 — Advisory Ingest + Sync Review UI | Pending |
+| ADVISE-08 | Phase 16 — Advisory Ingest + Sync Review UI | Pending |
 | SYNC-01 | Phase 16 — Advisory Ingest + Sync Review UI | Pending |
 | SYNC-02 | Phase 16 — Advisory Ingest + Sync Review UI | Pending |
