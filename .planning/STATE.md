@@ -1,15 +1,15 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.2
-milestone_name: LLM Advisory Loop
-status: roadmap_complete
-last_updated: "2026-06-29T00:00:00.000Z"
-last_activity: 2026-06-29
+milestone: v2.1
+milestone_name: Phases — Close the Loop
+status: planning
+last_updated: "2026-06-29T14:42:44.105Z"
+last_activity: 2026-06-29 — Milestone v2.2 roadmap written (Phases 14–16)
 progress:
-  total_phases: 3
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_phases: 12
+  completed_phases: 8
+  total_plans: 34
+  completed_plans: 33
 ---
 
 # Project State
@@ -195,5 +195,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-06-29
+Last session: 2026-06-29T14:42:44.102Z
 Next action: Run `/gsd:plan-phase 14` to break Phase 14 (Progression Substrate) into executable plans
