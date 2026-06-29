@@ -228,3 +228,21 @@
 | UPDATE-03 | Phase 13 — Update Loop UI | Complete |
 | UPDATE-04 | Phase 13 — Update Loop UI | Complete |
 | NOTIF-08 | Phase 13 — Update Loop UI | Complete |
+| PROG-01 | Phase 14 — Progression Substrate | Pending |
+| PROG-02 | Phase 14 — Progression Substrate | Pending |
+| EXPORT-01 | Phase 15 — Context Export + Advisor Prompt | Pending |
+| EXPORT-02 | Phase 15 — Context Export + Advisor Prompt | Pending |
+| EXPORT-03 | Phase 15 — Context Export + Advisor Prompt | Pending |
+| EXPORT-04 | Phase 15 — Context Export + Advisor Prompt | Pending |
+| EXPORT-05 | Phase 15 — Context Export + Advisor Prompt | Pending |
+| EXPORT-06 | Phase 15 — Context Export + Advisor Prompt | Pending |
+| PROMPT-01 | Phase 15 — Context Export + Advisor Prompt (schema block updated at end of Phase 16) | Pending |
+| ADVISE-01 | Phase 16 — Advisory Ingest + Sync Review UI | Pending |
+| ADVISE-02 | Phase 16 — Advisory Ingest + Sync Review UI | Pending |
+| ADVISE-03 | Phase 16 — Advisory Ingest + Sync Review UI | Pending |
+| ADVISE-04 | Phase 16 — Advisory Ingest + Sync Review UI | Pending |
+| ADVISE-05 | Phase 16 — Advisory Ingest + Sync Review UI | Pending |
+| ADVISE-06 | Phase 16 — Advisory Ingest + Sync Review UI | Pending |
+| ADVISE-07 | Phase 16 — Advisory Ingest + Sync Review UI | Pending |
+| SYNC-01 | Phase 16 — Advisory Ingest + Sync Review UI | Pending |
+| SYNC-02 | Phase 16 — Advisory Ingest + Sync Review UI | Pending |

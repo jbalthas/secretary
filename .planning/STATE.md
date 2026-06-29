@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 milestone: v2.2
 milestone_name: LLM Advisory Loop
-status: defining_requirements
+status: roadmap_complete
 last_updated: "2026-06-29T00:00:00.000Z"
 last_activity: 2026-06-29
 progress:
-  total_phases: 0
+  total_phases: 3
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -16,10 +16,10 @@ progress:
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: Phase 14 — Progression Substrate (not started)
 Plan: —
-Status: Defining requirements — Milestone v2.2 "LLM Advisory Loop"
-Last activity: 2026-06-29 — Milestone v2.2 started
+Status: Roadmap complete — ready to plan Phase 14
+Last activity: 2026-06-29 — Milestone v2.2 roadmap written (Phases 14–16)
 
 > **v2.1 carry-over:** Phase 13 (update-loop-ui) left at plan 4 of 4 — Quick-update capture box + End-of-day rollup unfinished. Intentionally deferred at v2.2 start; resume separately if/when wanted.
 
@@ -29,7 +29,7 @@ Last activity: 2026-06-29 — Milestone v2.2 started
 
 **Core value:** One place to manage your schedule and tasks — reachable from any device, voice-controllable via Google Home, and proactive enough to push reminders before you have to think about them.
 
-**Current focus:** Milestone v2.2 — LLM Advisory Loop (defining requirements)
+**Current focus:** Milestone v2.2 — LLM Advisory Loop (Phase 14: Progression Substrate)
 
 ---
 
@@ -48,8 +48,18 @@ Last activity: 2026-06-29 — Milestone v2.2 started
 
 | Phase | Name | Requirements | Status |
 |-------|------|--------------|--------|
-| 12 | Update Resolution Engine | UPDATE-02, UPDATE-03, NOTIF-07, INGEST-08 | Not started |
-| 13 | Update Loop UI | UPDATE-01, UPDATE-03, UPDATE-04, NOTIF-08 | Not started |
+| 12 | Update Resolution Engine | UPDATE-02, UPDATE-03, NOTIF-07, INGEST-08 | Complete |
+| 13 | Update Loop UI | UPDATE-01, UPDATE-03, UPDATE-04, NOTIF-08 | In Progress (plan 4/4 pending) |
+
+---
+
+## v2.2 Phase Map
+
+| Phase | Name | Requirements | Status |
+|-------|------|--------------|--------|
+| 14 | Progression Substrate | PROG-01, PROG-02 | Not started |
+| 15 | Context Export + Advisor Prompt | EXPORT-01, EXPORT-02, EXPORT-03, EXPORT-04, EXPORT-05, EXPORT-06, PROMPT-01 | Not started |
+| 16 | Advisory Ingest + Sync Review UI | ADVISE-01, ADVISE-02, ADVISE-03, ADVISE-04, ADVISE-05, ADVISE-06, ADVISE-07, SYNC-01, SYNC-02 | Not started |
 
 ---
 
@@ -60,8 +70,22 @@ Last activity: 2026-06-29 — Milestone v2.2 started
 - Phase 7 added: Outlook Calendar ICS feed integration (separate concurrent effort, do not modify)
 - Phases 8–11 added: v2.0 Ingest, Organize, Guide (2026-06-15)
 - Phases 12–13 added: v2.1 Close the Loop (2026-06-22)
+- Phases 14–16 added: v2.2 LLM Advisory Loop (2026-06-29)
 
-### Decisions Made
+### v2.2 Key Architectural Decisions (from research)
+
+- **No new dependencies** — zero new Python packages or npm packages; stdlib + existing Pydantic v2 + existing React patterns cover all 18 requirements
+- **Migration chain** — Alembic HEAD is 0016; Phase 14 adds 0017 (goal_progress_snapshots + UNIQUE index + retention cleanup job); Phase 16 adds 0018 (advisory_rationale TEXT NULL on goals + advisory_log table); write both migrations before `alembic upgrade head`
+- **Sync/async boundary** — snapshot_service.py MUST be sync (create_engine + sessionmaker, same brief.py pattern); export_service.py is async (FastAPI route only); advisory ingest functions are async (extend existing ingest_service.py)
+- **payload_type discriminator** — `payload_type: Literal["standard"] = "standard"` added to IngestPayload (default preserves backward compat); `AdvisoryPayload` has `payload_type: Literal["advisory"]` as required field; no schema_version bump for advisory
+- **Advisory scope** — advisory payload writes ONLY to Goal.target_date, Goal.priority_rank, Milestone.target_date, Milestone.done (forward-only), Milestone.title; goal creation/status/title/type and all task fields are blocked by schema omission + extra="forbid"
+- **advisory_id idempotency** — AdvisoryLog table (migration 0018) mirrors UpdateLog pattern; advisory payload carries advisory_id; confirm checks AdvisoryLog before applying
+- **session.flush() guard** — _apply_advisory() must call await session.flush() after goal upserts, then build goal_key_to_id map; extract as shared _flush_and_build_goal_map() helper reused by both apply_import and _apply_advisory
+- **rationale required** — rationale: str (not Optional) on every GoalAdjustment and MilestoneAdjustment; validation rejects advisory payloads where any item omits rationale
+- **PROMPT-01 placeholder** — advisorPrompt.ts delivered in Phase 15 with placeholder schema block; schema block regenerated from AdvisoryPayload.model_json_schema() at end of Phase 16; plan-phase 15 must call this out
+- **No server-side LLM** — CI guard: grep -r "anthropic\|openai\|litellm" backend/app/ must return zero; this is a locked hard constraint, not a preference
+
+### Decisions Made (prior milestones — preserved)
 
 - APScheduler 3.x (not 4.x alpha) — SQLAlchemyJobStore for persistence, AsyncIOScheduler for FastAPI event loop compatibility
 - Single uvicorn worker only — multiple workers cause duplicate APScheduler fires
@@ -171,5 +195,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-06-23T19:28:26.728Z
-Next action: Run `/gsd:plan-phase 12` to break Phase 12 (Update Resolution Engine) into executable plans
+Last session: 2026-06-29
+Next action: Run `/gsd:plan-phase 14` to break Phase 14 (Progression Substrate) into executable plans
