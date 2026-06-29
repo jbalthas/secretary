@@ -101,6 +101,45 @@
 
 ---
 
+## Milestone v2.2 Requirements — LLM Advisory Loop
+
+> Bidirectional sync with an EXTERNAL LLM: the secretary exports a rich, compact context bundle for the LLM to reason over, and ingests the LLM's goal/timeline adjustments back through the existing ingest contract. HARD CONSTRAINTS (locked since v2.0): no new dependencies, no server-side LLM, minimize token cost. North star: maximize the user's time and accelerate their growth as an engineer/career person. REQ-IDs continue in new categories: EXPORT, PROG, ADVISE, SYNC, PROMPT. Phase numbering continues (starts at Phase 14). Migration HEAD is 0016 → new migrations 0017/0018.
+
+### Context Export (EXPORT)
+
+- [ ] **EXPORT-01**: User can copy a complete advisor brief (Markdown with embedded JSON schema) to the clipboard with one action on the Sync page, ready to paste into an external LLM; the bundle header carries `generated_at` and a `session_id`
+- [ ] **EXPORT-02**: The bundle lists each active goal with title, type, target_date (+ days remaining), live-computed progress_pct, milestone list, top-3 active tasks (title/priority/due date), and overdue-task count
+- [ ] **EXPORT-03**: The bundle includes a 14-day planned-vs-actual block summary (blocks planned / completed / slipped) aggregated from ScheduledBlock
+- [ ] **EXPORT-04**: The bundle includes a per-goal progress trend (last 4 weekly values) and a velocity label (accelerating / steady / stalling / no_data), degrading gracefully to `no_data` until snapshots accumulate
+- [ ] **EXPORT-05**: The bundle includes a 7-day calendar load as per-day event counts only (never event titles — privacy) and a stalled-goals list reusing `guidance_service.get_stalled_goals()`
+- [ ] **EXPORT-06**: Career- and learning-type goals are ordered/flagged first in the bundle so the advisor's attention is steered by the data, not the prompt alone
+
+### Progression Substrate (PROG)
+
+- [ ] **PROG-01**: A weekly APScheduler job (SYNC, `brief.py` pattern) writes one `goal_snapshots` row per active goal — capturing that week's progress_pct, milestones_done, tasks_completed_week, tasks_slipped_week — and survives reboots; the snapshot stores a copy of progress_pct for trend only (live progress_pct remains computed, never overwritten)
+- [ ] **PROG-02**: User can trigger an on-demand snapshot from the Sync page without waiting for the weekly job, so trend data exists from first setup
+
+### Advisory Ingest (ADVISE)
+
+- [ ] **ADVISE-01**: The import contract accepts an advisory payload (distinguished by a `payload_type` discriminator, default-compatible with existing payloads) validated against a published schema, returning field-level errors on malformed input; undocumented fields are rejected (`extra="forbid"`)
+- [ ] **ADVISE-02**: An advisory payload can adjust goal `target_date` and `priority_rank`, and milestone `target_date`/`done`/`title`, each item carrying a REQUIRED `rationale`; goals matched by `external_key`, milestones by `(goal, title)`
+- [ ] **ADVISE-03**: An advisory payload cannot create goals, change goal status/title/type, or modify any task field — these are blocked by schema validation with clear errors
+- [ ] **ADVISE-04**: User can preview an advisory payload as a per-item diff (entity, field, old → new value, rationale) with no DB writes
+- [ ] **ADVISE-05**: User can confirm and have the accepted advisory changes applied in a single atomic transaction, idempotent on a stable `advisory_id` (AdvisoryLog), stamping `last_advisory_at`
+- [ ] **ADVISE-06**: A top-level free-text `notes` field from the advisor is surfaced prominently before confirm and is never written to goal/milestone entities
+- [ ] **ADVISE-07**: User can accept/reject individual diff rows and confirm only the accepted subset
+
+### Sync Review UI (SYNC)
+
+- [ ] **SYNC-01**: A dedicated `/advisor` page runs the full loop without navigating away — copy advisor prompt, copy export bundle, paste the LLM's JSON response, preview the diff, confirm — reusing the existing ingest UI patterns (`useIngest`, DiffGroup, error-list)
+- [ ] **SYNC-02**: The Sync page shows "last advisor sync: N days ago" and warns (non-blocking) when a pasted payload's `session_id` is stale (>7 days old)
+
+### Advisor Prompt (PROMPT)
+
+- [ ] **PROMPT-01**: User can copy a documented advisor system prompt from the Sync page in one click — role framing (career/engineering advisor for Jack, 4-week horizon, career/learning goals prioritized), explicit in-scope and out-of-scope lists, an auto-generated JSON schema block matching the advisory Pydantic models, an example payload, and `notes`-field guidance
+
+---
+
 ## Future / Backlog (post-v2.0)
 
 > Items below were deferred from v1.0 or flagged P3 during v2.0 research; not in the current milestone.
