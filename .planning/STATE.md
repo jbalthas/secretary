@@ -1,25 +1,25 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.2
-milestone_name: LLM Advisory Loop
-status: planning
-last_updated: "2026-06-29T18:38:37.750Z"
-last_activity: 2026-06-29 - Phase 15 context gathered
+milestone: v2.1
+milestone_name: Phases — Close the Loop
+status: executing
+last_updated: "2026-06-29T19:04:51.793Z"
+last_activity: 2026-06-29
 progress:
-  total_phases: 16
-  completed_phases: 9
-  total_plans: 36
-  completed_plans: 35
+  total_phases: 9
+  completed_phases: 8
+  total_plans: 34
+  completed_plans: 33
 ---
 
 # Project State
 
 ## Current Position
 
-Phase: Phase 14 - Progression Substrate (implementation complete)
-Plan: 2 of 2 complete
-Status: Phase 15 context gathered; ready to plan Phase 15
-Last activity: 2026-06-29 - Phase 15 context gathered (CONTEXT.md written)
+Phase: 15 (context-export-advisor-prompt) — EXECUTING
+Plan: 2 of 3
+Status: Ready to execute
+Last activity: 2026-06-29
 
 > **v2.1 carry-over:** Phase 13 (update-loop-ui) left at plan 4 of 4 — Quick-update capture box + End-of-day rollup unfinished. Intentionally deferred at v2.2 start; resume separately if/when wanted.
 
@@ -29,7 +29,7 @@ Last activity: 2026-06-29 - Phase 15 context gathered (CONTEXT.md written)
 
 **Core value:** One place to manage your schedule and tasks — reachable from any device, voice-controllable via Google Home, and proactive enough to push reminders before you have to think about them.
 
-**Current focus:** Milestone v2.2 — LLM Advisory Loop (Phase 15: Context Export + Advisor Prompt)
+**Current focus:** Phase 15 — context-export-advisor-prompt
 
 ---
 
@@ -158,6 +158,9 @@ Last activity: 2026-06-29 - Phase 15 context gathered (CONTEXT.md written)
 - [Phase 13]: [13-02] check_in_enabled nullable Boolean; None coalesces to True; GET check-in-time returns 'enabled' field (plans 03/04 wire the toggle)
 - [Phase 13-update-loop-ui]: useUpdate hook is stateless — Today.tsx owns all update-flow state (text, phase, candidates, candStatus, updError)
 - [Phase 13-update-loop-ui]: CandidateCard uses local Set<number> for skipped candidates — avoids lifting skip state to Today.tsx
+- [Phase 15]: [15-01] Wave 0 RED scaffold — deferred export_service import inside test body + triple _Session patch (export_service/brief/guidance_service) to one test Session; 8 tests; test_no_llm_imports locks the no-server-side-LLM constraint
+- [Phase 15]: [15-01] export bundle contract: build_export_bundle() -> {markdown, session_id, generated_at}; markdown starts "# Advisor Brief"; _velocity_label thresholds: +10 accelerating, -5 stalling, <2 entries no_data
+- [Phase 15]: [15-01] advisorPrompt.ts ships literal [SCHEMA BLOCK]; Phase 16 one-line-replaces with AdvisoryPayload.model_json_schema() — do NOT hand-write schema or create AdvisoryPayload in Phase 15
 
 ### Open Questions (Live Verification Required)
 
@@ -195,5 +198,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-06-29T18:38:37.746Z
+Last session: 2026-06-29T19:04:51.789Z
 Next action: Run /gsd:plan-phase 15 — context captured (15-CONTEXT.md). Advisory scope: approval MAY create new tasks (ADVISE-08, create-only)

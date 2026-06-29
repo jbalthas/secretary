@@ -107,12 +107,12 @@
 
 ### Context Export (EXPORT)
 
-- [ ] **EXPORT-01**: User can copy a complete advisor brief (Markdown with embedded JSON schema) to the clipboard with one action on the Sync page, ready to paste into an external LLM; the bundle header carries `generated_at` and a `session_id`
-- [ ] **EXPORT-02**: The bundle lists each active goal with title, type, target_date (+ days remaining), live-computed progress_pct, milestone list, top-3 active tasks (title/priority/due date), and overdue-task count
-- [ ] **EXPORT-03**: The bundle includes a 14-day planned-vs-actual block summary (blocks planned / completed / slipped) aggregated from ScheduledBlock
-- [ ] **EXPORT-04**: The bundle includes a per-goal progress trend (last 4 weekly values) and a velocity label (accelerating / steady / stalling / no_data), degrading gracefully to `no_data` until snapshots accumulate
-- [ ] **EXPORT-05**: The bundle includes a 7-day calendar load as per-day event counts only (never event titles — privacy) and a stalled-goals list reusing `guidance_service.get_stalled_goals()`
-- [ ] **EXPORT-06**: Career- and learning-type goals are ordered/flagged first in the bundle so the advisor's attention is steered by the data, not the prompt alone
+- [x] **EXPORT-01**: User can copy a complete advisor brief (Markdown with embedded JSON schema) to the clipboard with one action on the Sync page, ready to paste into an external LLM; the bundle header carries `generated_at` and a `session_id`
+- [x] **EXPORT-02**: The bundle lists each active goal with title, type, target_date (+ days remaining), live-computed progress_pct, milestone list, top-3 active tasks (title/priority/due date), and overdue-task count
+- [x] **EXPORT-03**: The bundle includes a 14-day planned-vs-actual block summary (blocks planned / completed / slipped) aggregated from ScheduledBlock
+- [x] **EXPORT-04**: The bundle includes a per-goal progress trend (last 4 weekly values) and a velocity label (accelerating / steady / stalling / no_data), degrading gracefully to `no_data` until snapshots accumulate
+- [x] **EXPORT-05**: The bundle includes a 7-day calendar load as per-day event counts only (never event titles — privacy) and a stalled-goals list reusing `guidance_service.get_stalled_goals()`
+- [x] **EXPORT-06**: Career- and learning-type goals are ordered/flagged first in the bundle so the advisor's attention is steered by the data, not the prompt alone
 
 ### Progression Substrate (PROG)
 
@@ -137,7 +137,7 @@
 
 ### Advisor Prompt (PROMPT)
 
-- [ ] **PROMPT-01**: User can copy a documented advisor system prompt from the Sync page in one click — role framing (career/engineering advisor for Jack, 4-week horizon, career/learning goals prioritized), explicit in-scope and out-of-scope lists, an auto-generated JSON schema block matching the advisory Pydantic models, an example payload, and `notes`-field guidance
+- [x] **PROMPT-01**: User can copy a documented advisor system prompt from the Sync page in one click — role framing (career/engineering advisor for Jack, 4-week horizon, career/learning goals prioritized), explicit in-scope and out-of-scope lists, an auto-generated JSON schema block matching the advisory Pydantic models, an example payload, and `notes`-field guidance
 
 ---
 
@@ -231,13 +231,13 @@
 | NOTIF-08 | Phase 13 — Update Loop UI | Complete |
 | PROG-01 | Phase 14 — Progression Substrate | Pending |
 | PROG-02 | Phase 14 — Progression Substrate | Pending |
-| EXPORT-01 | Phase 15 — Context Export + Advisor Prompt | Pending |
-| EXPORT-02 | Phase 15 — Context Export + Advisor Prompt | Pending |
-| EXPORT-03 | Phase 15 — Context Export + Advisor Prompt | Pending |
-| EXPORT-04 | Phase 15 — Context Export + Advisor Prompt | Pending |
-| EXPORT-05 | Phase 15 — Context Export + Advisor Prompt | Pending |
-| EXPORT-06 | Phase 15 — Context Export + Advisor Prompt | Pending |
-| PROMPT-01 | Phase 15 — Context Export + Advisor Prompt (schema block updated at end of Phase 16) | Pending |
+| EXPORT-01 | Phase 15 — Context Export + Advisor Prompt | Complete |
+| EXPORT-02 | Phase 15 — Context Export + Advisor Prompt | Complete |
+| EXPORT-03 | Phase 15 — Context Export + Advisor Prompt | Complete |
+| EXPORT-04 | Phase 15 — Context Export + Advisor Prompt | Complete |
+| EXPORT-05 | Phase 15 — Context Export + Advisor Prompt | Complete |
+| EXPORT-06 | Phase 15 — Context Export + Advisor Prompt | Complete |
+| PROMPT-01 | Phase 15 — Context Export + Advisor Prompt (schema block updated at end of Phase 16) | Complete |
 | ADVISE-01 | Phase 16 — Advisory Ingest + Sync Review UI | Pending |
 | ADVISE-02 | Phase 16 — Advisory Ingest + Sync Review UI | Pending |
 | ADVISE-03 | Phase 16 — Advisory Ingest + Sync Review UI | Pending |
