@@ -1,25 +1,27 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.1
-milestone_name: Phases — Close the Loop
-status: executing
-last_updated: "2026-06-23T19:28:26.732Z"
-last_activity: 2026-06-23
+milestone: v2.2
+milestone_name: LLM Advisory Loop
+status: defining_requirements
+last_updated: "2026-06-29T00:00:00.000Z"
+last_activity: 2026-06-29
 progress:
-  total_phases: 9
-  completed_phases: 8
-  total_plans: 34
-  completed_plans: 33
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
 
 ## Current Position
 
-Phase: 13 (update-loop-ui) — EXECUTING
-Plan: 4 of 4
-Status: Ready to execute
-Last activity: 2026-06-24 - Completed quick task 260624-kmx: Now view redesign (hero, momentum strip, timeline rail)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements — Milestone v2.2 "LLM Advisory Loop"
+Last activity: 2026-06-29 — Milestone v2.2 started
+
+> **v2.1 carry-over:** Phase 13 (update-loop-ui) left at plan 4 of 4 — Quick-update capture box + End-of-day rollup unfinished. Intentionally deferred at v2.2 start; resume separately if/when wanted.
 
 ---
 
@@ -27,7 +29,7 @@ Last activity: 2026-06-24 - Completed quick task 260624-kmx: Now view redesign (
 
 **Core value:** One place to manage your schedule and tasks — reachable from any device, voice-controllable via Google Home, and proactive enough to push reminders before you have to think about them.
 
-**Current focus:** Phase 13 — update-loop-ui
+**Current focus:** Milestone v2.2 — LLM Advisory Loop (defining requirements)
 
 ---
 

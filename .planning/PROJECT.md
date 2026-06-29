@@ -8,22 +8,23 @@ A self-hosted personal secretary running on a Raspberry Pi 5. It handles schedul
 
 One place to manage your schedule and tasks — reachable from any device, voice-controllable via Google Home, and proactive enough to push reminders before you have to think about them.
 
-## Current Milestone: v2.1 "Close the Loop"
+## Current Milestone: v2.2 "LLM Advisory Loop"
 
-**Goal:** Keep the day's plan accurate as it unfolds — the secretary checks in, the user logs progress in seconds (no manual reorganizing), and the schedule self-corrects.
+**Goal:** Make the secretary the system-of-record for a periodic advisory sync — it exports a rich picture of progress for an external LLM to reason over, and ingests the LLM's timeline/goal adjustments back in. The LLM is the brain the user brings; the secretary organizes everything and remembers history.
 
 **Target features:**
-- **Mid-day check-in** — configurable Pushover (+ optional Google Home TTS) reminder(s) prompting the user to log what they've done, deep-linking into the app
-- **Quick-update capture** — an in-app box on the Today tab; phone keyboard dictation is the voice path (zero new dependencies)
-- **No-LLM update resolution** — most updates (mark done / reschedule / drop) resolved by fuzzy-matching against today's existing scheduled blocks/tasks with pure server-side logic
-- **Messy-dump escape hatch** — multi-intent updates routed through the existing external-LLM ingest contract, extended with an "intra-day update" payload type (server only validates JSON)
-- **End-of-day rollup** — surfaces what slipped and feeds the existing rollover logic so unfinished items carry forward
+- **Context export ("brief for the LLM")** — one action that bundles goals, milestones, planned-vs-actual, completion/reschedule history, and momentum into a structured payload (Markdown + JSON) to paste into an external LLM. The outbound half the system does not yet have.
+- **Progression substrate** — capture history over time (goal-progress snapshots, plan adherence, what slipped/carried) so "track my progression" has real trend data, not just current state.
+- **Advisory ingest** — extend the existing versioned-JSON ingest contract with an "advisory" payload type so the LLM can push back adjusted timelines, re-prioritized goals, and new milestones — each with rationale the user reviews before it lands.
+- **Sync review UI** — a place to run the loop: export → (paste to LLM) → ingest decisions → see a diff of what changed and why.
+- **Advisor prompt/protocol doc** — a documented prompt (sibling to the existing ingest prompt) telling the external LLM how to act as a career/engineering advisor and what JSON to emit.
 
 **Key context:**
-- HARD CONSTRAINTS (locked since v2.0): no new dependencies; **no server-side LLM**; minimize API/token cost
-- Reuse Pydantic v2, SQLAlchemy/Alembic, native React, APScheduler, Pushover/TTS — all already in the codebase
-- Builds directly on shipped pieces: plan-task completion, scheduled_blocks, the planner, the daily brief, and the ingest pipeline
-- Phase numbering continues from v2.0 — this milestone starts at Phase 12
+- HARD CONSTRAINTS (locked since v2.0): no new dependencies; **no server-side LLM**; minimize API/token cost — this milestone EXTENDS the external-LLM ingest pattern, it does not overturn it
+- Reuse Pydantic v2 (`model_json_schema` + versioned payload), SQLAlchemy/Alembic, native React, the daily-brief/guidance services — all already in the codebase
+- North star: maximize the user's time and accelerate their growth as an engineer/career person
+- Phase numbering continues — this milestone starts at Phase 14
+- **v2.1 "Close the Loop" remains open** — Phase 13 (Quick-update capture box, End-of-day rollup) is unfinished and was intentionally not completed before starting v2.2
 
 ## Context
 
@@ -56,6 +57,13 @@ One place to manage your schedule and tasks — reachable from any device, voice
 - The backend resolves free-text progress updates to mark done / reschedule / drop by fuzzy-matching today's blocks and tasks with no LLM call, fires a configurable mid-day check-in notification that survives reboots, and accepts an intra-day update payload on the ingest contract (Validated in Phase 12: update-resolution-engine — UPDATE-02/03, NOTIF-07, INGEST-08; 12/12 verifier must-haves, 10 phase tests green)
 
 ### Active
+
+**v2.2 — LLM Advisory Loop (requirements being defined in REQUIREMENTS.md):**
+- [ ] Context export bundle (Markdown + JSON) of goals, planned-vs-actual, history, momentum for an external LLM
+- [ ] Progression substrate — historical progress/adherence snapshots, not just current state
+- [ ] Advisory ingest payload type — LLM-adjusted timelines, re-prioritized goals, new milestones with rationale
+- [ ] Sync review UI — export → ingest → diff of what changed and why
+- [ ] Documented advisor prompt/protocol (sibling to the ingest prompt)
 
 **v2.1 — Close the Loop (requirements defined in REQUIREMENTS.md):**
 - [x] Mid-day check-in reminder(s) — configurable Pushover/TTS prompt to log progress, deep-links into app — Phase 12 (NOTIF-07)
@@ -119,4 +127,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-22 — Milestone v2.1 "Close the Loop" started (intra-day update loop); v2.0 complete (Phases 8–11)*
+*Last updated: 2026-06-29 — Milestone v2.2 "LLM Advisory Loop" started (bidirectional secretary↔external-LLM sync + progression substrate); v2.1 "Close the Loop" left open mid-Phase-13; v2.0 complete (Phases 8–11)*
