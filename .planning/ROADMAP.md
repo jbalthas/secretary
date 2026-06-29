@@ -311,7 +311,12 @@ Plans:
 2. The exported bundle lists each active goal with title, type, target date and days remaining, live-computed `progress_pct`, a milestone list, top-3 active tasks (title/priority/due date), overdue task count, a 4-week progress trend array with velocity label (`accelerating` / `steady` / `stalling` / `no_data`), and career/learning-type goals ordered first.
 3. The bundle includes a 14-day planned-vs-actual block summary (blocks planned / completed / slipped from `ScheduledBlock`), a 7-day calendar load as per-day event counts only (no event titles), and a stalled-goals list reusing `guidance_service.get_stalled_goals()`.
 4. User can copy the advisor system prompt from the Sync page in one click — role framing, scope/out-of-scope list, placeholder JSON schema block, example payload, and `notes`-field guidance — before copying the export bundle.
-**Plans:** TBD
+**Plans:** 3 plans
+
+Plans:
+- [ ] 15-01-PLAN.md — Wave 0: RED test scaffold (test_export.py, 8 tests + CI guard) + advisorPrompt.ts [SCHEMA BLOCK] placeholder (PROMPT-01)
+- [ ] 15-02-PLAN.md — Backend: sync export_service.build_export_bundle + BundleResponse + GET /export/bundle (EXPORT-01..06)
+- [ ] 15-03-PLAN.md — Frontend: useExport hook + /advisor Sync page + route + BottomNav entry + human-verify checkpoint (EXPORT-01, PROMPT-01)
 **UI hint**: yes
 
 ---
