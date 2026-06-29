@@ -1,13 +1,13 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.2
-milestone_name: LLM Advisory Loop
-status: planning
-last_updated: "2026-06-29T14:42:44.105Z"
-last_activity: 2026-06-29 — Milestone v2.2 roadmap written (Phases 14–16)
+milestone: v2.1
+milestone_name: Phases — Close the Loop
+status: completed
+last_updated: "2026-06-29T18:38:37.750Z"
+last_activity: 2026-06-29 - Phase 14 snapshot substrate implemented and verified
 progress:
-  total_phases: 16
-  completed_phases: 8
+  total_phases: 12
+  completed_phases: 9
   total_plans: 36
   completed_plans: 35
 ---
@@ -195,5 +195,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-06-29T14:42:44.102Z
+Last session: 2026-06-29T18:38:37.746Z
 Next action: Run /gsd:discuss-phase 15 — advisory scope confirmed: approval MAY create new tasks (ADVISE-08, create-only); ADVISE-03 relaxed accordingly
