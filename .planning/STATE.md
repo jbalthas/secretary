@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Phases — Close the Loop
 status: executing
-last_updated: "2026-06-29T19:04:51.793Z"
+last_updated: "2026-06-29T19:09:55.042Z"
 last_activity: 2026-06-29
 progress:
   total_phases: 9
@@ -17,7 +17,7 @@ progress:
 ## Current Position
 
 Phase: 15 (context-export-advisor-prompt) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-06-29
 
@@ -161,6 +161,8 @@ Last activity: 2026-06-29
 - [Phase 15]: [15-01] Wave 0 RED scaffold — deferred export_service import inside test body + triple _Session patch (export_service/brief/guidance_service) to one test Session; 8 tests; test_no_llm_imports locks the no-server-side-LLM constraint
 - [Phase 15]: [15-01] export bundle contract: build_export_bundle() -> {markdown, session_id, generated_at}; markdown starts "# Advisor Brief"; _velocity_label thresholds: +10 accelerating, -5 stalling, <2 entries no_data
 - [Phase 15]: [15-01] advisorPrompt.ts ships literal [SCHEMA BLOCK]; Phase 16 one-line-replaces with AdvisoryPayload.model_json_schema() — do NOT hand-write schema or create AdvisoryPayload in Phase 15
+- [Phase 15]: [15-02] export bundle is SYNC (brief.py create_engine+sessionmaker boilerplate); GET /api/v1/export/bundle returns BundleResponse{markdown,session_id,generated_at}, markdown starts "# Advisor Brief"; all ORM access inside one `with _Session()` block (lazy=selectin); 8/8 export tests green
+- [Phase 15]: [15-02] calendar load renders all 7 days (today..+6) with explicit 0 counts, COUNT only never titles (D-05); career/learning ordered first; token-budget truncation (>30000 est tokens) re-renders compact but never drops a whole goal (D-06/D-07)
 
 ### Open Questions (Live Verification Required)
 
@@ -198,5 +200,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-06-29T19:04:51.789Z
+Last session: 2026-06-29T19:09:55.037Z
 Next action: Run /gsd:plan-phase 15 — context captured (15-CONTEXT.md). Advisory scope: approval MAY create new tasks (ADVISE-08, create-only)
