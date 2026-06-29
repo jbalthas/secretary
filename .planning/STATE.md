@@ -1,12 +1,12 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.1
-milestone_name: Phases — Close the Loop
-status: completed
+milestone: v2.2
+milestone_name: LLM Advisory Loop
+status: planning
 last_updated: "2026-06-29T18:38:37.750Z"
-last_activity: 2026-06-29 - Phase 14 snapshot substrate implemented and verified
+last_activity: 2026-06-29 - Phase 15 context gathered
 progress:
-  total_phases: 12
+  total_phases: 16
   completed_phases: 9
   total_plans: 36
   completed_plans: 35
@@ -18,8 +18,8 @@ progress:
 
 Phase: Phase 14 - Progression Substrate (implementation complete)
 Plan: 2 of 2 complete
-Status: Phase 14 backend complete; ready to discuss Phase 15
-Last activity: 2026-06-29 - Phase 14 snapshot substrate implemented and verified
+Status: Phase 15 context gathered; ready to plan Phase 15
+Last activity: 2026-06-29 - Phase 15 context gathered (CONTEXT.md written)
 
 > **v2.1 carry-over:** Phase 13 (update-loop-ui) left at plan 4 of 4 — Quick-update capture box + End-of-day rollup unfinished. Intentionally deferred at v2.2 start; resume separately if/when wanted.
 
@@ -29,7 +29,7 @@ Last activity: 2026-06-29 - Phase 14 snapshot substrate implemented and verified
 
 **Core value:** One place to manage your schedule and tasks — reachable from any device, voice-controllable via Google Home, and proactive enough to push reminders before you have to think about them.
 
-**Current focus:** Milestone v2.2 — LLM Advisory Loop (Phase 14: Progression Substrate)
+**Current focus:** Milestone v2.2 — LLM Advisory Loop (Phase 15: Context Export + Advisor Prompt)
 
 ---
 
@@ -196,4 +196,4 @@ None
 ## Session Continuity
 
 Last session: 2026-06-29T18:38:37.746Z
-Next action: Run /gsd:discuss-phase 15 — advisory scope confirmed: approval MAY create new tasks (ADVISE-08, create-only); ADVISE-03 relaxed accordingly
+Next action: Run /gsd:plan-phase 15 — context captured (15-CONTEXT.md). Advisory scope: approval MAY create new tasks (ADVISE-08, create-only)
