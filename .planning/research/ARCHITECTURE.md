@@ -1,666 +1,609 @@
 # Architecture Research
 
-**Domain:** v2.0 feature integration into existing FastAPI + SQLAlchemy + React personal secretary app
-**Researched:** 2026-06-15
-**Confidence:** HIGH (based on direct codebase inspection)
+**Domain:** v2.2 LLM Advisory Loop — integration into existing My Secretary (FastAPI async + SQLAlchemy 2.0 + aiosqlite + React 19)
+**Researched:** 2026-06-29
+**Confidence:** HIGH — based on direct reading of every relevant source module
 
 ---
 
-## Existing Architecture (Ground Truth from Codebase Inspection)
+## Ground Truth: Existing Architecture
 
-### Backend file layout
+Before integration design, these are verified facts from reading the actual code.
 
-```
-backend/app/
-├── main.py              # FastAPI app, lifespan, router registration
-├── config.py            # pydantic-settings Settings singleton
-├── db.py                # async engine, SessionLocal, Base, get_session dep
-├── scheduler.py         # APScheduler singleton + job helpers
-│                        # (upsert_reminder, schedule_routine, schedule_daily_brief,
-│                        #  schedule_calendar_sync, remove_reminder, remove_routine)
-├── models/
-│   ├── __init__.py      # Task, AppSettings, Routine, Priority, RoutineAction
-│   └── calendar.py      # CalendarEvent, CalendarSync
-├── schemas/
-│   ├── task.py          # TaskCreate / TaskUpdate / TaskRead
-│   ├── routine.py
-│   ├── event.py
-│   ├── settings.py      # BriefTimeRead / BriefTimeUpdate
-│   └── tts.py
-├── routers/
-│   ├── tasks.py         # CRUD + reminder side-effects
-│   ├── routines.py      # CRUD + scheduler side-effects
-│   ├── events.py        # read + patch(done)
-│   ├── auth.py          # Google OAuth flow
-│   ├── calendar_status.py
-│   ├── settings.py      # brief-time read/write
-│   ├── tts.py           # ad-hoc TTS trigger
-│   └── webhooks.py      # secret-guarded /webhooks/brief
-└── services/
-    ├── brief.py         # build_brief_body/speech, send_daily_brief (sync, uses own _Session)
-    ├── sync.py          # Google Calendar incremental sync (sync)
-    ├── oauth.py         # token refresh helpers
-    ├── pushover.py      # PushoverClient
-    ├── tts.py           # TTSClient (pychromecast + gTTS)
-    └── tts_settings.py  # reads tts_enabled from DB (sync)
+### Alembic HEAD
 
-backend/migrations/versions/   ← Alembic chain, HEAD is 0005
-├── fb2466e21e43_init.py
-├── 8f8f43ed5ce5_add_calendar_events_and_calendar_sync.py
-├── 0002_add_tasks_table.py
-├── 0003_add_app_settings_and_routines.py
-├── 0004_add_tts_enabled.py
-└── 0005_add_done_to_calendar_events.py    ← current HEAD
-```
+Current chain end: `0016_add_checkin_enabled.py` (`revision = "0016"`, `down_revision = "0015"`).
+Next new migration MUST use `revision = "0017"`, `down_revision = "0016"`.
 
-### Frontend file layout
+### Sync vs Async Boundary
 
-```
-frontend/src/
-├── App.tsx              # BrowserRouter, Routes: /today /tasks /settings
-├── pages/
-│   ├── Today.tsx        # useTasks + useCalendarEvents → buildAgenda → AgendaItem list
-│   ├── Tasks.tsx        # full task CRUD + TaskDrawer
-│   └── Settings.tsx     # brief time, TTS toggle, Google Home
-├── components/
-│   ├── AgendaItem.tsx   # renders one agenda row (task or event)
-│   ├── BottomNav.tsx    # /today /tasks /settings tabs
-│   ├── TaskDrawer.tsx
-│   ├── RoutineDrawer.tsx
-│   └── FAB.tsx
-├── hooks/
-│   ├── useTasks.ts
-│   ├── useCalendarEvents.ts
-│   ├── useRoutines.ts
-│   ├── useBriefSettings.ts
-│   └── useGoogleHome.ts
-├── lib/
-│   └── agenda.ts        # buildAgenda / buildWeekAgenda — pure merge function
-└── types/
-    ├── task.ts          # Task, AgendaItem types
-    ├── calendar.ts
-    └── routine.ts
-```
-
-### Key architectural facts that v2.0 must respect
-
-- All router handlers are **async** and receive `AsyncSession` via `Depends(get_session)`.
-- `brief.py`, `sync.py`, and `tts_settings.py` are **sync** services that build their own sync SQLAlchemy sessions (`create_engine` + `sessionmaker`). APScheduler runs them in a thread pool via `run_in_threadpool` or direct call. This pattern must be followed for any code called from the scheduler.
-- There is **no** `Base.metadata.create_all()` anywhere. Tables exist only via Alembic migrations. New models require a new migration file — the table will not exist in any environment (test, Pi) until the migration runs.
-- Current Alembic HEAD is `0005`. Every new migration must set `down_revision = '0005'` (or the migration immediately preceding it in the chain).
-- `brief.py::build_brief_body` and `build_brief_speech` are the composition points for the daily brief. v2.0 guidance output plugs in here.
-- `agenda.ts::buildAgenda` is the frontend composition point for Today view. v2.0 plan blocks can be surfaced here or in a new page.
-
----
-
-## v2.0 Integration Architecture
-
-### System overview after v2.0
-
-```
-┌──────────────────────────────────────────────────────────────────────┐
-│  React SPA                                                           │
-│                                                                      │
-│  EXISTING pages:  /today   /tasks   /settings                        │
-│  NEW pages:       /goals   /organize   /ingest                       │
-│                                                                      │
-│  BottomNav adds: Goals tab                                           │
-└───────────────────────────┬──────────────────────────────────────────┘
-                            │ HTTPS (Tailscale / nginx)
-┌───────────────────────────▼──────────────────────────────────────────┐
-│  FastAPI                                                             │
-│                                                                      │
-│  EXISTING (unchanged):                                               │
-│  tasks  routines  events  auth  calendar_status  settings            │
-│  tts  webhooks                                                       │
-│                                                                      │
-│  NEW ROUTERS:                                                        │
-│  ┌────────────┐  ┌──────────┐  ┌──────────────┐  ┌───────────────┐  │
-│  │ /ingest    │  │ /goals   │  │ /plan        │  │ /guidance     │  │
-│  │ preview    │  │ CRUD     │  │ propose      │  │ summary       │  │
-│  │ confirm    │  │ progress │  │ approve      │  │               │  │
-│  └─────┬──────┘  └────┬─────┘  └──────┬───────┘  └───────┬───────┘  │
-│        │              │               │                   │          │
-│  ┌─────▼──────────────▼───────────────▼───────────────────▼───────┐  │
-│  │  NEW SERVICES                                                   │  │
-│  │  ingest_service.py  goal_service.py  planner_service.py        │  │
-│  │  guidance_service.py                                            │  │
-│  └─────────────────────────────────────────────────────────────────┘  │
-│                                                                      │
-│  MODIFIED SERVICES:                                                  │
-│  brief.py — appends goal_summary from guidance_service              │
-│  scheduler.py — adds schedule_guidance_check() job                  │
-└──────────────────────────────────────────────────────────────────────┘
-                            │
-┌───────────────────────────▼──────────────────────────────────────────┐
-│  SQLite WAL                                                          │
-│                                                                      │
-│  EXISTING: tasks  routines  app_settings  calendar_events            │
-│            calendar_sync  apscheduler_jobs                           │
-│                                                                      │
-│  NEW (via Alembic, in chain order):                                  │
-│  0006: goals table                                                   │
-│  0007: goal_id + external_key columns added to tasks                 │
-│  0008: goal_id + external_key columns added to routines              │
-│  0009: scheduled_blocks table                                        │
-└──────────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## 1. Ingest: Router + Service Split, Versioning, Preview-then-Commit, Upsert
-
-### Router: `app/routers/ingest.py` (NEW)
-
-Two endpoints only:
-
-```
-POST /api/v1/ingest/preview   → IngestPreview   (no DB writes, read-only)
-POST /api/v1/ingest/confirm   → IngestResult    (transactional write)
-```
-
-Both accept the same `IngestPayload` body. The preview is pure computation; confirm is the transactional apply. The client resends the full payload on confirm — no session state is kept server-side between calls. This avoids a pending-import table and a cleanup job.
-
-### Service: `app/services/ingest_service.py` (NEW)
-
-Two public functions, one private shared resolution step:
-
-```python
-async def preview_import(payload: IngestPayload, session: AsyncSession) -> IngestPreview:
-    return await _resolve(payload, session, dry_run=True)
-
-async def apply_import(payload: IngestPayload, session: AsyncSession) -> IngestResult:
-    async with session.begin():
-        return await _resolve(payload, session, dry_run=False)
-
-async def _resolve(payload, session, dry_run: bool):
-    # 1. look up existing goals by external_key
-    # 2. look up existing tasks by external_key
-    # 3. look up existing routines by external_key
-    # 4. if dry_run: return diff; else: write upserts
-```
-
-Sharing `_resolve` ensures the preview diff is identical to what confirm writes. No drift risk.
-
-### Payload schema and versioning: `app/schemas/ingest.py` (NEW)
-
-```python
-class IngestPayload(BaseModel):
-    schema_version: Literal["1.0"]   # Pydantic rejects unknown versions with 422 before service runs
-    goals: list[GoalImport] = []
-    tasks: list[TaskImport] = []
-    routines: list[RoutineImport] = []
-
-class GoalImport(BaseModel):
-    external_key: str          # stable slug, e.g. "learn-guitar-2026"
-    title: str
-    description: str | None = None
-    target_date: date | None = None
-
-class TaskImport(BaseModel):
-    external_key: str          # e.g. "learn-guitar-2026/practice-chords"
-    goal_key: str | None = None
-    title: str
-    priority: Priority = Priority.medium
-    due_date: datetime | None = None
-    recurrence_cron: str | None = None
-
-class RoutineImport(BaseModel):
-    external_key: str
-    goal_key: str | None = None
-    name: str
-    cron: str
-    action: RoutineAction = RoutineAction.send_daily_brief
-```
-
-`schema_version` as `Literal["1.0"]` means Pydantic's 422 handler rejects payload from a future version automatically. When v1.1 is needed, extend to `Literal["1.0", "1.1"]` and branch inside the service.
-
-### Upsert / idempotency semantics
-
-Match on `external_key`, not title. This is a stable key the LLM produces; re-importing the same payload must be safe to do multiple times.
-
-Resolution rules:
-- `external_key` found in DB → **update** changed fields. Do NOT overwrite user-set fields: `completed`, `reminder_at`, `enabled`.
-- `external_key` not found → **create**.
-- Record in DB but absent from payload → **leave unchanged** (no deletions on import).
-
-Write order inside the transaction: goals first (so `goal_id` FK is resolvable), then tasks, then routines.
-
-### Preview response shape: `IngestPreview`
-
-```python
-class IngestPreview(BaseModel):
-    goals_to_create: list[GoalImport]
-    goals_to_update: list[GoalImport]
-    tasks_to_create: list[TaskImport]
-    tasks_to_update: list[TaskImport]
-    routines_to_create: list[RoutineImport]
-    routines_to_update: list[RoutineImport]
-    warnings: list[str]   # unknown goal_keys, invalid cron expressions, etc.
-```
-
-Frontend renders a summary ("3 goals, 12 tasks, 2 routines — 1 already exists and will be updated"). User confirms by reposting the same payload to `/ingest/confirm`.
-
----
-
-## 2. Goals: Data Model, Relationships, Progress
-
-### Model: `app/models/goal.py` (NEW)
-
-```python
-class Goal(Base):
-    __tablename__ = "goals"
-    id:           Mapped[int]       = mapped_column(primary_key=True)
-    external_key: Mapped[str|None]  = mapped_column(String(200), unique=True, nullable=True, index=True)
-    title:        Mapped[str]       = mapped_column(String(255), nullable=False)
-    description:  Mapped[str|None]  = mapped_column(Text, nullable=True)
-    target_date:  Mapped[date|None] = mapped_column(Date, nullable=True)
-    archived:     Mapped[bool]      = mapped_column(Boolean, default=False)
-    created_at:   Mapped[datetime]  = mapped_column(DateTime(timezone=True), default=utcnow)
-    updated_at:   Mapped[datetime]  = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
-
-    tasks:    Mapped[list["Task"]]    = relationship("Task", back_populates="goal", lazy="select")
-    routines: Mapped[list["Routine"]] = relationship("Routine", back_populates="goal", lazy="select")
-```
-
-`external_key` is nullable so manually-created goals (from the UI, not ingest) don't need one. The `unique=True` constraint with nullable values works correctly in SQLite (NULLs are not compared by the unique constraint).
-
-### Changes to existing models (ORM additions, NOT new files)
-
-In `app/models/__init__.py` — add to `Task` ORM class:
-
-```python
-goal_id:      Mapped[int|None] = mapped_column(ForeignKey("goals.id", ondelete="SET NULL"), nullable=True)
-external_key: Mapped[str|None] = mapped_column(String(200), unique=True, nullable=True, index=True)
-goal:         Mapped["Goal"|None] = relationship("Goal", back_populates="tasks")
-```
-
-In `app/models/__init__.py` — add to `Routine` ORM class:
-
-```python
-goal_id:      Mapped[int|None] = mapped_column(ForeignKey("goals.id", ondelete="SET NULL"), nullable=True)
-external_key: Mapped[str|None] = mapped_column(String(200), unique=True, nullable=True, index=True)
-goal:         Mapped["Goal"|None] = relationship("Goal", back_populates="routines")
-```
-
-### Progress: derived on read, not stored
-
-`app/services/goal_service.py::compute_progress(goal_id, session)` returns:
-
-```python
-class GoalProgress(BaseModel):
-    total_tasks: int
-    completed_tasks: int
-    pct: int             # 0-100
-    overdue_count: int
-    next_due: datetime | None
-```
-
-Computed by querying `tasks WHERE goal_id = X`. No cached column — avoids stale values and the extra write on every task patch. SQLite at personal scale makes this free.
-
-### Migration ordering (Alembic chain)
-
-```
-0005 (current HEAD)
-  └── 0006: CREATE TABLE goals
-        └── 0007: ALTER TABLE tasks ADD COLUMN goal_id, external_key
-              └── 0008: ALTER TABLE routines ADD COLUMN goal_id, external_key
-                    └── 0009: CREATE TABLE scheduled_blocks
-```
-
-0007 must follow 0006 because the FK references `goals.id`. 0008 is independent of 0009 but both depend on 0007 existing first for cleanliness. Run `alembic upgrade head` once after all four migration files are written.
-
-### Router: `app/routers/goals.py` (NEW)
-
-```
-GET    /api/v1/goals/              → list[GoalRead]
-POST   /api/v1/goals/              → GoalRead
-GET    /api/v1/goals/{id}          → GoalRead
-PATCH  /api/v1/goals/{id}          → GoalRead
-DELETE /api/v1/goals/{id}          → 204
-GET    /api/v1/goals/{id}/progress → GoalProgress
-```
-
----
-
-## 3. Day Planner: Pure Service, Proposed vs. Committed Blocks
-
-### Where it lives: `app/services/planner_service.py` (NEW)
-
-A **pure deterministic function** — no I/O, no async, no DB calls:
-
-```python
-def propose_day_plan(
-    tasks: list[Task],
-    events: list[CalendarEvent],
-    target_date: date,
-    work_start: time = time(9, 0),
-    work_end: time = time(18, 0),
-    default_block_minutes: int = 30,
-) -> list[ProposedBlock]:
-    # 1. Build fixed-event timeline from CalendarEvent records for target_date
-    # 2. Find gaps between fixed events within the work window
-    # 3. Assign pending tasks (sorted priority → due_date) into gaps
-    # 4. Return list[ProposedBlock] — no DB write ever
-```
-
-Being pure means it is trivially unit-testable with no database or async context.
-
-### Router: `app/routers/plan.py` (NEW)
-
-```
-GET  /api/v1/plan/propose?date=YYYY-MM-DD  → list[ProposedBlock]   (pure fn, no DB write)
-POST /api/v1/plan/approve                  → list[ScheduledBlock]  (writes approved blocks)
-GET  /api/v1/plan/blocks?date=YYYY-MM-DD   → list[ScheduledBlock]  (reads committed blocks)
-DELETE /api/v1/plan/blocks/{id}            → 204
-```
-
-`GET /plan/propose` fetches tasks and events from the DB inside the router (async session), calls the pure service function, returns the result. No write happens.
-
-### Two representations: proposed vs. committed
-
-**ProposedBlock** — transient, never persisted. Lives only in the API response:
-
-```python
-class ProposedBlock(BaseModel):
-    task_id: int | None      # None for buffer/break slots
-    title: str
-    start_dt: datetime
-    end_dt: datetime
-    source: Literal["task", "buffer"]
-```
-
-**ScheduledBlock** — persisted. Model in `app/models/plan.py` (NEW):
-
-```python
-class ScheduledBlock(Base):
-    __tablename__ = "scheduled_blocks"
-    id:          Mapped[int]        = mapped_column(primary_key=True)
-    task_id:     Mapped[int|None]   = mapped_column(ForeignKey("tasks.id", ondelete="SET NULL"), nullable=True)
-    title:       Mapped[str]        = mapped_column(String(255))
-    start_dt:    Mapped[datetime]   = mapped_column(DateTime(timezone=True))
-    end_dt:      Mapped[datetime]   = mapped_column(DateTime(timezone=True))
-    date_key:    Mapped[str]        = mapped_column(String(10), index=True)   # "YYYY-MM-DD"
-    approved_at: Mapped[datetime]   = mapped_column(DateTime(timezone=True), default=utcnow)
-```
-
-`date_key` (indexed) lets `GET /plan/blocks?date=X` query by day without datetime range arithmetic.
-
-`POST /plan/approve` receives the user-edited list of ProposedBlocks. Inside one transaction: delete existing ScheduledBlock rows for that date, then insert the approved set. The user may have removed, reordered, or added buffer slots — the approve endpoint accepts whatever the user submitted, not just the output of propose.
-
-### Frontend integration
-
-**`Today.tsx` (MODIFIED):** Add a `GET /api/v1/plan/blocks?date=today` fetch alongside the existing tasks and events fetches. Pass blocks as a third argument into `buildAgenda`. Committed blocks render in the timeline — if they have a `task_id`, they look like existing task items.
-
-**`agenda.ts::buildAgenda` (MODIFIED):** Accept an optional `blocks: ScheduledBlock[]` parameter. Inject them into the timed items list. A block without a `task_id` renders as a buffer slot (distinct style).
-
-**New page `/organize` (NEW):** Renders the propose → review → approve flow. Fetches propose on load, lets user drag/remove blocks, then submits to approve.
-
----
-
-## 4. Guidance: Plugging into the Existing Daily Brief
-
-### Composition point: `app/services/brief.py` (MODIFIED)
-
-`build_brief_body()` and `build_brief_speech()` are the two functions to modify. Both currently end with a `lines` list. Extend each to call `guidance_service.build_goal_summary()` and append the result:
-
-```python
-# At the end of build_brief_body(), before the final join:
-goal_summary = guidance_service.build_goal_summary()
-if goal_summary:
-    lines.append("")
-    lines.extend(goal_summary)
-```
-
-No other changes to `brief.py`. The brief remains one function, one output.
-
-### New service: `app/services/guidance_service.py` (NEW)
-
-Sync function — same pattern as `brief.py` (uses `create_engine` + `sessionmaker` directly, NOT `AsyncSession`):
+The APScheduler jobs (`brief.py`, `guidance_service.py`) run in a thread pool and use a **sync** engine (`create_engine` + `sessionmaker`). Attempting `async def` inside an APScheduler job causes a MissingGreenlet deadlock. The verified pattern in the codebase:
 
 ```python
 _sync_url = app_settings.database_url.replace("+aiosqlite", "")
 _engine = create_engine(_sync_url)
 _Session = sessionmaker(_engine)
-
-def build_goal_summary() -> list[str]:
-    """
-    Returns plain-text lines describing active goal status.
-    Called from brief.py (sync context, runs in APScheduler thread pool).
-    Examples:
-      "Goals: Learn Guitar — 3 of 10 tasks done (30%)"
-      "Overdue: Practice scales was due yesterday"
-    """
-
-def build_guidance_summary() -> GuidanceSummary:
-    """
-    Called from the /guidance/summary endpoint (via run_in_threadpool).
-    Returns structured goal progress for the frontend.
-    """
 ```
 
-This must stay sync to match the existing pattern. Making it async would require `asyncio.run()` inside a thread that may already have a running event loop — a known deadlock path.
+FastAPI route handlers use the **async** engine via `get_session` dependency (`AsyncSession`). The two engines share the same SQLite file; both are valid simultaneously under WAL mode.
 
-### New router: `app/routers/guidance.py` (NEW)
+Any new service called from APScheduler MUST be sync. Any new service called only from FastAPI routes CAN be async (and should be, to stay consistent with the route layer).
 
-```
-GET /api/v1/guidance/summary   → GuidanceSummary
-```
+### Ingest Contract (exact shape as of 2026-06-29)
 
-The router calls `build_guidance_summary()` via `run_in_threadpool` (same pattern as `webhooks.py` calling `send_daily_brief`).
+`IngestPayload` (schemas/ingest.py):
+- `schema_version: Literal["1.0", "1.1"]`
+- `goals: list[GoalImport]`, `tasks: list[TaskImport]`, `routines: list[RoutineImport]`, `habits: list[HabitImport]`, `updates: list[IntraDayUpdateImport]`
+- All models use `extra="forbid"` — unknown fields are validation errors
 
-### Proactive nudges via scheduler
+`IngestPayload.model_json_schema()` is served live at `GET /api/v1/ingest/schema`.
 
-Extend `app/scheduler.py` with a new function `schedule_guidance_check()`. The job runs daily (or on an interval) and calls a sync function that checks: goals with overdue tasks, goals with no tasks assigned, days where no blocks are approved. If thresholds are met, fires a Pushover notification. Registered in `main.py` lifespan alongside the existing `schedule_daily_brief` call.
+The shared path between preview and confirm: `_exists()` in `ingest_service.py` (SELECT by `external_key`) for preview, and the `_upsert_*` functions for confirm. Both use the same `AsyncSession` dependency. No server-side pending state — client resends full payload on confirm.
+
+### progress_pct (never stored)
+
+`goal_service.compute_progress(goal_id, session)` runs two aggregate SQL queries (Tasks + Milestones grouped by `goal_id`). Called in `goals.router._to_read()` for every `GoalRead` response. Also duplicated as `_compute_progress_sync()` inline inside `brief.py` for the scheduler context. This duplication is intentional and must be preserved: the async version is for routes, the sync copy is for APScheduler jobs.
+
+### Key Column Constraints (for migration design)
+
+- `tasks`: `completed`, `completed_at`, `estimated_minutes`, `external_key`, `list_name`, `parent_list_name`, `is_habit`, `goal_id`
+- `goals`: `external_key`, `status` (GoalStatus enum: active/archived/completed), `target_date`, `list_name`, `parent_list_name`, `updated_at`
+- `milestones`: `done`, `target_date` — matched by title during ingest upsert (no `external_key`)
+- `scheduled_blocks`: `task_id`, `date_key`, `completed`, `start_dt`, `end_dt`, `approved_at`
+- `app_settings`: single row (id=1), holds all configuration knobs
 
 ---
 
-## Component Classification: New vs. Modified
-
-### NEW — create from scratch
-
-| File | Type |
-|------|------|
-| `app/models/goal.py` | Model |
-| `app/models/plan.py` | Model (ScheduledBlock) |
-| `app/schemas/ingest.py` | Schema |
-| `app/schemas/goal.py` | Schema |
-| `app/schemas/plan.py` | Schema |
-| `app/routers/ingest.py` | Router |
-| `app/routers/goals.py` | Router |
-| `app/routers/plan.py` | Router |
-| `app/routers/guidance.py` | Router |
-| `app/services/ingest_service.py` | Service |
-| `app/services/goal_service.py` | Service |
-| `app/services/planner_service.py` | Service (pure fn) |
-| `app/services/guidance_service.py` | Service (sync) |
-| `migrations/versions/0006_create_goals.py` | Migration |
-| `migrations/versions/0007_task_goal_fk.py` | Migration |
-| `migrations/versions/0008_routine_goal_fk.py` | Migration |
-| `migrations/versions/0009_create_scheduled_blocks.py` | Migration |
-| `frontend/src/pages/Goals.tsx` | Frontend page |
-| `frontend/src/pages/Organize.tsx` | Frontend page |
-| `frontend/src/pages/Ingest.tsx` | Frontend page |
-| `frontend/src/hooks/useGoals.ts` | Hook |
-| `frontend/src/hooks/usePlan.ts` | Hook |
-| `frontend/src/hooks/useGuidance.ts` | Hook |
-| `frontend/src/types/goal.ts` | Type |
-| `frontend/src/types/plan.ts` | Type |
-
-### MODIFIED — targeted additions only
-
-| File | What changes |
-|------|--------------|
-| `app/models/__init__.py` | Add Goal + ScheduledBlock imports; add `goal_id` + `external_key` + relationship to Task and Routine ORM classes |
-| `app/main.py` | Register 4 new routers: `ingest`, `goals`, `plan`, `guidance` |
-| `app/services/brief.py` | Call `guidance_service.build_goal_summary()` and append result in `build_brief_body` and `build_brief_speech` |
-| `app/scheduler.py` | Add `schedule_guidance_check()` |
-| `frontend/src/App.tsx` | Add routes for `/goals`, `/organize`, `/ingest` |
-| `frontend/src/components/BottomNav.tsx` | Add Goals tab |
-| `frontend/src/pages/Today.tsx` | Fetch plan blocks, pass to buildAgenda |
-| `frontend/src/lib/agenda.ts` | Accept optional `ScheduledBlock[]` param in buildAgenda |
-
----
-
-## Data Flows
-
-### Ingest flow
+## System Overview: v2.2 Integration Points
 
 ```
-User pastes LLM JSON into Ingest.tsx
-  → POST /api/v1/ingest/preview
-      → ingest_service._resolve(payload, session, dry_run=True)
-          → SELECT goals WHERE external_key IN (...)
-          → SELECT tasks WHERE external_key IN (...)
-          → SELECT routines WHERE external_key IN (...)
-          → returns diff (no writes)
-      → IngestPreview response
-  → UI shows: "3 goals to create, 1 task to update, 0 routines to change"
-  → User clicks Confirm
-  → POST /api/v1/ingest/confirm (same payload, client resends)
-      → ingest_service._resolve(payload, session, dry_run=False)
-          → session.begin()
-          → UPSERT goals (external_key match) — goals first
-          → UPSERT tasks (external_key match, resolve goal_id from goals upserted above)
-          → UPSERT routines (external_key match, resolve goal_id)
-          → commit
-      → IngestResult (created/updated counts)
-```
-
-### Day planner flow
-
-```
-User opens Organize.tsx
-  → GET /api/v1/plan/propose?date=2026-06-16
-      → fetch tasks WHERE completed=False from DB
-      → fetch events WHERE date_key='2026-06-16' from DB
-      → planner_service.propose_day_plan(tasks, events, date)  ← pure fn, no DB
-      → list[ProposedBlock] response
-  → UI renders draggable time-block list
-  → User removes 2 blocks, reorders 1
-  → POST /api/v1/plan/approve {date: ..., blocks: [...]}
-      → DELETE ScheduledBlock WHERE date_key='2026-06-16'
-      → INSERT approved blocks
-      → list[ScheduledBlock] response
-  → Today.tsx fetches GET /api/v1/plan/blocks?date=today
-      → merges into buildAgenda alongside tasks and events
-```
-
-### Brief augmentation flow
-
-```
-APScheduler fires send_daily_brief() [sync, APScheduler thread pool]
-  → build_brief_body()
-      → query tasks for today (existing)
-      → query events for today (existing)
-      → guidance_service.build_goal_summary()   ← NEW (sync, same _Session pattern)
-      → concatenate all sections
-  → PushoverClient().send(body)
-  → if TTS enabled: build_brief_speech() [same structure] → TTSClient().speak()
+┌─────────────────────────────────────────────────────────────────┐
+│  External LLM (Claude, ChatGPT, etc.)  <->  User's clipboard   │
+└───────────────────────┬─────────────────────────────────────────┘
+                        │  Markdown + JSON (copy/paste)
+           ┌────────────┴─────────────┐
+           │    [NEW] Sync Page        │  frontend/src/pages/Sync.tsx
+           │  (export + advisory diff) │
+           └──────────┬───────────────┘
+                      │  GET /api/v1/export/bundle
+                      │  POST /api/v1/ingest/preview  (existing)
+                      │  POST /api/v1/ingest/confirm  (existing)
+┌─────────────────────┴────────────────────────────────────────────┐
+│                    FastAPI (async routes)                         │
+│                                                                   │
+│  [NEW] routers/export.py          [EXISTING] routers/ingest.py   │
+│  GET /export/bundle               GET  /ingest/schema            │
+│  -> export_service.build_bundle() POST /ingest/preview           │
+│                                   POST /ingest/confirm           │
+│                                                                   │
+│  [EXISTING] routers/goals.py  routers/plan.py  routers/tasks.py  │
+│  (read-only from export's perspective — no router changes)       │
+└──────────────────────────────────────┬───────────────────────────┘
+                                       │
+┌──────────────────────────────────────┴───────────────────────────┐
+│                    Service Layer                                   │
+│                                                                   │
+│  [NEW] services/export_service.py   (ASYNC, route-only)          │
+│  Aggregates: Goals+progress, Milestones, Tasks (linked),         │
+│  ScheduledBlocks (recent 14 days), completed tasks (rolling 30)  │
+│  Calls goal_service.compute_progress() -- reuse, no fork         │
+│  Produces: ExportBundle (Pydantic) -> JSON + Markdown render     │
+│                                                                   │
+│  [NEW] services/snapshot_service.py (SYNC, APScheduler job)      │
+│  Writes GoalProgressSnapshot rows nightly                        │
+│  Reads goals + inline _compute_progress_sync (same brief.py pat) │
+│                                                                   │
+│  [MODIFIED] schemas/ingest.py       (schema extension)           │
+│  New payload_type discriminator on IngestPayload                 │
+│  New AdvisoryPayload / GoalAdjustment / MilestoneAdjustment      │
+│                                                                   │
+│  [MODIFIED] services/ingest_service.py                           │
+│  New _apply_advisory() + _dry_run_advisory(); existing paths kept │
+│                                                                   │
+│  [EXISTING] services/goal_service.py -- untouched                │
+│  [EXISTING] services/brief.py -- untouched                       │
+│  [EXISTING] services/guidance_service.py -- untouched            │
+└──────────────────────────────────────┬───────────────────────────┘
+                                       │
+┌──────────────────────────────────────┴───────────────────────────┐
+│                    Data Layer                                      │
+│                                                                   │
+│  [EXISTING] goals, milestones, tasks, scheduled_blocks, ...      │
+│                                                                   │
+│  [NEW] migration 0017: goal_progress_snapshots table             │
+│  (append-only, keyed by goal_id + snapshotted_on date)           │
+│                                                                   │
+│  [NEW] migration 0018: advisory_rationale column on goals        │
+│  (nullable Text -- stores latest advisory rationale per goal)    │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Build Order (Dependency-Aware)
+## Component Boundaries
 
-### Phase 8 — Goals + Ingest
+| Component | Status | Responsibility | Key Design Constraint |
+|-----------|--------|---------------|----------------------|
+| `services/export_service.py` | NEW | Build the export bundle for the LLM | ASYNC (route-only); reuses `goal_service.compute_progress()`; no new DB tables needed |
+| `routers/export.py` | NEW | `GET /api/v1/export/bundle` | Thin router; returns `ExportBundle` JSON + rendered Markdown |
+| `GoalProgressSnapshot` model | NEW | Append-only history table | In `models/snapshot.py`; separate from `models/goal.py` to keep that file clean |
+| `services/snapshot_service.py` | NEW | APScheduler nightly job; write progress snapshots | SYNC (APScheduler); inline sync progress calculation identical to `_compute_progress_sync` in `brief.py` |
+| `schemas/ingest.py` | MODIFIED | Extend `IngestPayload` with advisory payload type | Discriminated union via `payload_type` field; `extra="forbid"` must remain on all models |
+| `services/ingest_service.py` | MODIFIED | Handle advisory adjustments | New `_apply_advisory()` / `_dry_run_advisory()`; existing `_upsert_*` and `dry_run_import` paths untouched |
+| `pages/Sync.tsx` | NEW | Export copy + advisory ingest flow | New page; reuses existing `useIngest` hook for preview/confirm; new `useExport` hook for bundle |
+| `hooks/useExport.ts` | NEW | Fetch `GET /export/bundle` | Returns bundle JSON + pre-rendered Markdown for display |
+| `lib/advisorPrompt.ts` | NEW | Documented advisor prompt string | Sibling to `ingestPrompt.ts`; same copy-button pattern |
+| `App.tsx` | MODIFIED | Add `/sync` route | Plus one BottomNav entry |
 
-Build first. Every other v2.0 feature either depends on Goal rows existing or is independent enough to build concurrently.
+---
 
-1. Write migrations 0006, 0007, 0008 (goals table, then FK columns on tasks, then FK columns on routines). Run `alembic upgrade head` to validate the chain before writing any service code.
-2. `app/models/goal.py` — Goal ORM model
-3. Update `app/models/__init__.py` — add `goal_id`, `external_key`, relationships to Task and Routine
-4. `app/schemas/goal.py`, `app/services/goal_service.py`, `app/routers/goals.py` — Goals CRUD
-5. Register goals router in `main.py`
-6. `app/schemas/ingest.py`, `app/services/ingest_service.py`, `app/routers/ingest.py` — Ingest
-7. Register ingest router in `main.py`
-8. Frontend: `useGoals`, `Goals.tsx`, `Ingest.tsx`, BottomNav + routes in App.tsx
+## Architectural Patterns
 
-### Phase 9 — Day Planner
+### Pattern 1: Export Service (ASYNC, Route-Only)
 
-Depends on: tasks and events exist (Phases 1-4). `goal_id` on tasks is nullable so planner works before any goals are populated.
+**What:** A pure read service that aggregates across multiple tables into a single structured bundle, called only from a FastAPI route handler.
 
-1. Write migration 0009 (scheduled_blocks). `alembic upgrade head`.
-2. `app/models/plan.py` — ScheduledBlock ORM model; import in `models/__init__.py`
-3. `app/services/planner_service.py` — pure propose function. Write unit tests first (no DB needed).
-4. `app/schemas/plan.py` — ProposedBlock, ScheduledBlock schemas
-5. `app/routers/plan.py` — propose + approve + read + delete endpoints
-6. Register plan router in `main.py`
-7. Frontend: `usePlan`, `Organize.tsx`
-8. Modify `Today.tsx` and `agenda.ts` to surface committed blocks in the timeline
+**Why async (not sync):** Export is triggered by a user clicking a button, not by APScheduler. It runs in FastAPI's async event loop where the existing `AsyncSession` is available. Making it sync would require a sync engine import and be inconsistent with every other read in the routes layer.
 
-### Phase 10 — Guidance
+**How it avoids duplicating goal/progress logic:** Call `goal_service.compute_progress(goal_id, session)` directly -- the same function the goals router calls. Do not inline the SQL. This is the clean reuse point.
 
-Depends on: goals + progress (Phase 8). Day planner is optional (nudges about un-blocked tasks can be deferred).
+```python
+# services/export_service.py
+async def build_bundle(session: AsyncSession) -> ExportBundle:
+    goals = (await session.execute(
+        select(Goal).where(Goal.status == GoalStatus.active)
+    )).scalars().all()
+    goal_data = []
+    for g in goals:
+        progress = await goal_service.compute_progress(g.id, session)
+        # collect tasks, milestones, recent blocks per goal
+        goal_data.append(GoalExport(..., progress_pct=progress["pct"]))
+    # collect rolling completed-task counts, snapshot history
+    return ExportBundle(generated_at=datetime.now(timezone.utc), goals=goal_data, ...)
+```
 
-1. `app/services/guidance_service.py` — sync, mirrors brief.py pattern
-2. Modify `app/services/brief.py` — append goal summary to body and speech
-3. `app/routers/guidance.py` — `GET /guidance/summary`
-4. Register guidance router in `main.py`
-5. Extend `app/scheduler.py` — `schedule_guidance_check()`
-6. Extend `main.py` lifespan — call `schedule_guidance_check()`
-7. Frontend: `useGuidance`, goal-progress display in `Goals.tsx`
+**What the bundle must contain for the LLM to reason well (minimum viable):**
+- All active goals: title, type, target_date, description, progress_pct, milestone list (title + done + target_date)
+- Per-goal linked tasks: title, priority, due_date, completed
+- Recent ScheduledBlocks (last 14 days): title, date_key, start_dt, completed -- gives planned-vs-actual
+- Rolling completion counts: tasks completed in the last 7/14/30 days (derived at export time, no stored table needed)
+- GoalProgressSnapshot history if rows exist (for trend lines)
+- `generated_at` timestamp so the LLM can reason about staleness
+
+**Markdown render:** The export endpoint returns both a JSON field (`bundle`) and a pre-rendered `markdown` string field. The Markdown is generated by Python from the same data structures -- a pure render function in `export_service.render_markdown(bundle)`. No template engine needed; the output is deterministic and token-efficient.
+
+### Pattern 2: Snapshot Table (Append-Only, SYNC APScheduler Job)
+
+**What:** A nightly APScheduler job writes one row per active goal capturing the point-in-time `progress_pct`. Rows are never updated, only inserted.
+
+**Why a snapshot table rather than deriving from completions:**
+
+The live `progress_pct` is computed from current `Task.completed` and `Milestone.done` states. Individual `Task.completed_at` timestamps exist but they do not give goal-level progress at an arbitrary past date (a goal that gained 10 tasks on day X would change the denominator retroactively). A nightly snapshot is the simplest correct solution. It does not double-count with the live computation because:
+
+1. The snapshot stores a COPY of `progress_pct` at capture time -- it never feeds back into `goal_service.compute_progress()`, which always runs live queries.
+2. The export service reads snapshots for the "trend" section and live computation for the "current state" section. They serve different purposes.
+
+**Schema (migration 0017, first of two):**
+
+```sql
+CREATE TABLE goal_progress_snapshots (
+    id              INTEGER PRIMARY KEY,
+    goal_id         INTEGER NOT NULL REFERENCES goals(id) ON DELETE CASCADE,
+    snapshotted_on  DATE NOT NULL,
+    progress_pct    INTEGER NOT NULL,
+    task_done       INTEGER NOT NULL DEFAULT 0,
+    task_total      INTEGER NOT NULL DEFAULT 0,
+    ms_done         INTEGER NOT NULL DEFAULT 0,
+    ms_total        INTEGER NOT NULL DEFAULT 0,
+    created_at      DATETIME
+);
+CREATE UNIQUE INDEX ix_snapshot_goal_date ON goal_progress_snapshots(goal_id, snapshotted_on);
+```
+
+The UNIQUE index on `(goal_id, snapshotted_on)` makes the job idempotent: if the Pi reboots and the job fires twice on the same day, the second insert is skipped (check before inserting).
+
+**APScheduler registration:** Follow the exact pattern of `schedule_stall_check()` in `scheduler.py`. Register with `id="snapshot_progress"` and `replace_existing=True`. Schedule at 23:50 daily.
+
+**Sync engine pattern (mandatory for APScheduler):**
+
+```python
+# services/snapshot_service.py
+_sync_url = app_settings.database_url.replace("+aiosqlite", "")
+_engine = create_engine(_sync_url)
+_Session = sessionmaker(_engine)
+
+def take_daily_snapshot() -> None:
+    today = date.today()
+    with _Session() as s:
+        goals = s.execute(select(Goal).where(Goal.status == "active")).scalars().all()
+        for g in goals:
+            existing = s.execute(
+                select(GoalProgressSnapshot).where(
+                    GoalProgressSnapshot.goal_id == g.id,
+                    GoalProgressSnapshot.snapshotted_on == today
+                )
+            ).scalar_one_or_none()
+            if existing:
+                continue  # idempotent: already captured today
+            pct_data = _compute_progress_sync(g.id, s)  # inline sync version
+            s.add(GoalProgressSnapshot(goal_id=g.id, snapshotted_on=today, ...))
+        s.commit()
+```
+
+### Pattern 3: Advisory Ingest Extension (Discriminated Union)
+
+**What:** Extend `IngestPayload` with a `payload_type` discriminator field so the existing preview/confirm path can handle a new "advisory" payload alongside the existing "standard" payload.
+
+**Why `payload_type` discriminator rather than a `schema_version` bump:**
+
+A version bump (`"1.2"`) would require the backend to branch on version inside `apply_import()`, which muddles the function's responsibility. A `payload_type` field makes the distinction explicit at the Pydantic validation level. The existing `schema_version: Literal["1.0", "1.1"]` covers the data format version; `payload_type` covers the intent.
+
+**Exact schema extension (schemas/ingest.py):**
+
+```python
+class GoalAdjustment(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    external_key: str = Field(..., max_length=200)
+    target_date: date | None = None          # LLM-suggested new target date
+    rationale: str = Field(..., max_length=1000)  # required -- why this change
+
+class MilestoneAdjustment(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    goal_key: str
+    title: str                               # matched by title (existing pattern)
+    target_date: date | None = None
+    done: bool | None = None
+    rationale: str | None = Field(None, max_length=500)
+
+class AdvisoryPayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    schema_version: Literal["1.0", "1.1"]
+    payload_type: Literal["advisory"]
+    goal_adjustments: list[GoalAdjustment] = []
+    milestone_adjustments: list[MilestoneAdjustment] = []
+    new_tasks: list[TaskImport] = []   # reuse existing TaskImport unchanged
+    new_goals: list[GoalImport] = []   # reuse existing GoalImport unchanged
+
+# EXISTING IngestPayload gains one new field with a default:
+class IngestPayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    schema_version: Literal["1.0", "1.1"]
+    payload_type: Literal["standard"] = "standard"  # NEW -- default preserves backward compat
+    goals: list[GoalImport] = []
+    tasks: list[TaskImport] = []
+    routines: list[RoutineImport] = []
+    habits: list[HabitImport] = []
+    updates: list[IntraDayUpdateImport] = []
+```
+
+**CRITICAL BACKWARD COMPAT NOTE:** Adding `payload_type: Literal["standard"] = "standard"` to `IngestPayload` with a default means all old payloads (which omit `payload_type`) parse as `"standard"`. This is safe because `extra="forbid"` prevents old clients from accidentally sending unknown fields. A regression test that sends a schema_version "1.0" payload with no `payload_type` field must pass before shipping this change.
+
+**Where rationale is stored (migration 0018, second of two):**
+
+Add a nullable `advisory_rationale TEXT` column to the `goals` table. When `_apply_advisory()` processes a `GoalAdjustment`, it writes `goal.advisory_rationale = adjustment.rationale` alongside any `target_date` change.
+
+- One advisory pass can overwrite a previous rationale on the same goal -- acceptable since the user reviews the diff before confirming.
+- No separate rationale history table needed for v2.2. The rationale is per-goal: "what is the LLM's current reasoning for this goal."
+- `GoalRead` schema gains `advisory_rationale: str | None = None` so the frontend can display it.
+
+**Advisory path in ingest_service.py:**
+
+```python
+async def dry_run_import(
+    payload: IngestPayload | AdvisoryPayload,
+    session: AsyncSession
+) -> IngestPreviewResult:
+    if getattr(payload, "payload_type", "standard") == "advisory":
+        return await _dry_run_advisory(payload, session)
+    # existing logic unchanged below
+    ...
+
+async def apply_import(
+    payload: IngestPayload | AdvisoryPayload,
+    session: AsyncSession
+) -> IngestResult:
+    if getattr(payload, "payload_type", "standard") == "advisory":
+        return await _apply_advisory(payload, session)
+    # existing logic unchanged below
+    ...
+```
+
+`_dry_run_advisory()` returns the same `IngestPreviewResult` shape. The diffs include the rationale text via an optional `rationale` field on `EntityDiff` (additive field, `None` on standard payloads).
+
+`_apply_advisory()` runs inside `async with session.begin()` (same pattern as existing `apply_import`). It:
+1. Resolves goal rows by `external_key` (same SELECT pattern as `_exists()`)
+2. Applies `target_date` changes and `advisory_rationale` to Goal rows
+3. Applies milestone adjustments matched by title (same as `_upsert_goal` milestone reconciliation)
+4. Calls `_upsert_goal` for `new_goals` and `_upsert_task` for `new_tasks` -- exact same functions, no fork
+
+Full idempotency guarantee is preserved: goals and tasks matched on `external_key`, milestones matched on title.
+
+---
+
+## Data Flow
+
+### Export Flow
+
+```
+User clicks "Export for LLM" on Sync page
+    |
+useExport.ts: GET /api/v1/export/bundle
+    |
+routers/export.py: async def get_bundle(session)
+    |
+export_service.build_bundle(session)
+    +-- SELECT active Goals (with selectinload milestones, tasks)
+    +-- goal_service.compute_progress(g.id, session) for each goal
+    +-- SELECT ScheduledBlocks WHERE date_key >= (today - 14 days)
+    +-- SELECT completed Tasks WHERE completed_at >= (today - 30 days)
+    +-- SELECT GoalProgressSnapshot WHERE snapshotted_on >= (today - 90 days)
+    |
+ExportBundle (Pydantic) serialized to JSON
+export_service.render_markdown(bundle) -> string
+    |
+Response: { bundle: {...}, markdown: "# My Secretary Context\n..." }
+    |
+Sync page: displays Markdown in <pre> block with "Copy" button
+           displays raw JSON in collapsible for inspection
+```
+
+### Advisory Ingest Flow (mirrors existing Ingest page flow exactly)
+
+```
+User pastes LLM advisory JSON into Sync page textarea
+    |
+handlePreview(): POST /api/v1/ingest/preview with AdvisoryPayload
+    |
+ingest_service.dry_run_import() -> _dry_run_advisory()
+    |
+AdvisoryDiff displayed (goal_adjustments + new entities + rationale per change)
+    |
+User reviews and clicks "Confirm Advisory"
+    |
+handleConfirm(): POST /api/v1/ingest/confirm with AdvisoryPayload
+    |
+ingest_service.apply_import() -> _apply_advisory()
+    +-- session.begin() atomic transaction
+    |
+navigate("/goals") -- same post-confirm UX as existing Ingest page
+```
+
+### Snapshot Flow (APScheduler, nightly)
+
+```
+APScheduler: daily cron at 23:50
+    |
+snapshot_service.take_daily_snapshot()
+    +-- SYNC engine (_Session)
+    +-- SELECT active Goals
+    +-- For each goal: _compute_progress_sync(g.id, s)
+    +-- INSERT OR SKIP into goal_progress_snapshots (UNIQUE index guards idempotency)
+    +-- s.commit()
+```
+
+---
+
+## New vs Modified Components
+
+### Backend -- NEW files
+
+| File | Purpose |
+|------|---------|
+| `backend/app/services/export_service.py` | Aggregate export bundle; render Markdown |
+| `backend/app/services/snapshot_service.py` | APScheduler nightly snapshot job (SYNC) |
+| `backend/app/routers/export.py` | `GET /api/v1/export/bundle` |
+| `backend/app/models/snapshot.py` | `GoalProgressSnapshot` ORM model |
+| `backend/migrations/versions/0017_add_goal_progress_snapshots.py` | Snapshot table |
+| `backend/migrations/versions/0018_add_advisory_rationale_to_goals.py` | `advisory_rationale` column |
+
+### Backend -- MODIFIED files
+
+| File | Change | Risk |
+|------|--------|------|
+| `backend/app/schemas/ingest.py` | Add `payload_type` default to `IngestPayload`; add `AdvisoryPayload`, `GoalAdjustment`, `MilestoneAdjustment`; extend `EntityDiff` with optional `rationale` | LOW -- default preserves backward compat |
+| `backend/app/services/ingest_service.py` | Add `_dry_run_advisory()` and `_apply_advisory()`; widen `dry_run_import` and `apply_import` signatures | LOW -- existing branches untouched |
+| `backend/app/schemas/goal.py` | Add `advisory_rationale: str | None = None` to `GoalRead` | LOW -- additive only |
+| `backend/app/scheduler.py` | Register `schedule_snapshot()` call with `id="snapshot_progress"` | LOW -- same pattern as `schedule_stall_check` |
+| `backend/app/main.py` | Include `export.router`; call `schedule_snapshot()` in lifespan | LOW |
+
+### Frontend -- NEW files
+
+| File | Purpose |
+|------|---------|
+| `frontend/src/pages/Sync.tsx` | New page: export panel (top) + advisory ingest panel (bottom) |
+| `frontend/src/hooks/useExport.ts` | `GET /export/bundle` -- returns `{ bundle, markdown }` |
+| `frontend/src/lib/advisorPrompt.ts` | Documented advisor prompt string (sibling to `ingestPrompt.ts`) |
+| `frontend/src/types/export.ts` | TypeScript types for `ExportBundle` and its nested shapes |
+
+### Frontend -- MODIFIED files
+
+| File | Change |
+|------|--------|
+| `frontend/src/App.tsx` | Add `/sync` route |
+| `frontend/src/components/BottomNav.tsx` | Add "Sync" nav entry |
+| `frontend/src/types/goal.ts` | Add `advisory_rationale?: string` to the `Goal` type |
+
+---
+
+## Migration Chain Guidance
+
+Continue from HEAD `0016`. Write both migrations before running `alembic upgrade head`.
+
+**Migration 0017** -- `goal_progress_snapshots` (new table, no batch needed):
+
+```python
+revision = "0017"
+down_revision = "0016"
+```
+
+Use `op.create_table(...)` directly. Include `op.create_index("ix_snapshot_goal_date", "goal_progress_snapshots", ["goal_id", "snapshotted_on"], unique=True)`.
+
+**Migration 0018** -- `advisory_rationale` column on `goals`:
+
+```python
+revision = "0018"
+down_revision = "0017"
+```
+
+Use `op.batch_alter_table("goals")` (SQLite ALTER TABLE requirement, same as every previous migration that touched existing tables). No `server_default` needed; column is nullable.
+
+---
+
+## Sync vs Async Decision Reference
+
+| Service | Called From | Must Be | Reason |
+|---------|-------------|---------|--------|
+| `export_service.build_bundle()` | FastAPI route | ASYNC | Uses `AsyncSession`; never called from APScheduler |
+| `export_service.render_markdown()` | Same route | plain sync function | No I/O; pure string formatting |
+| `snapshot_service.take_daily_snapshot()` | APScheduler | SYNC | APScheduler thread pool; MissingGreenlet deadlock if async |
+| `ingest_service._apply_advisory()` | FastAPI route | ASYNC | Same session pattern as existing `apply_import` |
+| `ingest_service._dry_run_advisory()` | FastAPI route | ASYNC | Same pattern as `dry_run_import` |
+
+---
+
+## Live-Progress vs Stored-History Tension
+
+The only place this can go wrong: code in `export_service.py` reading `goal_progress_snapshots` for "current progress" instead of calling `goal_service.compute_progress()`.
+
+The rule is explicit:
+
+- **Current state** = always `goal_service.compute_progress()` (live SQL aggregation, no stored value)
+- **Historical trend** = `goal_progress_snapshots` (point-in-time rows from the nightly job)
+
+The export bundle contains BOTH: the live `progress_pct` for the LLM to see where things stand now, and the snapshot history for the LLM to see the trend. They serve different purposes and never conflict.
+
+If snapshot rows are missing for some days (Pi was off), the trend section shows fewer data points. The export does not back-fill or estimate; it includes whatever rows exist.
 
 ---
 
 ## Anti-Patterns to Avoid
 
-### Anti-Pattern 1: Storing ingest state server-side between preview and confirm
+### Anti-Pattern 1: Async Snapshot Service
 
-**What it looks like:** A `pending_imports` table; preview writes a row and returns a token; confirm looks up the token.
+**What people do:** Write `snapshot_service.py` with `async def take_daily_snapshot()` and an `AsyncSession`.
 
-**Why it's wrong:** Adds a table, a cleanup job for stale rows, and a race if the user refreshes. The payload is small (personal JSON).
+**Why it breaks:** APScheduler 3.x jobs run in a thread pool executor. Calling `asyncio.run()` from within that thread and then trying to reuse the existing SQLAlchemy async engine causes a `MissingGreenlet` error. The Pi's single-worker uvicorn setup makes this a guaranteed runtime crash, not a theoretical concern. Verified by the existing `guidance_service.py` and `brief.py` patterns -- they both use sync engines for exactly this reason.
 
-**Do this instead:** Client resends the full payload on confirm. `_resolve()` is fast on personal-scale SQLite data. No server state needed.
+**Do this instead:** Sync engine, sync sessionmaker. Inline `_compute_progress_sync()` is intentional duplication, the same pattern already present in `brief.py`.
 
-### Anti-Pattern 2: Caching goal progress in a column
+### Anti-Pattern 2: Forking `_upsert_goal()` for Advisory
 
-**What it looks like:** `Goal.completed_task_count` updated every time a task is patched.
+**What people do:** Create a separate `_apply_advisory_goal()` that reimplements the goal upsert logic to handle `target_date` changes.
 
-**Why it's wrong:** Requires a second write on every `PATCH /tasks/{id}`, adds a consistency hazard, and adds a trigger-like dependency between two models.
+**Why it's wrong:** Creates two paths for writing Goal rows, both of which must be kept in sync as the schema evolves.
 
-**Do this instead:** Derive progress in `goal_service.compute_progress()` on each read. Free at personal scale.
+**Do this instead:** For new goals in the advisory payload, call the existing `_upsert_goal()` directly. For adjustments to existing goals (target_date, advisory_rationale), do a SELECT by `external_key` followed by direct `setattr` -- same SELECT shape as `_exists()`, just load the row and mutate it. `_apply_advisory()` is a thin orchestrator around the existing upsert functions.
 
-### Anti-Pattern 3: Auto-committing the proposed day plan
+### Anti-Pattern 3: Rationale History Table
 
-**What it looks like:** `GET /plan/propose` writes ScheduledBlock rows immediately.
+**What people do:** Create an `advisory_history` table with one row per advisory run per goal, preserving full rationale history.
 
-**Why it's wrong:** Violates the suggest-then-approve contract stated in the project requirements. User has no chance to review or edit.
+**Why it's overkill for v2.2:** The user reviews diffs before confirming. Once confirmed, the current advisory rationale is what matters -- the LLM will generate new rationale on the next sync. A nullable column on `goals` is sufficient; it gets overwritten each advisory cycle.
 
-**Do this instead:** `GET /plan/propose` is read-only (pure function, no DB write). Only `POST /plan/approve` writes.
+**Do this instead:** Single `advisory_rationale` nullable Text column on the goals table. Displayed in the Goals detail view alongside `target_date` and `progress_pct`. Add a history table in a later milestone if the audit trail of advisory reasoning becomes a real need.
 
-### Anti-Pattern 4: Making guidance_service async and calling it from brief.py
+### Anti-Pattern 4: Reimplementing useIngest in Sync.tsx
 
-**What it looks like:** `async def build_goal_summary()` called inside the sync `build_brief_body()`.
+**What people do:** Build the Sync page with its own `fetch('/api/v1/ingest/preview', ...)` calls, duplicating `useIngest.ts` logic.
 
-**Why it's wrong:** `brief.py` runs in APScheduler's thread pool. Calling `asyncio.run()` inside a thread that already has a running event loop causes a deadlock or RuntimeError.
+**Why it's wrong:** The existing `useIngest` hook encapsulates error handling, loading state, and the preview/confirm state machine. Duplicating it creates two diverging implementations of the same contract.
 
-**Do this instead:** `guidance_service.build_goal_summary()` is sync, uses the same `create_engine` + `sessionmaker` pattern already in `brief.py` and `tts_settings.py`.
+**Do this instead:** `Sync.tsx` imports and calls `useIngest()` directly for the advisory confirm flow. The hook does not need to know it is being called from Sync.tsx vs Ingest.tsx.
 
-### Anti-Pattern 5: Adding external_key as NOT NULL to existing tables
+### Anti-Pattern 5: Schema Version Bump for Advisory Payload
 
-**What it looks like:** Migration 0007 defines `external_key TEXT NOT NULL` on the tasks table.
+**What people do:** Change `schema_version` from `Literal["1.0", "1.1"]` to `Literal["1.0", "1.1", "2.0"]` to signal advisory vs standard payloads.
 
-**Why it's wrong:** Existing task rows have no external_key. SQLite's ALTER TABLE with a NOT NULL column that has no default will fail on a non-empty database.
+**Why it's wrong:** Conflates format versioning with intent discrimination. Clients cannot tell from the schema_version alone whether to expect advisory fields or standard entity arrays. Branching inside `apply_import()` on version number requires knowing the version-to-type mapping in two places.
 
-**Do this instead:** `external_key` is nullable. Unique constraint on nullable columns in SQLite correctly excludes NULL values from uniqueness checks. Only ingest-created records carry an external_key; manually created records leave it NULL.
+**Do this instead:** `payload_type: Literal["standard"] | Literal["advisory"]` with a `"standard"` default. Pydantic's discriminated union resolves the type before any service code runs.
+
+---
+
+## Build Order (Dependency-Ordered)
+
+Dependencies:
+
+```
+Migration 0017 (snapshots table)
+    -> snapshot_service.py (needs table)
+        -> scheduler registration (needs service)
+
+Migration 0018 (advisory_rationale column)
+    -> ingest schema extension (needs column to exist)
+        -> ingest_service advisory functions (needs schema)
+            -> Sync page advisory panel (needs endpoint)
+
+export_service.py (needs existing models only -- no new migrations)
+    -> routers/export.py (needs service)
+        -> useExport.ts (needs endpoint)
+            -> Sync page export panel (needs hook)
+
+lib/advisorPrompt.ts (no dependencies -- standalone doc)
+```
+
+### Recommended Phase Sequence
+
+**Phase 14 -- Progression Substrate**
+
+1. Migration 0017 (`goal_progress_snapshots`)
+2. `models/snapshot.py` -- `GoalProgressSnapshot` ORM model
+3. `services/snapshot_service.py` -- SYNC nightly job
+4. Register in `scheduler.py` + `main.py` lifespan
+5. Tests: verify idempotency (double-fire same day = no duplicate row); verify snapshot values match live `compute_progress()`
+
+Rationale: No frontend dependency. Can be shipped and accumulating data while the rest of v2.2 is built. Every day it runs builds history that Phase 15 exports. Zero risk to existing functionality.
+
+**Phase 15 -- Context Export**
+
+1. `services/export_service.py` -- `build_bundle()` + `render_markdown()`
+2. `routers/export.py` -- `GET /export/bundle`
+3. Include router in `main.py`
+4. `types/export.ts` -- TypeScript types
+5. `hooks/useExport.ts`
+6. Sync page export panel only (no advisory yet) -- add `/sync` route to `App.tsx` and BottomNav entry
+7. Tests: bundle contains live progress_pct matching goals endpoint; Markdown non-empty; snapshot rows appear in trend section when present
+
+Rationale: Export stands alone. Delivering it first lets you validate the full LLM advisory loop manually (copy bundle, paste to LLM, read advisory response) before building the advisory ingest path. Also confirms the LLM output format before you build the schema that validates it.
+
+**Phase 16 -- Advisory Ingest + Sync Review UI**
+
+1. Migration 0018 (`advisory_rationale` column on goals)
+2. Extend `schemas/ingest.py` -- `AdvisoryPayload`, `GoalAdjustment`, `MilestoneAdjustment`; add `payload_type` default to `IngestPayload`; extend `EntityDiff` with optional `rationale`
+3. Extend `schemas/goal.py` -- `advisory_rationale: str | None = None` in `GoalRead`
+4. `ingest_service._dry_run_advisory()` + `_apply_advisory()` + widen signatures
+5. Backward compat regression test: existing schema_version "1.0" payload with no `payload_type` still validates as `IngestPayload`
+6. Sync page advisory panel -- textarea + preview diff (with rationale display) + confirm (reusing `useIngest`)
+7. `lib/advisorPrompt.ts` -- advisor prompt string; copy-button on Sync page
+8. Display `advisory_rationale` in Goals detail view (Goals.tsx)
+9. Tests: advisory preview shows goal_adjustments as EntityDiff with rationale; confirm applies target_date + advisory_rationale; new_tasks in advisory payload creates tasks via existing `_upsert_task`; full round-trip test (export -> mock advisory JSON -> preview -> confirm -> verify Goals)
 
 ---
 
 ## Integration Points Summary
 
-| New Component | Integrates With | Integration Method |
-|---------------|-----------------|-------------------|
-| `ingest_service.py` | `Goal`, `Task`, `Routine` models | Async SQLAlchemy upserts in shared session |
-| `goal_service.py` | `Task` model | Queries `task.goal_id` in async session |
-| `planner_service.py` | `Task`, `CalendarEvent` ORM objects | Pure function — receives ORM objects, returns Pydantic models |
-| `guidance_service.py` | `Goal`, `Task` models | Sync `_Session` (same pattern as `brief.py`) |
-| `brief.py` (modified) | `guidance_service` | Sync call to `build_goal_summary()` |
-| `Today.tsx` (modified) | `GET /api/v1/plan/blocks` | Third fetch alongside existing tasks+events |
-| `agenda.ts` (modified) | `ScheduledBlock[]` | Optional third param, merged into timed items |
-| `scheduler.py` (modified) | `guidance_service` | New `schedule_guidance_check()` job, sync in thread pool |
+| Existing Module | How v2.2 Touches It | Risk |
+|-----------------|--------------------|----|
+| `goal_service.compute_progress()` | Called directly from `export_service.build_bundle()` -- no change to function | None |
+| `ingest_service.dry_run_import()` | Signature widens to `IngestPayload | AdvisoryPayload`; branch added at top | LOW |
+| `ingest_service.apply_import()` | Same signature widening; existing branch untouched | LOW |
+| `ingest_service._upsert_goal()` / `_upsert_task()` | Called by `_apply_advisory()` for new_goals/new_tasks -- no change to functions | None |
+| `scheduler.py` | One new `schedule_snapshot()` registration function | LOW |
+| `main.py` | One new router include + one new schedule call in lifespan | LOW |
+| `useIngest.ts` | Used as-is from Sync.tsx -- no change | None |
+| `ingestPrompt.ts` | Not changed; `advisorPrompt.ts` is a new sibling file | None |
+| `Ingest.tsx` | Not changed; Sync.tsx is a new separate page | None |
+| `GoalRead` schema | Additive: `advisory_rationale: str | None = None` | LOW |
+| Migration chain | Two new migrations (0017, 0018) appended after 0016 HEAD | LOW |
 
 ---
 
-*Architecture research for: My Secretary v2.0 (Ingest, Organize, Guide)*
-*Researched: 2026-06-15*
+## Sources
+
+- Direct source reading: `backend/app/schemas/ingest.py`, `backend/app/services/ingest_service.py`, `backend/app/services/brief.py`, `backend/app/services/guidance_service.py`, `backend/app/services/goal_service.py`, `backend/app/models/__init__.py`, `backend/app/models/goal.py`, `backend/app/models/plan.py`, `backend/app/routers/goals.py`, `backend/app/routers/ingest.py`, `backend/app/routers/plan.py`, `backend/app/main.py`, `backend/migrations/versions/0016_add_checkin_enabled.py`
+- STATE.md decisions: v2.0 roadmap ingest/planner/brief/guidance decisions; Phase 08/09/10/11/12/13 accumulated context
+- PROJECT.md: validated requirements and architectural constraints
+
+---
+*Architecture research for: My Secretary v2.2 LLM Advisory Loop*
+*Researched: 2026-06-29*

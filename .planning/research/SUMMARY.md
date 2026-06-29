@@ -1,113 +1,232 @@
-# Project Research Summary — v2.0 "Ingest, Organize, Guide"
+# Research Summary -- v2.2 "LLM Advisory Loop"
 
-**Project:** My Secretary (self-hosted personal assistant, Raspberry Pi 5)
-**Milestone:** v2.0 — Ingest LLM-produced payloads, organize the day, guide toward goals
-**Researched:** 2026-06-15
-**Confidence:** HIGH on stack/architecture; HIGH on goal-tracking + time-blocking patterns; MEDIUM on import-schema design (no dominant standard); guidance kept deliberately simple (no server-side LLM in v2.0)
-
-> Covers v2.0 net-new features only. v1.0 (Task CRUD, Calendar sync, Pushover, TTS, daily brief, routines) is treated as a dependency. The stale v1.0 summary this file replaces is preserved in git history.
+**Project:** My Secretary
+**Domain:** Human-in-the-loop LLM advisory loop for a self-hosted personal secretary (FastAPI + SQLAlchemy 2.0 async + Alembic + SQLite + React 19 + APScheduler 3.x, Raspberry Pi 5)
+**Researched:** 2026-06-29
+**Confidence:** HIGH -- all four researchers worked from direct codebase inspection, not speculation
 
 ---
 
 ## Executive Summary
 
-v2.0 adds three layers on top of the shipped v1.0 app: **Ingest** (a versioned JSON contract any external LLM can target → preview → confirm → write), **Goals** (a first-class entity with milestones, linked tasks/routines, and computed progress), and **Organize/Guide** (a deterministic suggest-then-approve day planner plus goal-aware augmentation of the existing daily brief).
+v2.2 closes the outbound half of the LLM loop that v2.0 opened. The existing ingest contract (versioned JSON payload -> preview -> confirm) handles the inbound direction for raw entity creation; v2.2 adds a context-export endpoint that bundles goals, milestones, progress trends, and planned-vs-actual adherence into a copy-pasteable Markdown + JSON brief for an external LLM, then extends the ingest contract with an advisory payload type so the LLM can push back adjusted timelines, re-prioritized milestones, and new tasks -- each with required rationale the user reviews before anything lands. The critical architectural boundary: the Pi never calls an LLM. The user is the transport layer (copy out, paste in). This is a hard, locked constraint, and the top regression risk for the entire milestone is the temptation to add a server-side LLM call once the copy-paste workflow feels clunky.
 
-The single most important architectural finding: **no new Python dependencies and no server-side LLM are required.** Every feature is buildable on the existing FastAPI + SQLAlchemy 2.0 async + Alembic + Pydantic v2 + React/Vite stack. The user talks to their own LLM externally; the secretary only validates and ingests the resulting JSON.
+All four researchers converge on a three-phase delivery shape -- progression substrate first, context export second, advisory ingest and sync UI third -- because each phase depends on the previous one accumulating data and validating assumptions before writing the next layer. The zero-new-dependencies constraint holds across all five feature areas: stdlib (json, datetime, len()), Pydantic v2 discriminated unions, and existing React patterns cover every requirement. Two Alembic migrations are needed (0017: goal_progress_snapshots table; 0018: advisory_rationale column on goals plus AdvisoryLog table); everything else is additive service and schema code on top of existing patterns.
 
----
-
-## Recommended Stack Additions
-
-**None — reuse the existing stack.** Specific reuse patterns:
-
-| Need | Reuse | Pattern |
-|------|-------|---------|
-| Publish the import contract | Pydantic v2 | `model_json_schema()` served at `GET /api/v1/ingest/schema`; paste into the LLM |
-| Validate incoming payload | Pydantic v2 | `model_validate_json()`; `schema_version: Literal["1.0"]` for free version gating (422 on mismatch) |
-| Goals + Milestones + FKs | SQLAlchemy 2.0 + Alembic | New `Goal`/`Milestone` models; `goal_id` + `external_key` columns on Task/Routine; `lazy="selectin"` for async |
-| Day planner | Hand-rolled greedy interval-fill (~50 lines) | Pure deterministic function: tasks + events → `ProposedSchedule`; writes nothing. `PuLP`/`ortools`/`timeboard` all ruled out as wrong-size |
-| Ingest + plan UI | Native React 19 | `<textarea>` paste + `<input type=file>` + `FileReader`; timeline rendered as divs (same pattern as existing agenda). No new FE libs |
-
-**Explicit blocklist (do NOT add):** server-side LLM/Anthropic SDK, `jsonschema` (Pydantic covers it), `react-hook-form`/`tanstack-query`/`react-dropzone`, any solver library, CSV/iCal parsers.
+The critical pitfalls fall into three clusters: snapshot-job async/sync confusion (write the job as sync or it deadlocks under APScheduler 3.x, a lesson hard-won in Phases 10-13); export token budget and PII leakage (the export must use an explicit allowlist model, never serialize full GoalRead, and cap history to 14-30 days); and advisory-ingest safety (rationale is required not optional, extra=forbid blocks undocumented fields, advisory_id + AdvisoryLog provide idempotency, and the session.flush() + goal-key-to-id map must not be omitted or tasks silently unlink). The scope-creep risk -- adding a server-side LLM call -- must be treated as a build-system rule, not a design guideline.
 
 ---
 
-## Feature Landscape (P1 → P3)
+## Reconciled Decisions
 
-**P1 — Goals + Ingest foundation (Phase 8):** Goals CRUD, Milestone child model, Task `goal_id`+`estimated_minutes`, Routine `goal_id`, versioned import schema + documented LLM prompt, ingest endpoint (validate → preview → confirm → write), paste/upload UI, Goals list+detail view, progress % computed from linked-task completion.
+These four tensions were surfaced across the research files. One recommendation is selected; the runner-up is noted.
 
-**P2 — Organize + Guide (Phase 9):** gap-finding day planner, priority + goal-urgency sort, peak-hours setting, buffer blocks, propose-then-approve UI, local plan storage (no calendar write), "next best task" surface, goal snapshot in daily brief, stall detection, weekly digest job, milestone-completion celebration (reuses TTS + Pushover).
+### 1. Advisory Payload Discriminator: payload_type vs schema_version: "2.0"
 
-**P3 / deferred (v2.1+):** Google Calendar write-back for approved blocks, partial-ingest conflict report, mid-day re-plan, LLM-driven coaching.
+**Recommendation: `payload_type: Literal["standard"] = "standard"` on IngestPayload, and `payload_type: Literal["advisory"]` as a required field on AdvisoryPayload.**
 
-**Anti-features (out of scope, single-user self-hosted):** habit streaks/streak counters, gamification/points, OKR scoring, social/sharing, daily motivational pushes, notification-per-completion, any review that requires manual input.
+ARCHITECTURE wins over STACK. A payload_type field separates intent (standard entity creation vs. advisory adjustment) from format version (schema_version covers the data schema). Bumping schema_version to "2.0" (STACK proposal) conflates the two concerns: it forces apply_import to branch on a version number, creating a mapping table inside service logic rather than resolving the type at the Pydantic validation boundary. With payload_type as the discriminator, Pydantic resolves the model before any service code runs.
+
+Backward-compat guarantee: adding `payload_type: Literal["standard"] = "standard"` with a default means all existing payloads (which omit payload_type) continue to validate as IngestPayload. A regression test must confirm this before shipping.
+
+Runner-up: schema_version: "2.0" (STACK). Would work technically, but requires service-layer branching on version.
+
+### 2. Advisory Scope: Goal-Layer Only (Explicit Anti-Feature)
+
+**Recommendation: Advisory payload writes only to Goal.target_date, Goal.priority_rank, Milestone.target_date, Milestone.done (forward-only, true only), and Milestone.title. Task fields, goal status, goal title, goal type, and goal creation are explicitly excluded from the schema.**
+
+FEATURES boundary is the MVP contract. Confirmed and locked. The Pydantic model enforces this via omission -- if a field is not in AdvisoryGoalAdjustment or AdvisoryMilestoneAdjustment, the LLM cannot set it (extra="forbid" raises a 422 before any service code runs). Goal creation, task scheduling, and status transitions are user-controlled actions that the LLM can suggest in the notes field but never execute.
+
+Implication for requirements scoping: any requirement touching task due dates, goal archiving, or goal creation via the advisory payload is out of scope for v2.2.
+
+### 3. Service Split: Reuse _upsert_* vs New advisory_service.py
+
+**Recommendation: Keep _apply_advisory() and _dry_run_advisory() in ingest_service.py, not in a new advisory_service.py. For new_goals and new_tasks in the advisory payload, call the existing _upsert_goal() and _upsert_task() directly.**
+
+ARCHITECTURE wins over STACK. Two reasons: (1) the advisory apply function is a thin orchestrator around existing upsert functions -- a separate file adds a module boundary around 30-40 lines; (2) keeping advisory paths alongside standard paths means the session.flush() + goal-key map pattern is in one place and cannot be accidentally omitted.
+
+PITFALLS is the decisive data point: omitting await session.flush() after goal upserts before building the goal_key_to_id map silently sets task.goal_id = None for tasks referencing goals created in the same advisory payload. Extract a shared _flush_and_build_goal_map(session, goal_imports) helper, called by both apply_import and _apply_advisory, to prevent this drift.
+
+### 4. tasks_slipped_week and the UpdateLog.goal_id Gap
+
+The UpdateLog table currently has no goal_id column. Per-goal slippage ratio requires it. FEATURES flagged this and deferred it to the after-validation tier.
+
+**Recommendation: Do not add goal_id to UpdateLog in Phase 14 or 15.** The export bundle computes tasks_slipped_30d as a global count until this migration is warranted. If the first real advisory session reveals per-goal slippage is materially useful, add the column after Phase 16. Doing it speculatively adds migration risk for an unvalidated metric.
+
+---
+## Key Findings
+
+### Recommended Stack
+
+Zero new dependencies for all five v2.2 features. Alembic HEAD is **0016**; next migrations are 0017 and 0018.
+
+**Core additions (code only, no new packages):**
+- export_service.py -- async, route-only, calls goal_service.compute_progress() directly
+- snapshot_service.py -- SYNC (APScheduler), create_engine + sessionmaker, inline _compute_progress_sync
+- AdvisoryPayload Pydantic model -- payload_type: Literal["advisory"], extra="forbid", rationale required
+- _apply_advisory() / _dry_run_advisory() in ingest_service.py -- thin orchestrators over existing _upsert_*
+- Migration 0017 (goal_progress_snapshots) + Migration 0018 (advisory_rationale on goals + advisory_log table)
+- Sync.tsx page -- reuses useIngest hook; new useExport hook
+- advisorPrompt.ts -- sibling to ingestPrompt.ts
+
+**Hard blocklist (must not add):**
+- tiktoken / sentencepiece / transformers -- len(text) // 4 heuristic is sufficient
+- jinja2 / markdown (PyPI) -- string concatenation, no template engine
+- jsonpatch / deepdiff -- field-level Pydantic comparison, no JSON patch library
+- sqlalchemy-history -- simple append-only table or nullable column
+- react-diff-viewer / react-markdown -- structured diff cards, not text diff
+- Any LLM SDK (anthropic, openai, litellm) -- server never calls an LLM
+
+### Expected Features
+
+**Must have (v2.2 launch gate):**
+- Progression substrate: goal_progress_snapshots table (migration 0017) + nightly APScheduler job (sync, idempotent via UNIQUE index on (goal_id, snapshotted_on))
+- Context export: GET /api/v1/export/bundle returning {bundle, markdown, estimated_tokens} with active goals, milestones, top-5 linked tasks, 14-day planned-vs-actual block aggregate, 7-day calendar load (counts only, no titles), stalled goals, trend array + velocity label
+- Advisory payload: AdvisoryPayload with payload_type: Literal["advisory"], GoalAdjustment, MilestoneAdjustment, required rationale on every item, top-level notes, session_id, advisory_id (idempotency)
+- Advisory dry-run: POST /api/v1/ingest/preview with advisory path returns before/after diffs with rationale inline
+- Advisory confirm: POST /api/v1/ingest/confirm with advisory path -- atomic session.begin(), stamps AppSettings.last_advisory_at, creates AdvisoryLog row, fires Pushover on success
+- Sync review page /sync: export panel (copy button), advisor prompt copy button, JSON textarea, preview diff, confirm, notes display
+- Advisor prompt (advisorPrompt.ts): role framing, scope/out-of-scope list, auto-generated schema block, example payload
+
+**Should have (v2.2.x -- after first advisory session):**
+- Per-row accept/reject toggles in the diff (client sends filtered accepted list to confirm)
+- Stale session warning (compare session_id in payload vs. current export; warn not block)
+- Last synced N days ago display on Sync page (reads last_advisory_at)
+- On-demand snapshot trigger (POST /api/v1/export/snapshot)
+
+**Defer (v2.3+):**
+- Progress sparkline chart in Goals UI (cosmetic; export already surfaces trend array)
+- Pushover time-to-sync nudge (add only after cadence is established)
+- Advisory-proposed goal creation (use notes field; goal creation is user-controlled)
+- Per-goal slippage ratio in export (needs UpdateLog.goal_id migration; validate need first)
+
+**Confirmed anti-features (schema-enforced, not just policy):**
+- Advisory task-field changes (planner domain)
+- Advisory goal status / title / type changes (user-controlled via UI)
+- Autonomous advisory apply without preview/confirm gate (trust violation, locked since v2.0)
+- Full task history dump in export (token noise; aggregate counts only)
+- Calendar event titles in export (PII risk; counts only)
+- progress_pct stored as canonical value (always computed live; snapshots are historical copies only)
+
+### Architecture Approach
+
+v2.2 is a strict extension of the existing FastAPI + SQLAlchemy async + APScheduler architecture. The most important boundary: export service is async (route-only), snapshot service is sync (APScheduler-only). Advisory ingest extends ingest_service.py with two new internal functions rather than a new module, preserving co-location of the session.flush() + goal-key map pattern.
+
+**Major components:**
+1. export_service.py (ASYNC) -- aggregates Goals, Milestones, Tasks, ScheduledBlocks, GoalProgressSnapshots into ExportBundle; renders Markdown; no new DB tables
+2. snapshot_service.py (SYNC) -- nightly APScheduler job; writes GoalProgressSnapshot rows; idempotent; uses sync engine (same pattern as brief.py)
+3. ingest_service._apply_advisory() / _dry_run_advisory() (ASYNC) -- extends existing preview/confirm flow; reuses _upsert_goal, _upsert_task; adds AdvisoryLog write on confirm
+4. Sync.tsx (NEW PAGE) -- export panel + advisory ingest panel; reuses useIngest hook; new useExport hook
+
+### Critical Pitfalls
+
+1. **Async snapshot job deadlock** -- async def take_daily_snapshot() + AsyncSession = MissingGreenlet under APScheduler 3.x. Mitigation: sync function, create_engine, sessionmaker. Pattern already in brief.py and guidance_service.py.
+
+2. **Export token budget and PII leakage** -- reusing GoalRead inflates tokens and leaks secret fields. Mitigation: separate GoalExport allowlist model; cap block history to 14 days; surface len()//4 estimate in UI before copy; regression test asserting no secret field names in serialized output.
+
+3. **session.flush() + goal-key map omission** -- tasks referencing goals in the same advisory payload get goal_id = None if flush is skipped. Mitigation: extract shared _flush_and_build_goal_map() helper used by both apply_import and _apply_advisory.
+
+4. **Scope creep to server-side LLM** -- copy-paste workflow will feel clunky once working; a llm_client.py looks like 10 lines. Mitigation: CI grep for anthropic/openai/litellm in backend/app/ must return zero.
+
+5. **Optional rationale** -- rationale: str | None allows the LLM to omit it. Mitigation: rationale: str = Field(..., max_length=2000) -- required, non-nullable, rendered inline in diff UI.
+
+---
+## Implications for Roadmap
+
+All four researchers converge on this sequence with no disagreement on ordering.
+
+### Phase 14: Progression Substrate
+
+**Rationale:** No frontend dependency; accumulates history data while Phases 15-16 are built. Every nightly snapshot adds trend data that Phase 15 exports. Zero risk to existing functionality.
+
+**Delivers:** Migration 0017 (goal_progress_snapshots + UNIQUE index on (goal_id, snapshotted_on)); models/snapshot.py; snapshot_service.py (SYNC, nightly, idempotent); APScheduler registration with monthly retention cleanup job.
+
+**Avoids:** Async-in-threadpool deadlock; snapshot timezone bug; unbounded table growth (retention job + index in same migration); double-counting against live progress_pct (forward-only invariant established here).
+
+**Research flag:** Standard patterns -- no /gsd:research-phase needed. Follows exact brief.py / guidance_service.py pattern.
+---
+
+### Phase 15: Context Export + Advisor Prompt
+
+**Rationale:** Export stands alone from advisory ingest. Delivering it first lets Jack run the full advisory loop manually -- copy bundle, paste to LLM, receive advisory JSON -- to validate the bundle structure and LLM output format before building the schema that validates it.
+
+**Delivers:** export_service.py (async, route-only, GoalExport allowlist model, render_markdown()); routers/export.py (GET /api/v1/export/bundle); types/export.ts; hooks/useExport.ts; /sync route + Sync page export panel + copy button; lib/advisorPrompt.ts with placeholder schema block (updated at end of Phase 16).
+
+**Uses:** goal_service.compute_progress() (unchanged); guidance_service.get_stalled_goals() (unchanged); GoalProgressSnapshot rows from Phase 14; ScheduledBlock, Task (existing).
+
+**Avoids:** Token budget violation (explicit GoalExport model, 14-day cap, len()//4 estimate); PII leakage (allowlist model; no secret fields; calendar counts only); non-deterministic ordering (stable ORDER BY on every query).
+
+**Research flag:** Standard patterns -- no /gsd:research-phase needed.
+---
+
+### Phase 16: Advisory Ingest + Sync Review UI
+
+**Rationale:** Advisory ingest schema is finalized against observed LLM output from Phase 15 manual validation. Sync page advisory panel depends on both export hook (Phase 15) and advisory ingest endpoints (this phase). advisorPrompt.ts schema block is updated from AdvisoryPayload.model_json_schema() at the end of this phase.
+
+**Delivers:** Migration 0018 (advisory_rationale TEXT NULL on goals + advisory_log table); schema extension (payload_type default on IngestPayload; AdvisoryPayload, GoalAdjustment, MilestoneAdjustment; EntityDiff.rationale optional); GoalRead.advisory_rationale additive field; _dry_run_advisory() + _apply_advisory() + shared _flush_and_build_goal_map() helper; GET /api/v1/ingest/schema/advisory endpoint; Sync page advisory panel (textarea + diff + confirm + notes); advisory rationale in Goals detail view; backward-compat regression test.
+
+**Avoids:** session.flush() omission (shared helper); partial apply (single session.begin()); double-apply (advisory_id + AdvisoryLog); LLM inventing external_keys (validate all keys before diff); optional rationale (required field + inline rendering); history mutation (immutable fields excluded from schema); nullable column migration failure (batch_alter_table + nullable column).
+
+**Research flag:** No /gsd:research-phase needed, but Phase plan must explicitly address: session.flush() pattern, advisory_id idempotency scheme, backward-compat regression test, AdvisoryLog schema, and scope guard (no LLM imports CI check).
 
 ---
 
-## Architecture Highlights
+### Phase Ordering Rationale
 
-```
-External LLM (user-driven) ──emits──> JSON payload
-        │ paste/upload
-        ▼
-/ingest/preview ──_resolve(payload, dry_run=True)──> diff (creates/updates)   [no writes]
-/ingest/confirm ──_resolve(payload, dry_run=False)─> goals→tasks→routines      [one transaction]
-        │ match on external_key (not title); payload-hash dedup
-        ▼
-   Goal / Milestone / Task(goal_id, estimated_minutes) / Routine(goal_id)
-        │
-planner_service.propose_day_plan(tasks, events) ──pure fn──> ProposedBlock[]   [no writes]
-POST /plan/approve ──delete-then-insert for date_key──> ScheduledBlock         [only writer]
-        │
-guidance_service.build_goal_summary() ──SYNC──> injected into existing brief.py
-```
+- Phase 14 before 15: export trend section requires snapshot rows; gracefully emits velocity no_data without them, but the trend is the key differentiator
+- Phase 15 before 16: advisory ingest schema finalized against observed LLM output; advisorPrompt.ts schema block auto-generated from Phase 16 Pydantic models
+- All three in same milestone: tight dependency chain; splitting across milestones is impractical
+- Frontend deferred to Phase 15/16: no UI needed until data pipeline and schema contract are validated
+---
 
-- **Ingest is stateless preview-then-commit:** client resends the full payload on confirm (no server-side pending state). Two endpoints share one private `_resolve(payload, session, dry_run)`.
-- **Match on `external_key`** (stable slug the LLM assigns), never on title → idempotent re-import.
-- **Migration chain (current HEAD 0005):** 0006 goals → 0007 task FK/estimate cols → 0008 routine FK → 0009 scheduled_blocks. All `external_key`/FK columns nullable. Write all four before `alembic upgrade head`.
-- **Guidance service must be SYNC** (same `create_engine`+`sessionmaker` pattern as existing `brief.py`/`tts_settings.py`) — async-in-thread-pool would deadlock under APScheduler.
-- **Planner is a plain on-demand function**, NOT an APScheduler job. Only `/plan/approve` persists.
-- Existing 8 routers untouched; only `brief.py`, `scheduler.py`, `main.py`, `models/__init__.py`, `Today.tsx`, `agenda.ts` get targeted additions.
+## Confidence Assessment
+
+| Area | Confidence | Notes |
+|------|------------|-------|
+| Stack | HIGH | Direct pyproject.toml + source inspection; zero-new-deps claim verified against live files |
+| Features | HIGH | Codebase examined directly; MVP boundary validated against existing schema constraints; HITL patterns verified from multiple published sources |
+| Architecture | HIGH | Verified against live source modules; sync/async boundary documented from actual guidance_service.py + brief.py; migration chain verified from Alembic version files |
+| Pitfalls | HIGH | Grounded in existing codebase and accumulated STATE.md lessons from Phases 8-13 |
+
+**Overall confidence: HIGH**
+
+### Gaps to Address
+
+- **UpdateLog.goal_id migration:** Per-goal slippage ratio requires this column. Value is unvalidated. Defer and revisit after first advisory session.
+- **AdvisoryLog migration placement:** Decide whether AdvisoryLog goes in migration 0018 alongside advisory_rationale on goals, or as separate 0019. Recommendation: combine into 0018.
+- **session_id vs advisory_id naming:** session_id = export fingerprint for stale-session detection; advisory_id = idempotency key for AdvisoryLog. Both fields, different purposes. Clarify in Phase 15/16 requirements.
+- **Advisor prompt schema block timing:** advisorPrompt.ts delivered in Phase 15 with placeholder. Plan a one-line update at end of Phase 16 from AdvisoryPayload.model_json_schema().
+---
+
+## Sources
+
+### Primary (HIGH confidence -- direct codebase inspection)
+- backend/app/schemas/ingest.py -- confirmed schema_version Literal, extra=forbid, discriminated union patterns
+- backend/app/services/ingest_service.py -- _upsert_goal, apply_import, session.flush() + goal-key map pattern
+- backend/app/services/brief.py -- sync engine pattern for APScheduler, _compute_progress_sync, datetime.now() TZ pattern
+- backend/app/services/guidance_service.py -- confirmed sync engine pattern, get_stalled_goals() reuse point
+- backend/app/services/goal_service.py -- compute_progress() function (async, route-only)
+- backend/app/models/__init__.py -- confirmed Task, Goal, Milestone, AppSettings, UpdateLog column inventory
+- backend/migrations/versions/0016_add_checkin_enabled.py -- confirmed Alembic HEAD = 0016
+- frontend/src/pages/Ingest.tsx + frontend/src/hooks/useIngest.ts -- confirmed reuse pattern for Sync page
+
+### Secondary (HIGH confidence -- official docs)
+- Pydantic v2 discriminated unions: https://docs.pydantic.dev/latest/concepts/unions/#discriminated-unions
+- Alembic batch migration (SQLite ALTER TABLE): https://alembic.sqlalchemy.org/en/latest/batch.html
+- SQLite strftime: https://www.sqlite.org/lang_datefunc.html
+- Python json.dumps: https://docs.python.org/3/library/json.html#json.JSONEncoder
+
+### Secondary (MEDIUM confidence -- multiple sources agree)
+- Human-in-the-Loop Agentic Workflows (Orkes): https://orkes.io/blog/human-in-the-loop/
+- AI HITL Production Oversight (Redis): https://redis.io/blog/ai-human-in-the-loop/
+- Context Engineering reducing LLM tokens: https://www.tokenoptimize.dev/guides/context-engineering-reduce-token-usage
+- The Maximum Effective Context Window (arXiv): https://arxiv.org/pdf/2509.21361
+- G-Research code review LLM patterns: https://www.gresearch.com/news/building-a-code-review-tool-the-llm-patterns-that-actually-work/
+
+### Tertiary (MEDIUM confidence -- heuristic)
+- 4-chars-per-token heuristic for English + JSON -- validated against known GPT-4 behavior; +/-20% accuracy; sufficient for a warning label
 
 ---
 
-## Top Pitfalls & Guardrails
-
-### Critical (build the guard before the feature)
-1. **Ingest idempotency** — re-import silently duplicates without `external_key` matching + a payload-hash/`IngestRecord` dedup guard. Build before the first commit path.
-2. **Destructive overwrite** — blindly `session.merge()`-ing over user-edited rows is the hardest bug to recover from. Preview must show a diff; respect `user_modified_at` / conflict handling.
-3. **UTC everywhere** — naive datetimes produce wrong time blocks twice a year (DST). Establish a UTC policy before any planner time-arithmetic.
-4. **All-day / multi-day calendar events** — Google returns `start.date` (not `start.dateTime`); unnormalized events crash gap-finding. Normalize to `(start_dt, end_dt, is_all_day)`.
-5. **APScheduler job duplication** — every new job (stall detection, weekly digest) needs explicit `id=` + `replace_existing=True`. Silent failure = duplicate Pushover spam.
-6. **Alembic multiple heads** — adding 4 tables in one milestone risks branched revisions; verify `alembic heads` returns exactly one.
-
-### Watch
-- Recurring-task expansion can flood the planner — cap/expand deliberately.
-- Stale plan when the calendar changes after approval — re-plan, don't silently drift.
-- Notification budget across v1 + v2 jobs — audit all Pushover paths before adding guidance nudges; keep guidance pull-not-push (weekly digest + brief snapshot, nudge only on genuine 7+ day stall).
-- Orphaned `goal_id` links on task delete — use `ON DELETE SET NULL`.
-
----
-
-## Open Questions (decide during phase planning)
-- Habits: recurring-task `habit` flag (recommended for v2.0) vs. own table (defer to v3).
-- Stall threshold (7 vs 14 days) — make it a user setting, not hardcoded.
-- Weekly digest delivery — Pushover primary; TTS opt-in (Sunday TTS can be jarring).
-- `user_timezone` as an explicit DB setting vs. relying on Pi system tz.
-- `IngestRecord` retention policy.
-
----
-
-## Phase Ordering Recommendation
-
-| Phase | Focus | Gate Test |
-|-------|-------|-----------|
-| 8 | Goals entity + Import contract (ship together) | Paste an LLM payload → preview shows N goals/tasks/routines → confirm → they appear, progress % renders; re-import creates no duplicates |
-| 9 | Day auto-organize + goal guidance | Request a day plan → proposed blocks fill gaps around calendar events → approve → plan shows in Today; daily brief includes goal snapshot; stalled goal triggers a nudge |
-
-> v2.0 phases start at **Phase 8** (Phase 7 Outlook ICS is owned by a separate concurrent effort). The architecture research suggested optionally splitting guidance into its own Phase 10; roadmapper to decide based on size.
-
----
-
-*Synthesized 2026-06-15 from STACK.md, FEATURES.md, ARCHITECTURE.md, PITFALLS.md for My Secretary v2.0.*
+*Research completed: 2026-06-29*
+*Ready for roadmap: yes*
