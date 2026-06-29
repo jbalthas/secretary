@@ -24,7 +24,7 @@
 | 12 | Update Resolution Engine | 4/4 | Complete    | 2026-06-22 |
 | 13 | Update Loop UI | 3/4 | In Progress|  |
 | 14 | Progression Substrate | Goal progress history accumulates automatically; trend data exists before export is built | PROG-01, PROG-02 | 3 |
-| 15 | Context Export + Advisor Prompt | 2/3 | In Progress|  |
+| 15 | Context Export + Advisor Prompt | 3/3 | Awaiting human-verify | 2026-06-29 |
 | 16 | Advisory Ingest + Sync Review UI | User can paste an LLM advisory response, preview a rationale-annotated diff, and confirm goal/milestone adjustments atomically | ADVISE-01, ADVISE-02, ADVISE-03, ADVISE-04, ADVISE-05, ADVISE-06, ADVISE-07, SYNC-01, SYNC-02 | 5 |
 
 ---
@@ -311,12 +311,12 @@ Plans:
 2. The exported bundle lists each active goal with title, type, target date and days remaining, live-computed `progress_pct`, a milestone list, top-3 active tasks (title/priority/due date), overdue task count, a 4-week progress trend array with velocity label (`accelerating` / `steady` / `stalling` / `no_data`), and career/learning-type goals ordered first.
 3. The bundle includes a 14-day planned-vs-actual block summary (blocks planned / completed / slipped from `ScheduledBlock`), a 7-day calendar load as per-day event counts only (no event titles), and a stalled-goals list reusing `guidance_service.get_stalled_goals()`.
 4. User can copy the advisor system prompt from the Sync page in one click — role framing, scope/out-of-scope list, placeholder JSON schema block, example payload, and `notes`-field guidance — before copying the export bundle.
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [x] 15-01-PLAN.md — Wave 0: RED test scaffold (test_export.py, 8 tests + CI guard) + advisorPrompt.ts [SCHEMA BLOCK] placeholder (PROMPT-01)
 - [x] 15-02-PLAN.md — Backend: sync export_service.build_export_bundle + BundleResponse + GET /export/bundle (EXPORT-01..06)
-- [ ] 15-03-PLAN.md — Frontend: useExport hook + /advisor Sync page + route + BottomNav entry + human-verify checkpoint (EXPORT-01, PROMPT-01)
+- [x] 15-03-PLAN.md — Frontend: useExport hook + /advisor Sync page + route + BottomNav entry + human-verify checkpoint (EXPORT-01, PROMPT-01)
 **UI hint**: yes
 
 ---
