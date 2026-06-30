@@ -74,7 +74,7 @@ export default function Tasks() {
   }
 
   return (
-    <div className="page">
+    <div className="page tasks-page">
       <div className="tasks-header">
         <div className="tasks-header">
         <h1 className="page-title">Tasks</h1>

@@ -1167,3 +1167,39 @@ body {
     transition: none;
   }
 }
+
+/* Tasks page — laptop / desktop responsive */
+@media (min-width: 760px) {
+  .tasks-page {
+    max-width: 1040px;
+    margin: 0 auto;
+  }
+}
+@media (min-width: 900px) {
+  .tasks-hero {
+    flex-direction: row;
+    align-items: stretch;
+  }
+  .tasks-hero-cover {
+    height: auto;
+    width: 240px;
+    flex-shrink: 0;
+    justify-content: center;
+  }
+  .tasks-hero-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 24px 28px;
+  }
+  .tasks-hero-title {
+    font-size: 24px;
+  }
+}
+@media (min-width: 1024px) {
+  .tasks-card-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
