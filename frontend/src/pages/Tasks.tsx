@@ -2,7 +2,9 @@ import { useState } from "react";
 import { useTasks } from "../hooks/useTasks";
 import { useGoals } from "../hooks/useGoals";
 import { useTaskLists } from "../hooks/useTaskLists";
-import TaskRow from "../components/TaskRow";
+import TaskCard from "../components/TaskCard";
+import TasksHero from "../components/TasksHero";
+import MomentumRing from "../components/MomentumRing";
 import TaskDrawer from "../components/TaskDrawer";
 import FAB from "../components/FAB";
 import { buildTaskFilters, taskMatchesFilter } from "../lib/taskFilters";
@@ -52,6 +54,13 @@ export default function Tasks() {
   );
   const sorted = sortTasks(filtered, sort);
 
+  // Momentum ring covers the active-chip set across both tabs (listFiltered), not just the visible tab.
+  const momentumTotal = listFiltered.length;
+  const momentumDone = listFiltered.filter((t) => t.completed).length;
+
+  // Hero surfaces the top of the already-sorted pending set; hidden in Completed view / when empty.
+  const heroTask = filter === "pending" && sorted.length > 0 ? sorted[0] : null;
+
   async function handleSave(body: TaskCreate, id?: number) {
     if (id !== undefined) {
       await patchTask(id, body);
@@ -63,7 +72,21 @@ export default function Tasks() {
 
   return (
     <div className="page">
-      <h1 className="page-title">Tasks</h1>
+      <div className="tasks-header">
+        <h1 className="page-title">Tasks</h1>
+        <MomentumRing done={momentumDone} total={momentumTotal} />
+      </div>
+
+      {heroTask && (
+        <TasksHero
+          task={heroTask}
+          goals={goals}
+          onStart={() => {
+            setEditingTask(heroTask);
+            setDrawerOpen(true);
+          }}
+        />
+      )}
 
       {taskFilters.length > 0 && (
         <div className="list-filter-panel">
@@ -154,11 +177,12 @@ export default function Tasks() {
           )}
         </div>
       ) : (
-        <div>
+        <div className="tasks-card-grid">
           {sorted.map((task) => (
-            <TaskRow
+            <TaskCard
               key={task.id}
               task={task}
+              goals={goals}
               onEdit={(t) => {
                 setEditingTask(t);
                 setDrawerOpen(true);
