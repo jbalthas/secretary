@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Phases — Close the Loop
-status: executing
-last_updated: "2026-06-29T19:14:15.106Z"
-last_activity: 2026-06-29
+status: paused
+last_updated: "2026-06-30T13:56:19.455Z"
+last_activity: 2026-06-30
 progress:
   total_phases: 9
   completed_phases: 8
@@ -16,10 +16,10 @@ progress:
 
 ## Current Position
 
-Phase: 15 (context-export-advisor-prompt) — EXECUTING
-Plan: 3 of 3
+Phase: 15
+Plan: Not started
 Status: Paused at 15-03 Task 3 (human-verify checkpoint — Sync page round-trip). Tasks 1-2 done + committed. Awaiting "approved".
-Last activity: 2026-06-29
+Last activity: 2026-06-30
 
 > **v2.1 carry-over:** Phase 13 (update-loop-ui) left at plan 4 of 4 — Quick-update capture box + End-of-day rollup unfinished. Intentionally deferred at v2.2 start; resume separately if/when wanted.
 
