@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict
 
@@ -47,3 +47,40 @@ class AdvisoryPayload(BaseModel):
     milestone_adjustments: list[MilestoneAdjustment] = []
     new_tasks: list[TaskCreation] = []
     notes: str | None = None
+
+
+class AdvisoryFieldChange(BaseModel):
+    field: str
+    old: Any | None = None
+    new: Any | None = None
+
+
+class AdvisoryEntityDiff(BaseModel):
+    external_key: str
+    title: str
+    action: Literal["update", "create"]
+    rationale: str
+    fields: list[AdvisoryFieldChange] = []
+
+
+class AdvisoryPreviewResult(BaseModel):
+    goals: list[AdvisoryEntityDiff] = []
+    milestones: list[AdvisoryEntityDiff] = []
+    new_tasks: list[AdvisoryEntityDiff] = []
+    notes: str | None = None
+    session_id: str
+    generated_at: datetime
+
+
+class AdvisoryResult(BaseModel):
+    created: dict[str, int]
+    updated: dict[str, int]
+    advisory_id: str
+    replayed: bool = False
+
+
+class AdvisoryConfirmRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    advisory_id: str
+    payload: AdvisoryPayload

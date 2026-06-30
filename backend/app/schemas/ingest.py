@@ -49,6 +49,7 @@ class TaskImport(BaseModel):
     description: str | None = Field(None, max_length=2000)
     list_name: str | None = Field(None, max_length=100)
     parent_list_name: str | None = Field(None, max_length=100)
+    estimated_minutes: int | None = None
 
 
 class RoutineImport(BaseModel):

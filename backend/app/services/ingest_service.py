@@ -71,6 +71,7 @@ async def _upsert_task(t: TaskImport, goal_id: int | None, session: AsyncSession
         existing.goal_id = goal_id
         existing.list_name = t.list_name
         existing.parent_list_name = t.parent_list_name
+        existing.estimated_minutes = t.estimated_minutes
         # NEVER overwrite completed or reminder_at (D-08)
         return existing, False
     else:
@@ -83,6 +84,7 @@ async def _upsert_task(t: TaskImport, goal_id: int | None, session: AsyncSession
             goal_id=goal_id,
             list_name=t.list_name,
             parent_list_name=t.parent_list_name,
+            estimated_minutes=t.estimated_minutes,
             is_habit=False,
         )
         session.add(row)
