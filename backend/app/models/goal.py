@@ -31,6 +31,7 @@ class Goal(Base):
     status: Mapped[GoalStatus] = mapped_column(SAEnum(GoalStatus), default=GoalStatus.active, nullable=False)
     list_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
     parent_list_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    priority_rank: Mapped[int | None] = mapped_column(Integer, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )

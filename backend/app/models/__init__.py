@@ -55,12 +55,23 @@ class AppSettings(Base):
     check_in_hour: Mapped[int | None] = mapped_column(Integer, nullable=True)
     check_in_minute: Mapped[int | None] = mapped_column(Integer, nullable=True)
     check_in_enabled: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    last_advisory_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
 class UpdateLog(Base):
     __tablename__ = "update_log"
     id: Mapped[int] = mapped_column(primary_key=True)
     update_id: Mapped[str] = mapped_column(String(200), unique=True, nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+
+
+class AdvisoryLog(Base):
+    __tablename__ = "advisory_log"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    advisory_id: Mapped[str] = mapped_column(String(200), unique=True, nullable=False, index=True)
+    result_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )
