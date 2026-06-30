@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Phases — Close the Loop
-status: paused
-last_updated: "2026-06-30T15:55:36.687Z"
-last_activity: 2026-06-30
+status: executing
+last_updated: "2026-06-30T20:14:04.394Z"
+last_activity: 2026-06-30 -- Phase 16 execution started
 progress:
   total_phases: 9
   completed_phases: 8
@@ -16,10 +16,10 @@ progress:
 
 ## Current Position
 
-Phase: 15
-Plan: Not started
-Status: Paused at 15-03 Task 3 (human-verify checkpoint — Sync page round-trip). Tasks 1-2 done + committed. Awaiting "approved".
-Last activity: 2026-06-30
+Phase: 16 (advisory-ingest-sync-review-ui) — EXECUTING
+Plan: 1 of 5
+Status: Executing Phase 16
+Last activity: 2026-06-30 -- Completed quick task 260630-j83: Redesign Tasks page into card-based layout (+ responsive desktop)
 
 > **v2.1 carry-over:** Phase 13 (update-loop-ui) left at plan 4 of 4 — Quick-update capture box + End-of-day rollup unfinished. Intentionally deferred at v2.2 start; resume separately if/when wanted.
 
@@ -29,7 +29,7 @@ Last activity: 2026-06-30
 
 **Core value:** One place to manage your schedule and tasks — reachable from any device, voice-controllable via Google Home, and proactive enough to push reminders before you have to think about them.
 
-**Current focus:** Phase 15 — context-export-advisor-prompt
+**Current focus:** Phase 16 — advisory-ingest-sync-review-ui
 
 ---
 
@@ -192,6 +192,7 @@ None
 | 260619-hier | Add hierarchical umbrella lists across tasks, goals, ingest, filters, and Organize | 2026-06-19 | pending | [260619-hier-hierarchical-umbrella-lists](./quick/260619-hier-hierarchical-umbrella-lists/) |
 | 260619-u0n | Include tomorrow's due tasks in the Google Home briefing | 2026-06-20 | eddb8b2 | [260619-u0n-include-tomorrow-s-due-tasks-in-the-goog](./quick/260619-u0n-include-tomorrow-s-due-tasks-in-the-goog/) |
 | 260624-kmx | Redesign Today page into a Now view: hero next-best task card, momentum strip, timeline rail with now-marker | 2026-06-24 | b30c1db | [260624-kmx-redesign-today-page-into-a-now-view-hero](./quick/260624-kmx-redesign-today-page-into-a-now-view-hero/) |
+| 260630-j83 | Redesign Tasks page into card-based layout: category-colored cards, Focus-now hero, momentum ring, completed-state polish; responsive laptop/desktop (centered, horizontal hero banner, 3-col grid) | 2026-06-30 | 4c143b4 | [260630-j83-redesign-tasks-page-ui-into-card-based-l](./quick/260630-j83-redesign-tasks-page-ui-into-card-based-l/) |
 
 ### Todos
 
