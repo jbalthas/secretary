@@ -1,46 +1,25 @@
-import { useEffect, useState } from "react";
-import { CloudSun, MapPin } from "lucide-react";
+﻿import { FormEvent, useEffect, useState } from "react";
+import { CloudSun, LocateFixed, MapPin, Search, X } from "lucide-react";
 import type { Task } from "../types/task";
-
+import { dailyBackground, loadWeatherLocation, locationLabel, saveWeatherLocation, type WeatherLocation } from "../lib/weather";
 interface Props { task: Task | null; contextLine: string | null; doneToday: number; remainingToday: number; }
 interface Weather { temperature: number; high: number; low: number; label: string; }
-
-function weatherLabel(code: number): string {
-  if (code === 0) return "Clear skies";
-  if (code <= 3) return "Partly cloudy";
-  if (code <= 48) return "Misty";
-  if (code <= 67) return "Rain showers";
-  if (code <= 77) return "Snow showers";
-  if (code <= 82) return "Passing showers";
-  return "Stormy";
-}
-
+interface Result extends WeatherLocation { admin1?: string; country?: string; }
+function weatherLabel(code: number) { if (code === 0) return "Clear skies"; if (code <= 3) return "Partly cloudy"; if (code <= 48) return "Misty"; if (code <= 67) return "Rain showers"; if (code <= 77) return "Snow showers"; if (code <= 82) return "Passing showers"; return "Stormy"; }
 export default function WeatherFocusHero({ task, contextLine, doneToday, remainingToday }: Props) {
+  const [location, setLocation] = useState<WeatherLocation>(loadWeatherLocation);
   const [weather, setWeather] = useState<Weather | null>(null);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    fetch("https://api.open-meteo.com/v1/forecast?latitude=41.8781&longitude=-87.6298&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&timezone=America%2FChicago", { signal: controller.signal })
-      .then((response) => response.ok ? response.json() : Promise.reject())
-      .then((data) => setWeather({ temperature: Math.round(data.current.temperature_2m), high: Math.round(data.daily.temperature_2m_max[0]), low: Math.round(data.daily.temperature_2m_min[0]), label: weatherLabel(data.current.weather_code) }))
-      .catch(() => undefined);
-    return () => controller.abort();
-  }, []);
-
-  return (
-    <section className="weather-focus" aria-label="Weather and current focus">
-      <div className="weather-focus__top">
-        <div><p className="weather-focus__greeting">Good morning.</p><p className="weather-focus__message">A clear view of what matters today.</p></div>
-        <div className="weather-focus__weather" aria-live="polite">
-          <CloudSun size={26} />
-          <div><strong>{weather ? `${weather.temperature}°` : "Morning"}</strong><span>{weather?.label ?? "Weather loading"}</span></div>
-          <div className="weather-focus__place"><span><MapPin size={13} /> Chicago</span>{weather && <span>H {weather.high}° · L {weather.low}°</span>}</div>
-        </div>
-      </div>
-      <div className="weather-focus__bottom">
-        <div className="focus-task"><span className="focus-task__check" aria-hidden="true" /><div><span className="focus-task__label">Up next</span><strong>{task?.title ?? "You're all caught up"}</strong><span>{contextLine ?? (task?.estimated_minutes ? `About ${task.estimated_minutes} minutes` : "Nothing needs your attention right now")}</span></div></div>
-        <div className="weather-focus__momentum" aria-label="Today's momentum"><div><strong>{doneToday}</strong><span>complete</span></div><div><strong>{remainingToday}</strong><span>remaining</span></div></div>
-      </div>
-    </section>
-  );
+  const [open, setOpen] = useState(false); const [query, setQuery] = useState(""); const [results, setResults] = useState<Result[]>([]); const [busy, setBusy] = useState(false); const [error, setError] = useState<string | null>(null);
+  useEffect(() => { const controller = new AbortController(); setWeather(null); const p = new URLSearchParams({ latitude: String(location.latitude), longitude: String(location.longitude), current: "temperature_2m,weather_code", daily: "temperature_2m_max,temperature_2m_min", temperature_unit: "fahrenheit", timezone: "auto" }); fetch(`https://api.open-meteo.com/v1/forecast?${p}`, { signal: controller.signal }).then(r => r.ok ? r.json() : Promise.reject()).then(d => setWeather({ temperature: Math.round(d.current.temperature_2m), high: Math.round(d.daily.temperature_2m_max[0]), low: Math.round(d.daily.temperature_2m_min[0]), label: weatherLabel(d.current.weather_code) })).catch(() => undefined); return () => controller.abort(); }, [location]);
+  function choose(next: WeatherLocation) { saveWeatherLocation(next); setLocation(next); setOpen(false); setResults([]); setQuery(""); setError(null); }
+  async function search(event: FormEvent) { event.preventDefault(); if (!query.trim()) return; setBusy(true); setError(null); try { const p = new URLSearchParams({ name: query.trim(), count: "5", language: "en", format: "json" }); const r = await fetch(`https://geocoding-api.open-meteo.com/v1/search?${p}`); if (!r.ok) throw new Error(); const data = await r.json(); const found = (data.results ?? []) as Result[]; setResults(found); if (!found.length) setError("No matching places found."); } catch { setError("Could not search right now."); } finally { setBusy(false); } }
+  function locate() { if (!navigator.geolocation) { setError("Location is not supported by this browser."); return; } setBusy(true); setError(null); navigator.geolocation.getCurrentPosition(async ({ coords }) => { let name = "Current location"; try { const p = new URLSearchParams({ latitude: String(coords.latitude), longitude: String(coords.longitude), count: "1", language: "en", format: "json" }); const r = await fetch(`https://geocoding-api.open-meteo.com/v1/reverse?${p}`); const data = r.ok ? await r.json() : {}; if (data.results?.[0]) name = locationLabel(data.results[0]); } catch { /* Coordinates still work. */ } choose({ name, latitude: coords.latitude, longitude: coords.longitude }); setBusy(false); }, e => { setBusy(false); setError(e.code === e.PERMISSION_DENIED ? "Location permission was denied. Search instead." : "Could not determine your location."); }, { timeout: 10000, maximumAge: 300000 }); }
+  return <section className="weather-focus" aria-label="Weather and current focus" style={{ backgroundImage: `url(${dailyBackground()})` }}>
+    <div className="weather-focus__top"><div><p className="weather-focus__greeting">Good morning.</p><p className="weather-focus__message">A clear view of what matters today.</p></div>
+      <div className="weather-focus__weather" aria-live="polite"><CloudSun size={26}/><div><strong>{weather ? `${weather.temperature}°` : "Morning"}</strong><span>{weather?.label ?? "Weather loading"}</span></div>
+        <div className="weather-focus__place"><button className="weather-focus__location-button" type="button" onClick={() => setOpen(!open)} aria-expanded={open}><MapPin size={13}/><span>{location.name}</span></button>{weather && <span>H {weather.high}° · L {weather.low}°</span>}</div>
+        {open && <div className="weather-location" role="dialog" aria-label="Change weather location"><div className="weather-location__header"><strong>Weather location</strong><button type="button" onClick={() => setOpen(false)} aria-label="Close"><X size={16}/></button></div><button type="button" className="weather-location__current" onClick={locate} disabled={busy}><LocateFixed size={16}/> Use my current location</button><form className="weather-location__search" onSubmit={search}><input value={query} onChange={e => setQuery(e.target.value)} placeholder="City or postal code" aria-label="City or postal code"/><button type="submit" disabled={busy || !query.trim()} aria-label="Search"><Search size={16}/></button></form>{error && <p className="weather-location__error" role="alert">{error}</p>}{results.length > 0 && <div className="weather-location__results">{results.map(r => { const label = locationLabel(r); return <button type="button" key={`${r.latitude}-${r.longitude}`} onClick={() => choose({ name: label, latitude: r.latitude, longitude: r.longitude })}>{label}</button>; })}</div>}</div>}
+      </div></div>
+    <div className="weather-focus__bottom"><div className="focus-task"><span className="focus-task__check" aria-hidden="true"/><div><span className="focus-task__label">Up next</span><strong>{task?.title ?? "You're all caught up"}</strong><span>{contextLine ?? (task?.estimated_minutes ? `About ${task.estimated_minutes} minutes` : "Nothing needs your attention right now")}</span></div></div><div className="weather-focus__momentum" aria-label="Today's momentum"><div><strong>{doneToday}</strong><span>complete</span></div><div><strong>{remainingToday}</strong><span>remaining</span></div></div></div>
+  </section>;
 }
