@@ -121,9 +121,9 @@
 
 ### Advisory Ingest (ADVISE)
 
-- [ ] **ADVISE-01**: The import contract accepts an advisory payload (distinguished by a `payload_type` discriminator, default-compatible with existing payloads) validated against a published schema, returning field-level errors on malformed input; undocumented fields are rejected (`extra="forbid"`)
+- [x] **ADVISE-01**: The import contract accepts an advisory payload (distinguished by a `payload_type` discriminator, default-compatible with existing payloads) validated against a published schema, returning field-level errors on malformed input; undocumented fields are rejected (`extra="forbid"`)
 - [ ] **ADVISE-02**: An advisory payload can adjust goal `target_date` and `priority_rank`, and milestone `target_date`/`done`/`title`, each item carrying a REQUIRED `rationale`; goals matched by `external_key`, milestones by `(goal, title)`
-- [ ] **ADVISE-03**: An advisory payload cannot create goals, change goal status/title/type, or modify/complete/delete *existing* tasks — these are blocked by schema validation with clear errors. It MAY create *new* tasks per ADVISE-08.
+- [x] **ADVISE-03**: An advisory payload cannot create goals, change goal status/title/type, or modify/complete/delete *existing* tasks — these are blocked by schema validation with clear errors. It MAY create *new* tasks per ADVISE-08.
 - [ ] **ADVISE-04**: User can preview an advisory payload as a per-item diff (entity, field, old → new value, rationale) with no DB writes
 - [ ] **ADVISE-05**: User can confirm and have the accepted advisory changes applied in a single atomic transaction, idempotent on a stable `advisory_id` (AdvisoryLog), stamping `last_advisory_at`
 - [ ] **ADVISE-06**: A top-level free-text `notes` field from the advisor is surfaced prominently before confirm and is never written to goal/milestone entities
@@ -238,9 +238,9 @@
 | EXPORT-05 | Phase 15 — Context Export + Advisor Prompt | Complete |
 | EXPORT-06 | Phase 15 — Context Export + Advisor Prompt | Complete |
 | PROMPT-01 | Phase 15 — Context Export + Advisor Prompt (schema block updated at end of Phase 16) | Complete |
-| ADVISE-01 | Phase 16 — Advisory Ingest + Sync Review UI | Pending |
+| ADVISE-01 | Phase 16 — Advisory Ingest + Sync Review UI | Complete |
 | ADVISE-02 | Phase 16 — Advisory Ingest + Sync Review UI | Pending |
-| ADVISE-03 | Phase 16 — Advisory Ingest + Sync Review UI | Pending |
+| ADVISE-03 | Phase 16 — Advisory Ingest + Sync Review UI | Complete |
 | ADVISE-04 | Phase 16 — Advisory Ingest + Sync Review UI | Pending |
 | ADVISE-05 | Phase 16 — Advisory Ingest + Sync Review UI | Pending |
 | ADVISE-06 | Phase 16 — Advisory Ingest + Sync Review UI | Pending |

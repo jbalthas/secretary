@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Phases — Close the Loop
 status: executing
-last_updated: "2026-06-30T20:14:04.394Z"
-last_activity: 2026-06-30 -- Phase 16 execution started
+last_updated: "2026-06-30T20:20:16.229Z"
+last_activity: 2026-06-30
 progress:
   total_phases: 9
   completed_phases: 8
@@ -17,9 +17,9 @@ progress:
 ## Current Position
 
 Phase: 16 (advisory-ingest-sync-review-ui) — EXECUTING
-Plan: 1 of 5
-Status: Executing Phase 16
-Last activity: 2026-06-30 -- Completed quick task 260630-j83: Redesign Tasks page into card-based layout (+ responsive desktop)
+Plan: 2 of 5
+Status: Ready to execute
+Last activity: 2026-06-30
 
 > **v2.1 carry-over:** Phase 13 (update-loop-ui) left at plan 4 of 4 — Quick-update capture box + End-of-day rollup unfinished. Intentionally deferred at v2.2 start; resume separately if/when wanted.
 
@@ -164,6 +164,9 @@ Last activity: 2026-06-30 -- Completed quick task 260630-j83: Redesign Tasks pag
 - [Phase 15]: [15-02] export bundle is SYNC (brief.py create_engine+sessionmaker boilerplate); GET /api/v1/export/bundle returns BundleResponse{markdown,session_id,generated_at}, markdown starts "# Advisor Brief"; all ORM access inside one `with _Session()` block (lazy=selectin); 8/8 export tests green
 - [Phase 15]: [15-02] calendar load renders all 7 days (today..+6) with explicit 0 counts, COUNT only never titles (D-05); career/learning ordered first; token-budget truncation (>30000 est tokens) re-renders compact but never drops a whole goal (D-06/D-07)
 - [Phase 15]: [15-03] /advisor Sync page wired to live POST /snapshot + GET /bundle (both already existed from 15-02, contract matched — no backend work); useExport mirrors useIngest, fetchBundle returns markdown for one-click fetch-then-copy; Bot icon, Sync added as 6th bottom-nav tab before Settings (first nav addition; /ingest stays out of nav); paused at Task 3 human-verify checkpoint
+- [Phase 16-01]: AdvisoryPayload.generated_at required per locked interfaces spec (test payload adds it to the advisorPrompt.ts example dict, which omits it in its illustrative prose)
+- [Phase 16-01]: ADVISE-03 forbidden-ops gate proven at schema level via extra=forbid + field omission (no status/title/type on GoalAdjustment, no id on TaskCreation) — no service-layer blocking logic needed
+- [Phase 16-01]: Pre-existing unrelated failure in test_calendar.py::test_callback_stores_credentials (404 on /auth/google/callback) confirmed present before 16-01 changes; logged to deferred-items.md, not fixed (out of scope)
 
 ### Open Questions (Live Verification Required)
 
@@ -202,5 +205,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-06-30T15:55:36.684Z
+Last session: 2026-06-30T20:20:16.226Z
 Next action: Run /gsd:plan-phase 15 — context captured (15-CONTEXT.md). Advisory scope: approval MAY create new tasks (ADVISE-08, create-only)
