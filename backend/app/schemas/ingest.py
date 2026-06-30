@@ -103,6 +103,7 @@ class IntraDayUpdateImport(BaseModel):
 class IngestPayload(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
+    payload_type: Literal["standard"] = "standard"
     schema_version: Literal["1.0", "1.1"]
     goals: list[GoalImport] = []
     tasks: list[TaskImport] = []
