@@ -55,15 +55,16 @@ One place to manage your schedule and tasks — reachable from any device, voice
 - Goals, milestones, and habits are first-class DB entities; the versioned import contract is live; the ingest endpoint validates, commits atomically, and is idempotent (Validated in Phase 8: goals-ingest-backend — GOAL-01/02/03/06, INGEST-01/02/04/06/07; 20 phase tests green, live Pushover+TTS celebration delivery pending human test on Pi)
 - Goals are manageable from the web UI (list, drill-in detail, milestones, archive); tasks and routines link to goals via a shared dropdown; the Ingest page paste/uploads an LLM JSON payload, previews a per-entity dry-run diff, then confirms (Validated in Phase 9: goals-ingest-ui — GOAL-04/05, INGEST-03/05; 18/18 verifier must-haves, golden-path human UAT approved)
 - The backend resolves free-text progress updates to mark done / reschedule / drop by fuzzy-matching today's blocks and tasks with no LLM call, fires a configurable mid-day check-in notification that survives reboots, and accepts an intra-day update payload on the ingest contract (Validated in Phase 12: update-resolution-engine — UPDATE-02/03, NOTIF-07, INGEST-08; 12/12 verifier must-haves, 10 phase tests green)
+- The Sync page exports a complete token-budgeted advisory brief (goals career/learning-first, planned-vs-actual, 7-day calendar counts with no titles per D-05, momentum trend, stalled goals) and a documented advisor prompt in one click, with no server-side LLM dependency (Validated in Phase 15: context-export-advisor-prompt — EXPORT-01..06, PROMPT-01; 8/8 verifier must-haves, 14 backend tests green, live in-browser round-trip confirmed on Pi)
 
 ### Active
 
 **v2.2 — LLM Advisory Loop (requirements being defined in REQUIREMENTS.md):**
-- [ ] Context export bundle (Markdown + JSON) of goals, planned-vs-actual, history, momentum for an external LLM
+- [x] Context export bundle (Markdown + JSON) of goals, planned-vs-actual, history, momentum for an external LLM — Phase 15 (EXPORT-01..06)
 - [ ] Progression substrate — historical progress/adherence snapshots, not just current state
 - [ ] Advisory ingest payload type — LLM-adjusted timelines, re-prioritized goals, new milestones with rationale
 - [ ] Sync review UI — export → ingest → diff of what changed and why
-- [ ] Documented advisor prompt/protocol (sibling to the ingest prompt)
+- [x] Documented advisor prompt/protocol (sibling to the ingest prompt) — Phase 15 (PROMPT-01; [SCHEMA BLOCK] swap deferred to Phase 16)
 
 **v2.1 — Close the Loop (requirements defined in REQUIREMENTS.md):**
 - [x] Mid-day check-in reminder(s) — configurable Pushover/TTS prompt to log progress, deep-links into app — Phase 12 (NOTIF-07)
@@ -127,4 +128,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-29 — Milestone v2.2 "LLM Advisory Loop" started (bidirectional secretary↔external-LLM sync + progression substrate); v2.1 "Close the Loop" left open mid-Phase-13; v2.0 complete (Phases 8–11)*
+*Last updated: 2026-06-30 — Phase 15 (Context Export + Advisor Prompt) complete: outbound half of the advisory loop shipped (EXPORT-01..06, PROMPT-01); Milestone v2.2 "LLM Advisory Loop" in progress; v2.1 "Close the Loop" left open mid-Phase-13; v2.0 complete (Phases 8–11)*
