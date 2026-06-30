@@ -12,19 +12,21 @@ import "./styles.css";
 export default function App() {
   return (
     <BrowserRouter>
-      <div style={{ paddingBottom: 56 }}>
-        <Routes>
-          <Route path="/" element={<Navigate to="/today" replace />} />
-          <Route path="/today" element={<Today />} />
-          <Route path="/tasks" element={<Tasks />} />
-          <Route path="/goals" element={<Goals />} />
-          <Route path="/ingest" element={<Ingest />} />
-          <Route path="/advisor" element={<Advisor />} />
-          <Route path="/organize" element={<Organize />} />
-          <Route path="/settings" element={<Settings />} />
-        </Routes>
+      <div className="app-shell">
+        <BottomNav />
+        <main className="app-content">
+          <Routes>
+            <Route path="/" element={<Navigate to="/today" replace />} />
+            <Route path="/today" element={<Today />} />
+            <Route path="/tasks" element={<Tasks />} />
+            <Route path="/goals" element={<Goals />} />
+            <Route path="/ingest" element={<Ingest />} />
+            <Route path="/advisor" element={<Advisor />} />
+            <Route path="/organize" element={<Organize />} />
+            <Route path="/settings" element={<Settings />} />
+          </Routes>
+        </main>
       </div>
-      <BottomNav />
     </BrowserRouter>
   );
 }

@@ -11,8 +11,7 @@ import type { DayGroup } from "../lib/agenda";
 import AgendaItem from "../components/AgendaItem";
 import CandidateCard from "../components/CandidateCard";
 import RollupCard from "../components/RollupCard";
-import NowHero from "../components/NowHero";
-import MomentumStrip from "../components/MomentumStrip";
+import WeatherFocusHero from "../components/WeatherFocusHero";
 import TodayTimeline from "../components/TodayTimeline";
 import type { AgendaItem as AgendaItemType } from "../types/task";
 import type { UpdateCandidate } from "../types/update";
@@ -170,12 +169,21 @@ export default function Today() {
   const restOfWeek = groups.slice(1);
 
   return (
-    <div className="page">
-      <h1 className="page-title">Now</h1>
+    <div className="page today-page">
+      <header className="today-header">
+        <div>
+          <h1>Today</h1>
+          <p>{now.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}</p>
+        </div>
+        <span className="today-header__date-mark">{now.getDate()}</span>
+      </header>
 
-      <NowHero task={nextBest} contextLine={contextLine} />
-
-      <MomentumStrip doneToday={momentum.doneToday} remainingToday={momentum.remainingToday} />
+      <WeatherFocusHero
+        task={nextBest}
+        contextLine={contextLine}
+        doneToday={momentum.doneToday}
+        remainingToday={momentum.remainingToday}
+      />
 
       {candStatus ? (
         <CandidateCard
@@ -186,28 +194,34 @@ export default function Today() {
         />
       ) : (
         <>
-          <div className="update-input-row">
-            <textarea
-              ref={textareaRef}
-              className="update-input"
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSubmit();
-                }
-              }}
-              placeholder="What got done? e.g. finished standup"
-            />
-            <button
-              className="btn-save btn-save--inline"
-              onClick={handleSubmit}
-              disabled={phase === "submitting"}
-              style={phase === "submitting" ? { opacity: 0.6 } : undefined}
-            >
-              {submitLabel}
-            </button>
+          <div className="update-panel">
+            <div className="update-panel__heading">
+              <strong>Capture progress</strong>
+              <span>A quick note keeps your day current.</span>
+            </div>
+            <div className="update-input-row">
+              <textarea
+                ref={textareaRef}
+                className="update-input"
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSubmit();
+                  }
+                }}
+                placeholder="What got done? e.g. finished standup"
+              />
+              <button
+                className="btn-save btn-save--inline"
+                onClick={handleSubmit}
+                disabled={phase === "submitting"}
+                style={phase === "submitting" ? { opacity: 0.6 } : undefined}
+              >
+                {submitLabel}
+              </button>
+            </div>
           </div>
           {updError && (
             <p style={{ fontSize: 12, color: "var(--destructive)", margin: "-8px 0 12px" }}>
@@ -219,15 +233,25 @@ export default function Today() {
 
       <RollupCard tasks={tasks} blocks={blocks} todayKey={todayKey} workEnd={workEnd} />
 
-      <TodayTimeline
-        items={todayGroup?.items ?? []}
-        nowHHMM={nowHHMM}
-        onToggle={handleToggle}
-      />
+      <div className="today-columns">
+        <section className="today-section">
+          <div className="today-section__heading">
+            <h2>Your day</h2>
+            <span>{todayGroup?.items.length ?? 0} items</span>
+          </div>
+          <TodayTimeline items={todayGroup?.items ?? []} nowHHMM={nowHHMM} onToggle={handleToggle} />
+        </section>
 
-      {restOfWeek.map((group) => (
-        <DaySection key={group.dateKey} group={group} onToggle={handleToggle} />
-      ))}
+        <section className="today-section today-section--week">
+          <div className="today-section__heading">
+            <h2>Later this week</h2>
+            <span>Next 6 days</span>
+          </div>
+          {restOfWeek.map((group) => (
+            <DaySection key={group.dateKey} group={group} onToggle={handleToggle} />
+          ))}
+        </section>
+      </div>
     </div>
   );
 }
