@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Phases — Close the Loop
 status: executing
-last_updated: "2026-07-06T01:12:42.540Z"
+last_updated: "2026-07-06T01:19:48.556Z"
 last_activity: 2026-07-06
 progress:
   total_phases: 9
@@ -17,7 +17,7 @@ progress:
 ## Current Position
 
 Phase: 16 (advisory-ingest-sync-review-ui) — EXECUTING
-Plan: 3 of 5
+Plan: 4 of 5
 Status: Ready to execute
 Last activity: 2026-07-06
 
@@ -167,6 +167,8 @@ Last activity: 2026-07-06
 - [Phase 16-01]: AdvisoryPayload.generated_at required per locked interfaces spec (test payload adds it to the advisorPrompt.ts example dict, which omits it in its illustrative prose)
 - [Phase 16-01]: ADVISE-03 forbidden-ops gate proven at schema level via extra=forbid + field omission (no status/title/type on GoalAdjustment, no id on TaskCreation) — no service-layer blocking logic needed
 - [Phase 16-01]: Pre-existing unrelated failure in test_calendar.py::test_callback_stores_credentials (404 on /auth/google/callback) confirmed present before 16-01 changes; logged to deferred-items.md, not fixed (out of scope)
+- [Phase 16-03]: No .github/workflows/ existed prior to 16-03 — created ci.yml fresh with backend job (LLM-import grep guard + pytest), rather than assuming an existing workflow to extend
+- [Phase 16-03]: Reused _uid(prefix) unique-ID pattern from test_advisory_service.py (16-02) in test_advisory_routes.py to avoid cross-test DB collisions; confirmed shared session-scoped test DB pollution/ordering flakiness (test_brief.py, test_plan.py) is pre-existing and unrelated to 16-03 files, logged to deferred-items.md
 
 ### Open Questions (Live Verification Required)
 
@@ -205,5 +207,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-07-06T01:12:42.537Z
+Last session: 2026-07-06T01:19:48.552Z
 Next action: Run /gsd:plan-phase 15 — context captured (15-CONTEXT.md). Advisory scope: approval MAY create new tasks (ADVISE-08, create-only)
