@@ -5,7 +5,7 @@ from starlette.concurrency import run_in_threadpool
 from starlette.middleware.sessions import SessionMiddleware
 from app.config import settings
 from fastapi.staticfiles import StaticFiles
-from app.routers import tasks, auth, calendar_status, events, settings as settings_router, routines, tts, webhooks, goals, ingest, plan, guidance, updates, export
+from app.routers import tasks, auth, calendar_status, events, settings as settings_router, routines, tts, webhooks, goals, ingest, advisory, plan, guidance, updates, export
 from app.services.tts import CACHE_DIR
 from app.scheduler import scheduler, schedule_calendar_sync, schedule_daily_brief, schedule_outlook_ics_sync, schedule_stall_check, schedule_weekly_snapshot, schedule_snapshot_cleanup
 
@@ -83,6 +83,7 @@ app.include_router(tts.router)
 app.include_router(webhooks.router)
 app.include_router(goals.router)
 app.include_router(ingest.router)
+app.include_router(advisory.router)
 app.include_router(plan.router)
 app.include_router(guidance.router)
 app.include_router(updates.router)
