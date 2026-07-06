@@ -25,7 +25,7 @@
 | 13 | Update Loop UI | 3/4 | In Progress|  |
 | 14 | Progression Substrate | Goal progress history accumulates automatically; trend data exists before export is built | PROG-01, PROG-02 | 3 |
 | 15 | Context Export + Advisor Prompt | 3/3 | Complete    | 2026-06-30 |
-| 16 | Advisory Ingest + Sync Review UI | 1/5 | In Progress|  |
+| 16 | Advisory Ingest + Sync Review UI | 2/5 | In Progress|  |
 
 ---
 
@@ -340,7 +340,7 @@ Plans:
 3. Confirmed advisory changes are idempotent on a stable `advisory_id`: confirming the same advisory payload a second time returns the original result with no duplicate goal/milestone rows and no duplicate tasks created.
 4. Goal target dates and priority ranks adjusted by the advisory, and any new tasks it created (linked to their goal), are visible in the Goals view immediately after confirm; the advisor's free-text `notes` field is displayed prominently on the Sync page before confirm and is never written to goal, milestone, or task entities.
 5. The Sync page shows "last advisor sync: N days ago" (reads `AppSettings.last_advisory_at` stamped on confirm) and displays a non-blocking warning when a pasted payload's `session_id` is older than 7 days.
-**Plans:** 1/5 plans executed
+**Plans:** 2/5 plans executed
 **UI hint**: yes
 
 ---
