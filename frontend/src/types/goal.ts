@@ -23,6 +23,7 @@ export interface Goal {
   updated_at: string;
   progress_pct: number;
   milestones: Milestone[];
+  priority_rank?: number | null;
 }
 
 export interface GoalCreate {
@@ -60,4 +61,34 @@ export interface IngestPreviewResult {
   tasks: IngestEntityDiff[];
   routines: IngestEntityDiff[];
   habits: IngestEntityDiff[];
+}
+
+export interface AdvisoryFieldChange {
+  field: string;
+  old: unknown;
+  new: unknown;
+}
+
+export interface AdvisoryEntityDiff {
+  external_key: string;
+  title: string;
+  action: "update" | "create";
+  rationale: string;
+  fields: AdvisoryFieldChange[];
+}
+
+export interface AdvisoryPreviewResult {
+  goals: AdvisoryEntityDiff[];
+  milestones: AdvisoryEntityDiff[];
+  new_tasks: AdvisoryEntityDiff[];
+  notes: string | null;
+  session_id: string;
+  generated_at: string;
+}
+
+export interface AdvisoryResult {
+  created: Record<string, number>;
+  updated: Record<string, number>;
+  advisory_id: string;
+  replayed: boolean;
 }
