@@ -25,7 +25,7 @@
 | 13 | Update Loop UI | 3/4 | In Progress|  |
 | 14 | Progression Substrate | Goal progress history accumulates automatically; trend data exists before export is built | PROG-01, PROG-02 | 3 |
 | 15 | Context Export + Advisor Prompt | 3/3 | Complete    | 2026-06-30 |
-| 16 | Advisory Ingest + Sync Review UI | 5/5 | Complete   | 2026-07-06 |
+| 16 | Advisory Ingest + Sync Review UI | 5/5 | Complete    | 2026-07-06 |
 
 ---
 
