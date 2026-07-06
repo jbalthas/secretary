@@ -76,21 +76,7 @@ export default function Tasks() {
   return (
     <div className="page tasks-page">
       <div className="tasks-header">
-        <div className="tasks-header">
         <h1 className="page-title">Tasks</h1>
-        <MomentumRing done={momentumDone} total={momentumTotal} />
-      </div>
-
-      {heroTask && (
-        <TasksHero
-          task={heroTask}
-          goals={goals}
-          onStart={() => {
-            setEditingTask(heroTask);
-            setDrawerOpen(true);
-          }}
-        />
-      )}
         <MomentumRing done={momentumDone} total={momentumTotal} />
       </div>
 
