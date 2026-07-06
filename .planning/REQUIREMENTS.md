@@ -79,12 +79,74 @@
 
 ---
 
+## Milestone v2.1 Requirements — Close the Loop
+
+> Intra-day update loop: the secretary checks in, the user logs progress in seconds, the schedule self-corrects. HARD CONSTRAINTS (locked since v2.0): no new dependencies, no server-side LLM, minimize API/token cost. REQ-IDs continue in NOTIF/INGEST and a new UPDATE category. Phase numbering continues from v2.0 (starts at Phase 12).
+
+### Intra-day Updates (UPDATE)
+
+- [x] **UPDATE-01**: User can log progress via a quick-update box on the Today view by typing or phone keyboard dictation (free text), without opening any task form
+- [x] **UPDATE-02**: System resolves simple updates — mark a task/block done, reschedule it, or drop it — by fuzzy-matching the text against today's existing scheduled blocks/tasks, with no LLM call
+- [x] **UPDATE-03**: A quick update that is ambiguous or matches nothing is surfaced to the user to confirm/correct, never guessed at or silently dropped
+- [x] **UPDATE-04**: At end of day, user sees a rollup of completed vs. slipped items, and unfinished items carry forward into the next day via the existing brief/rollover path
+
+### Notifications & Google Home (NOTIF) — continued
+
+- [x] **NOTIF-07**: User receives a configurable mid-day check-in notification (Pushover, optionally announced on Google Home) prompting them to log progress, with a link that deep-links into the Today update view
+- [x] **NOTIF-08**: User can configure the check-in time(s) and enable/disable them from the web UI; the schedule persists across reboots (APScheduler SQLAlchemyJobStore)
+
+### Ingest (INGEST) — continued
+
+- [x] **INGEST-08**: The import contract supports an "intra-day update" payload type (mark done / reschedule / drop against today's plan) that the ingest endpoint validates and applies idempotently — letting the user route a messy multi-intent spoken dump through any external LLM
+
+---
+
+## Milestone v2.2 Requirements — LLM Advisory Loop
+
+> Bidirectional sync with an EXTERNAL LLM: the secretary exports a rich, compact context bundle for the LLM to reason over, and ingests the LLM's goal/timeline adjustments back through the existing ingest contract. HARD CONSTRAINTS (locked since v2.0): no new dependencies, no server-side LLM, minimize token cost. North star: maximize the user's time and accelerate their growth as an engineer/career person. REQ-IDs continue in new categories: EXPORT, PROG, ADVISE, SYNC, PROMPT. Phase numbering continues (starts at Phase 14). Migration HEAD is 0016 → new migrations 0017/0018.
+
+### Context Export (EXPORT)
+
+- [x] **EXPORT-01**: User can copy a complete advisor brief (Markdown with embedded JSON schema) to the clipboard with one action on the Sync page, ready to paste into an external LLM; the bundle header carries `generated_at` and a `session_id`
+- [x] **EXPORT-02**: The bundle lists each active goal with title, type, target_date (+ days remaining), live-computed progress_pct, milestone list, top-3 active tasks (title/priority/due date), and overdue-task count
+- [x] **EXPORT-03**: The bundle includes a 14-day planned-vs-actual block summary (blocks planned / completed / slipped) aggregated from ScheduledBlock
+- [x] **EXPORT-04**: The bundle includes a per-goal progress trend (last 4 weekly values) and a velocity label (accelerating / steady / stalling / no_data), degrading gracefully to `no_data` until snapshots accumulate
+- [x] **EXPORT-05**: The bundle includes a 7-day calendar load as per-day event counts only (never event titles — privacy) and a stalled-goals list reusing `guidance_service.get_stalled_goals()`
+- [x] **EXPORT-06**: Career- and learning-type goals are ordered/flagged first in the bundle so the advisor's attention is steered by the data, not the prompt alone
+
+### Progression Substrate (PROG)
+
+- [ ] **PROG-01**: A weekly APScheduler job (SYNC, `brief.py` pattern) writes one `goal_snapshots` row per active goal — capturing that week's progress_pct, milestones_done, tasks_completed_week, tasks_slipped_week — and survives reboots; the snapshot stores a copy of progress_pct for trend only (live progress_pct remains computed, never overwritten)
+- [ ] **PROG-02**: User can trigger an on-demand snapshot from the Sync page without waiting for the weekly job, so trend data exists from first setup
+
+### Advisory Ingest (ADVISE)
+
+- [x] **ADVISE-01**: The import contract accepts an advisory payload (distinguished by a `payload_type` discriminator, default-compatible with existing payloads) validated against a published schema, returning field-level errors on malformed input; undocumented fields are rejected (`extra="forbid"`)
+- [x] **ADVISE-02**: An advisory payload can adjust goal `target_date` and `priority_rank`, and milestone `target_date`/`done`/`title`, each item carrying a REQUIRED `rationale`; goals matched by `external_key`, milestones by `(goal, title)`
+- [x] **ADVISE-03**: An advisory payload cannot create goals, change goal status/title/type, or modify/complete/delete *existing* tasks — these are blocked by schema validation with clear errors. It MAY create *new* tasks per ADVISE-08.
+- [x] **ADVISE-04**: User can preview an advisory payload as a per-item diff (entity, field, old → new value, rationale) with no DB writes
+- [x] **ADVISE-05**: User can confirm and have the accepted advisory changes applied in a single atomic transaction, idempotent on a stable `advisory_id` (AdvisoryLog), stamping `last_advisory_at`
+- [x] **ADVISE-06**: A top-level free-text `notes` field from the advisor is surfaced prominently before confirm and is never written to goal/milestone entities
+- [x] **ADVISE-07**: User can accept/reject individual diff rows and confirm only the accepted subset
+- [x] **ADVISE-08**: An advisory payload can create *new* tasks (`title` required; optional `description`, `due_date`, `priority`, `estimated_minutes`), each linked to a goal by `external_key` and carrying a REQUIRED `rationale`. Created tasks surface as add-rows in the diff (ADVISE-04), are applied via the shared `apply_import` task-creation path (no fork) in the goals → milestones → tasks order, and are idempotent on a stable advisory-derived `external_key` so re-confirming the same `advisory_id` creates no duplicates
+
+### Sync Review UI (SYNC)
+
+- [x] **SYNC-01**: A dedicated `/advisor` page runs the full loop without navigating away — copy advisor prompt, copy export bundle, paste the LLM's JSON response, preview the diff, confirm — reusing the existing ingest UI patterns (`useIngest`, DiffGroup, error-list)
+- [x] **SYNC-02**: The Sync page shows "last advisor sync: N days ago" and warns (non-blocking) when a pasted payload's `session_id` is stale (>7 days old)
+
+### Advisor Prompt (PROMPT)
+
+- [x] **PROMPT-01**: User can copy a documented advisor system prompt from the Sync page in one click — role framing (career/engineering advisor for Jack, 4-week horizon, career/learning goals prioritized), explicit in-scope and out-of-scope lists, an auto-generated JSON schema block matching the advisory Pydantic models, an example payload, and `notes`-field guidance
+
+---
+
 ## Future / Backlog (post-v2.0)
 
 > Items below were deferred from v1.0 or flagged P3 during v2.0 research; not in the current milestone.
 
 - Energy-aware day planning (peak-hours setting) + automatic buffer blocks between tasks — deferred from v2.0 Organize
-- Mid-day re-plan button (re-propose remaining time) — P3
+- ~~Mid-day re-plan button (re-propose remaining time) — P3~~ → promoted into v2.1 (UPDATE + NOTIF-07)
 - Weekly goal digest (automated Friday/Sunday review) — deferred from v2.0 Guidance (partially served by the existing weekly voice readout, quick task 260615-bse)
 - Per-item ingest conflict report (resolve title conflicts on re-import) — P3
 - Google Calendar write-back for approved plan blocks — needs write OAuth scope + conflict/undo handling
@@ -159,3 +221,30 @@
 | GUIDE-01 | Phase 11 — Goal-Guided Guidance | Complete |
 | GUIDE-02 | Phase 11 — Goal-Guided Guidance | Complete |
 | GUIDE-03 | Phase 11 — Goal-Guided Guidance | Complete |
+| UPDATE-02 | Phase 12 — Update Resolution Engine | Complete |
+| UPDATE-03 | Phase 12 — Update Resolution Engine | Complete |
+| NOTIF-07 | Phase 12 — Update Resolution Engine | Complete |
+| INGEST-08 | Phase 12 — Update Resolution Engine | Complete |
+| UPDATE-01 | Phase 13 — Update Loop UI | Complete |
+| UPDATE-03 | Phase 13 — Update Loop UI | Complete |
+| UPDATE-04 | Phase 13 — Update Loop UI | Complete |
+| NOTIF-08 | Phase 13 — Update Loop UI | Complete |
+| PROG-01 | Phase 14 — Progression Substrate | Pending |
+| PROG-02 | Phase 14 — Progression Substrate | Pending |
+| EXPORT-01 | Phase 15 — Context Export + Advisor Prompt | Complete |
+| EXPORT-02 | Phase 15 — Context Export + Advisor Prompt | Complete |
+| EXPORT-03 | Phase 15 — Context Export + Advisor Prompt | Complete |
+| EXPORT-04 | Phase 15 — Context Export + Advisor Prompt | Complete |
+| EXPORT-05 | Phase 15 — Context Export + Advisor Prompt | Complete |
+| EXPORT-06 | Phase 15 — Context Export + Advisor Prompt | Complete |
+| PROMPT-01 | Phase 15 — Context Export + Advisor Prompt (schema block updated at end of Phase 16) | Complete |
+| ADVISE-01 | Phase 16 — Advisory Ingest + Sync Review UI | Complete |
+| ADVISE-02 | Phase 16 — Advisory Ingest + Sync Review UI | Complete |
+| ADVISE-03 | Phase 16 — Advisory Ingest + Sync Review UI | Complete |
+| ADVISE-04 | Phase 16 — Advisory Ingest + Sync Review UI | Complete |
+| ADVISE-05 | Phase 16 — Advisory Ingest + Sync Review UI | Complete |
+| ADVISE-06 | Phase 16 — Advisory Ingest + Sync Review UI | Complete |
+| ADVISE-07 | Phase 16 — Advisory Ingest + Sync Review UI | Complete |
+| ADVISE-08 | Phase 16 — Advisory Ingest + Sync Review UI | Complete |
+| SYNC-01 | Phase 16 — Advisory Ingest + Sync Review UI | Complete |
+| SYNC-02 | Phase 16 — Advisory Ingest + Sync Review UI | Complete |

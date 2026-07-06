@@ -6,35 +6,41 @@ import type { Task } from "../types/task";
 const goal = {
   id: 7,
   list_name: "Side Projects",
-} as unknown as Goal;
+  parent_list_name: "Work",
+} as Goal;
 
 const baseTask = {
   id: 1,
   title: "Some task",
   priority: "medium",
   list_name: null,
+  parent_list_name: null,
   goal_id: null,
   completed: false,
-} as unknown as Task;
+} as Task;
 
 describe("resolveCategory", () => {
-  it("prefers list_name over goal over priority fallback", () => {
+  it("prefers list_name over parent_list_name over goal over priority fallback", () => {
     expect(
-      resolveCategory({ ...baseTask, list_name: "Work", goal_id: goal.id }, [goal])
+      resolveCategory({ ...baseTask, list_name: "Work", parent_list_name: "Personal", goal_id: goal.id }, [goal])
     ).toBe("work");
 
-expect(
-      resolveCategory({ ...baseTask, list_name: null, goal_id: goal.id }, [goal])
+    expect(
+      resolveCategory({ ...baseTask, list_name: null, parent_list_name: "Personal", goal_id: goal.id }, [goal])
+    ).toBe("personal");
+
+    expect(
+      resolveCategory({ ...baseTask, list_name: null, parent_list_name: null, goal_id: goal.id }, [goal])
     ).toBe("side projects");
 
     expect(
-      resolveCategory({ ...baseTask, list_name: null, goal_id: null }, [goal])
+      resolveCategory({ ...baseTask, list_name: null, parent_list_name: null, goal_id: null }, [goal])
     ).toBe("priority:medium");
   });
 
   it("falls back to priority:high when task has no list/goal", () => {
     expect(
-      resolveCategory({ ...baseTask, priority: "high", list_name: null, goal_id: null }, [])
+      resolveCategory({ ...baseTask, priority: "high", list_name: null, parent_list_name: null, goal_id: null }, [])
     ).toBe("priority:high");
   });
 

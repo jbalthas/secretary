@@ -2,7 +2,7 @@
 
 ## Overview
 
-10 phases | 45 requirements | Infrastructure → Task UI → Reminders → Calendar Sync → Routines/Brief → Google Home TTS → Goals+Ingest Backend → Goals+Ingest UI → Day Organize → Guidance
+16 phases | 70 requirements | Infrastructure → Task UI → Reminders → Calendar Sync → Routines/Brief → Google Home TTS → Goals+Ingest Backend → Goals+Ingest UI → Day Organize → Guidance → v2.1 Update Engine → v2.1 Update Loop UI → v2.2 Progression Substrate → v2.2 Context Export + Advisor Prompt → v2.2 Advisory Ingest + Sync Review UI
 
 ---
 
@@ -21,6 +21,11 @@
 | 9 | Goals + Ingest UI | User can manage goals, link tasks, and submit LLM payloads from the web UI | GOAL-04, GOAL-05, INGEST-03, INGEST-05 | 4 |
 | 10 | Day Auto-Organize | 4/4 | Complete   | 2026-06-17 |
 | 11 | Goal-Guided Guidance | 2/4 | Complete    | 2026-06-18 |
+| 12 | Update Resolution Engine | 4/4 | Complete    | 2026-06-22 |
+| 13 | Update Loop UI | 3/4 | In Progress|  |
+| 14 | Progression Substrate | Goal progress history accumulates automatically; trend data exists before export is built | PROG-01, PROG-02 | 3 |
+| 15 | Context Export + Advisor Prompt | 3/3 | Complete    | 2026-06-30 |
+| 16 | Advisory Ingest + Sync Review UI | 5/5 | Complete   | 2026-07-06 |
 
 ---
 
@@ -135,6 +140,9 @@ Plans:
 
 ---
 
+<details>
+<summary>✅ <strong>v2.0 — Ingest, Organize, Guide</strong> (Phases 8–11) — SHIPPED 2026-06-23</summary>
+
 ## v2.0 Phases — Ingest, Organize, Guide
 
 > Phases start at 8 (Phase 7 Outlook ICS is a separate concurrent effort). Requirements: INGEST-01..07, GOAL-01..06, PLAN-01..02, GUIDE-01..03 (18 total).
@@ -219,6 +227,122 @@ Plans:
 - [x] 11-04-PLAN.md — Today Focus banner + Settings stall-threshold field + checkpoint (GUIDE-02, GUIDE-03) (Wave 3)
 **UI hint**: yes
 
+</details>
+
+---
+
+## v2.1 Phases — Close the Loop
+
+> Phases continue at 12. Requirements: UPDATE-01..04, NOTIF-07..08, INGEST-08 (7 total). Hard constraints: no new dependencies, no server-side LLM, minimize API/token cost.
+
+---
+
+### Phase 12: Update Resolution Engine
+**Goal:** The backend can receive a free-text progress update, resolve it to a concrete action (mark done / reschedule / drop) by fuzzy-matching today's scheduled blocks and tasks without any LLM call, and fire a configurable mid-day check-in notification that survives reboots.
+**Depends on:** Phase 10 (ScheduledBlock rows, plan router), Phase 11 (completed_at stamp)
+**Requirements:** UPDATE-02, UPDATE-03, NOTIF-07, INGEST-08
+**Success Criteria** (what must be TRUE):
+1. Posting a free-text update that clearly names a task or block causes the backend to return a resolved action (done/reschedule/drop) with the matched entity — no LLM call made, verified by absence of any external HTTP request in tests.
+2. Posting an update that is ambiguous (multiple plausible matches) or matches nothing returns an `ambiguous` or `no_match` status with candidate list, never silently applying an action or dropping the input.
+3. A mid-day check-in Pushover notification fires at the configured time (default 12:00) with a deep-link URL into the Today update view; the job is registered via APScheduler SQLAlchemyJobStore and survives a Pi reboot.
+4. The existing ingest endpoint accepts an `intra_day_update` payload type — validated against a versioned Pydantic schema — and applies it idempotently; posting the same update payload twice produces no double-mutation.
+**Plans:** 4/4 plans complete
+
+Plans:
+- [x] 12-01-PLAN.md — Wave 0: rapidfuzz dep + schema/service stubs + migration 0015 (check-in cols + update_log) + main wiring + 10 red tests (Wave 1)
+- [x] 12-02-PLAN.md — Resolution engine: resolve_update (WRatio + intent) + POST /updates/resolve (UPDATE-02, UPDATE-03) (Wave 2)
+- [x] 12-03-PLAN.md — Check-in scheduler: PushoverClient url + checkin_service + schedule_checkin + /settings/check-in-time (NOTIF-07) (Wave 2)
+- [x] 12-04-PLAN.md — Ingest extension: IntraDayUpdateImport + idempotent apply (done/drop stateless, reschedule via UpdateLog) (INGEST-08) (Wave 2)
+**UI hint**: no
+
+---
+
+### Phase 13: Update Loop UI
+**Goal:** User can log progress in seconds from the Today tab, see ambiguous matches to confirm, review what slipped at end of day, and toggle/schedule the check-in notification from Settings — all without leaving the app.
+**Depends on:** Phase 12 (update resolution API, check-in scheduler API)
+**Requirements:** UPDATE-01, UPDATE-03, UPDATE-04, NOTIF-08
+**Success Criteria** (what must be TRUE):
+1. A quick-update text box is visible on the Today tab; the user can type (or use phone keyboard dictation) and submit a free-text update without opening any task form; the result is reflected in the Today view immediately.
+2. When the backend returns an ambiguous or no-match status, the user sees the candidate list and can confirm the correct match or dismiss — the update is never silently dropped.
+3. After the end of the current work day, the Today tab shows a rollup card listing completed vs. slipped items; unfinished items appear in the next day's brief and plan via the existing rollover path.
+4. From Settings, the user can enable/disable the mid-day check-in and change its time(s); the new schedule takes effect without a server restart and persists across reboots.
+**Plans:** 3/4 plans executed
+
+Plans:
+- [x] 13-01-PLAN.md — Wave 0 pure-lib stubs + tests: isAfterWorkHours + deriveRollup (UPDATE-01, UPDATE-04)
+- [x] 13-02-PLAN.md — Backend: resolver apply-step + confirmed_id path + check_in_enabled migration 0016 (UPDATE-01, UPDATE-03, NOTIF-08)
+- [x] 13-03-PLAN.md — Today quick-update box + CandidateCard + rollup card + CSS (UPDATE-01, UPDATE-03, UPDATE-04)
+- [ ] 13-04-PLAN.md — useCheckInSettings + Settings check-in section + golden-path checkpoint (NOTIF-08)
+**UI hint**: yes
+
+---
+
+## v2.2 Phases — LLM Advisory Loop
+
+> Phases continue at 14. Requirements: EXPORT-01..06, PROG-01..02, ADVISE-01..07, SYNC-01..02, PROMPT-01 (18 total). Hard constraints (locked since v2.0): no new dependencies, no server-side LLM, minimize token cost. Migration HEAD entering this milestone: 0016 → new migrations 0017 then 0018.
+>
+> **PROMPT-01 placement note:** The advisor prompt (`advisorPrompt.ts`) is delivered in Phase 15 with a placeholder schema block. The schema block is regenerated from `AdvisoryPayload.model_json_schema()` at the end of Phase 16 once the advisory Pydantic models are finalized. Plan-phase 15 must call this out explicitly so Phase 16 does not re-open Phase 15 scope.
+
+---
+
+### Phase 14: Progression Substrate
+**Goal:** Goal progress history accumulates automatically each week so that trend data exists before the export or advisory UI is built.
+**Depends on:** Phase 8 (Goal, Milestone, Task models), Phase 11 (completed_at stamp, guidance_service.py sync pattern)
+**Requirements:** PROG-01, PROG-02
+**Success Criteria** (what must be TRUE):
+1. After the weekly APScheduler job fires, one `goal_progress_snapshots` row per active goal exists in the DB, capturing that week's `progress_pct`, `milestones_done`, `tasks_completed_week`, and `tasks_slipped_week`; firing the job twice on the same day produces no duplicate rows (idempotent via UNIQUE index on `(goal_id, snapshotted_on)`).
+2. The snapshot job is a plain sync function (no `async def`, no `await`) following the `brief.py` / `guidance_service.py` pattern — verified by the test running it directly and asserting no `asyncio` event loop is touched.
+3. User can trigger an on-demand snapshot from the `/advisor` Sync page (via `POST /api/v1/export/snapshot`) without waiting for the weekly job, so trend data accumulates from first setup.
+**Plans:**
+- [x] 14-01-PLAN.md - Snapshot persistence: ORM model, migration 0017, synchronous snapshot/retention service, and service tests
+- [x] 14-02-PLAN.md - Operational wiring: weekly/monthly scheduler jobs, synchronous trigger endpoint, startup registration, and integration tests
+**UI hint**: no
+
+---
+
+### Phase 15: Context Export + Advisor Prompt
+**Goal:** User can copy a complete, token-budgeted LLM advisory brief and a documented advisor system prompt in one action from the Sync page, enabling the outbound half of the advisory loop without waiting for Phase 16.
+**Depends on:** Phase 14 (goal_progress_snapshots rows for trend section; degrades to `no_data` if absent), Phase 11 (guidance_service.get_stalled_goals()), Phase 10 (ScheduledBlock for planned-vs-actual)
+**Requirements:** EXPORT-01, EXPORT-02, EXPORT-03, EXPORT-04, EXPORT-05, EXPORT-06, PROMPT-01
+**Note on PROMPT-01:** The advisor prompt is delivered here with a placeholder `[SCHEMA BLOCK]` in place of the auto-generated advisory JSON schema. The schema block is regenerated from `AdvisoryPayload.model_json_schema()` at the end of Phase 16. Plan-phase 15 must flag this as a known one-line update deferred to Phase 16.
+**Note on task creation (ADVISE-08):** The advisor prompt's scope section must state the LLM MAY propose *new* tasks (title required; optional description/due_date/priority/estimated_minutes) linked to a goal by `external_key`, each with a `rationale` — and MUST NOT edit/complete/delete existing tasks or change goal status/title/type. The example payload should include at least one new-task item.
+**Success Criteria** (what must be TRUE):
+1. User can tap one button on the Sync page (`/advisor`) and have the complete advisor brief copied to the clipboard, ready to paste into an external LLM; the bundle header contains `generated_at` and a `session_id`.
+2. The exported bundle lists each active goal with title, type, target date and days remaining, live-computed `progress_pct`, a milestone list, top-3 active tasks (title/priority/due date), overdue task count, a 4-week progress trend array with velocity label (`accelerating` / `steady` / `stalling` / `no_data`), and career/learning-type goals ordered first.
+3. The bundle includes a 14-day planned-vs-actual block summary (blocks planned / completed / slipped from `ScheduledBlock`), a 7-day calendar load as per-day event counts only (no event titles), and a stalled-goals list reusing `guidance_service.get_stalled_goals()`.
+4. User can copy the advisor system prompt from the Sync page in one click — role framing, scope/out-of-scope list, placeholder JSON schema block, example payload, and `notes`-field guidance — before copying the export bundle.
+**Plans:** 3/3 plans complete
+
+Plans:
+- [x] 15-01-PLAN.md — Wave 0: RED test scaffold (test_export.py, 8 tests + CI guard) + advisorPrompt.ts [SCHEMA BLOCK] placeholder (PROMPT-01)
+- [x] 15-02-PLAN.md — Backend: sync export_service.build_export_bundle + BundleResponse + GET /export/bundle (EXPORT-01..06)
+- [x] 15-03-PLAN.md — Frontend: useExport hook + /advisor Sync page + route + BottomNav entry + human-verify checkpoint (EXPORT-01, PROMPT-01)
+**UI hint**: yes
+
+---
+
+### Phase 16: Advisory Ingest + Sync Review UI
+**Goal:** User can paste an LLM advisory JSON response into the Sync page, preview a per-item diff with rationale, accept or reject individual rows, and confirm the accepted subset — applied atomically and idempotently — closing the full advisory loop.
+**Depends on:** Phase 14 (migration 0017 in place), Phase 15 (Sync page shell, useExport hook, advisorPrompt.ts placeholder)
+**Requirements:** ADVISE-01, ADVISE-02, ADVISE-03, ADVISE-04, ADVISE-05, ADVISE-06, ADVISE-07, ADVISE-08, SYNC-01, SYNC-02
+**Note on PROMPT-01 update:** This phase finalizes `AdvisoryPayload` and its nested models (`GoalAdjustment`, `MilestoneAdjustment`, `TaskCreation`). The last plan of this phase regenerates the schema block in `advisorPrompt.ts` from `AdvisoryPayload.model_json_schema()`, completing PROMPT-01.
+**Critical correctness gates (must be in plan):**
+- `await session.flush()` + `goal_key_to_id` map helper shared with `apply_import` (no fork)
+- New-task creation (ADVISE-08) reuses the `apply_import` task-creation path (no fork); apply order is goals → milestones → tasks so new tasks resolve their `goal_id` from the flushed `goal_key_to_id` map
+- `advisory_id` idempotency via `AdvisoryLog` table (migration 0018, mirrors `UpdateLog` pattern); new tasks additionally carry a stable advisory-derived `external_key`, with `Task.external_key` UNIQUE guarding row-level duplicates on re-confirm
+- Backward-compat regression test: existing `payload_type="standard"` / `schema_version 1.x` payloads still validate
+- `rationale: str` required (non-null) on every `GoalAdjustment`, `MilestoneAdjustment`, and `TaskCreation`
+- `TaskCreation` is create-only — schema has no task `id`/`external_key`-match field and `extra="forbid"`, so edits/completion/deletion of existing tasks are rejected at validation
+- CI / grep guard: `grep -r "anthropic\|openai\|litellm" backend/app/` must return zero
+**Success Criteria** (what must be TRUE):
+1. User can paste an LLM advisory JSON payload into the Sync page and see a per-item diff — entity, field, old value, new value, rationale (new tasks shown as add-rows) — with no DB writes; an advisory payload that omits `rationale` on any item, references an unknown goal `external_key`, or attempts a forbidden operation (create goal, change goal status/title/type, or edit/complete/delete an existing task) is rejected at validation with field-level 422 errors.
+2. User can accept or reject individual diff rows; clicking Confirm applies only the accepted subset in a single atomic transaction — injecting a DB error mid-apply leaves zero changes persisted.
+3. Confirmed advisory changes are idempotent on a stable `advisory_id`: confirming the same advisory payload a second time returns the original result with no duplicate goal/milestone rows and no duplicate tasks created.
+4. Goal target dates and priority ranks adjusted by the advisory, and any new tasks it created (linked to their goal), are visible in the Goals view immediately after confirm; the advisor's free-text `notes` field is displayed prominently on the Sync page before confirm and is never written to goal, milestone, or task entities.
+5. The Sync page shows "last advisor sync: N days ago" (reads `AppSettings.last_advisory_at` stamped on confirm) and displays a non-blocking warning when a pasted payload's `session_id` is older than 7 days.
+**Plans:** 5/5 plans complete
+**UI hint**: yes
+
 ---
 
 ## Progress
@@ -236,3 +360,8 @@ Plans:
 | 9. Goals + Ingest UI | 0/? | Not started | - |
 | 10. Day Auto-Organize | 0/? | Not started | - |
 | 11. Goal-Guided Guidance | 0/? | Not started | - |
+| 12. Update Resolution Engine | 0/? | Not started | - |
+| 13. Update Loop UI | 0/? | Not started | - |
+| 14. Progression Substrate | 0/? | Not started | - |
+| 15. Context Export + Advisor Prompt | 0/? | Not started | - |
+| 16. Advisory Ingest + Sync Review UI | 0/? | Not started | - |

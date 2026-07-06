@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { buildAgenda, buildWeekAgenda } from "./agenda";
 import type { CalendarEvent, Task } from "../types/task";
+import type { ScheduledBlock } from "../types/plan";
 
 const NOW = new Date("2026-06-12T08:00:00Z");
 const TODAY = "2026-06-12";
@@ -26,6 +27,21 @@ function makeEvent(overrides: Partial<CalendarEvent>): CalendarEvent {
     all_day: false,
     start_date: null,
     done: false,
+    ...overrides,
+  };
+}
+
+function makeBlock(overrides: Partial<ScheduledBlock>): ScheduledBlock {
+  return {
+    id: 1,
+    task_id: null,
+    title: "Planned block",
+    start_dt: `${TODAY}T10:00:00Z`,
+    end_dt: `${TODAY}T10:30:00Z`,
+    date_key: TODAY,
+    approved_at: `${TODAY}T08:00:00Z`,
+    completed: false,
+    conflict_with: null,
     ...overrides,
   };
 }
@@ -150,6 +166,39 @@ describe("buildAgenda", () => {
     const evt = makeEvent({ google_id: "evt-notitle", title: "", start_dt: `${TODAY}T10:00:00Z` });
     const result = buildAgenda([], [evt], NOW);
     expect(result.find((i) => i.id === "event-evt-notitle")?.title).toBe("(No title)");
+  });
+
+  it("keeps task-backed planned blocks toggleable and reflects task completion", () => {
+    const task = makeTask({ id: 42, priority: "high", completed: true });
+    const block = makeBlock({ id: 7, task_id: task.id, title: task.title });
+
+    const item = buildAgenda([task], [], NOW, [block]).find((i) => i.id === "block-7");
+
+    expect(item?.taskId).toBe(42);
+    expect(item?.completed).toBe(true);
+    expect(item?.priority).toBe("high");
+  });
+
+  it("uses persisted plan-block completion after a reload", () => {
+    const block = makeBlock({
+      id: 88,
+      task_id: null,
+      title: "Finished plan block",
+      completed: true,
+    });
+
+    const item = buildAgenda([], [], NOW, [block]).find((entry) => entry.id === "block-88");
+
+    expect(item?.completed).toBe(true);
+    expect(item?.blockId).toBe(88);
+  });
+  it("leaves custom planned blocks without a task target", () => {
+    const block = makeBlock({ id: 8, task_id: null });
+
+    const item = buildAgenda([], [], NOW, [block]).find((i) => i.id === "block-8");
+
+    expect(item?.taskId).toBeUndefined();
+    expect(item?.completed).toBe(false);
   });
 });
 

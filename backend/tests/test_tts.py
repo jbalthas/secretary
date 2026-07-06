@@ -179,3 +179,22 @@ def test_tts_client_caches_mp3(tmp_path):
         TTSClient().speak(text)
 
     assert (tmp_path / expected_name).exists()
+
+
+def test_webhook_brief_tomorrow_routes_to_tomorrow_itinerary():
+    with patch("app.routers.webhooks.settings") as mock_settings, patch(
+        "app.routers.webhooks.send_daily_brief"
+    ) as mock_daily, patch(
+        "app.routers.webhooks.send_tomorrow_brief"
+    ) as mock_tomorrow:
+        mock_settings.webhook_secret = "test-secret"
+
+        r = client.post(
+            "/api/v1/webhooks/brief?range=tomorrow",
+            headers={"X-Webhook-Secret": "test-secret"},
+        )
+
+    assert r.status_code == 200
+    assert r.json() == {"status": "ok"}
+    mock_tomorrow.assert_called_once()
+    mock_daily.assert_not_called()

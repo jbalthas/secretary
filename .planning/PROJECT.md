@@ -8,22 +8,23 @@ A self-hosted personal secretary running on a Raspberry Pi 5. It handles schedul
 
 One place to manage your schedule and tasks — reachable from any device, voice-controllable via Google Home, and proactive enough to push reminders before you have to think about them.
 
-## Current Milestone: v2.0 "Ingest, Organize, Guide"
+## Current Milestone: v2.2 "LLM Advisory Loop"
 
-**Goal:** The secretary ingests LLM-produced structured payloads into first-class goals, tasks, and routines; tracks progress toward those goals; and proactively guides the day by proposing an approved schedule around calendar events.
+**Goal:** Make the secretary the system-of-record for a periodic advisory sync — it exports a rich picture of progress for an external LLM to reason over, and ingests the LLM's timeline/goal adjustments back in. The LLM is the brain the user brings; the secretary organizes everything and remembers history.
 
 **Target features:**
-- **Import contract** — a stable, versioned JSON schema plus a documented prompt the user runs in any LLM, which emits the payload
-- **Ingest flow** — a validating endpoint and UI to paste/upload the payload, preview what it will create, confirm, then write goals/tasks/routines
-- **Goals entity** — first-class career/life goals with target dates, linked tasks/routines, and progress reporting
-- **Day auto-organize** — proposes time-blocks around synced calendar events; the user approves before anything commits
-- **Goal-guided guidance** — surfaces goal progress and next-best actions (augmented daily brief / dedicated view / proactive nudges)
+- **Context export ("brief for the LLM")** — one action that bundles goals, milestones, planned-vs-actual, completion/reschedule history, and momentum into a structured payload (Markdown + JSON) to paste into an external LLM. The outbound half the system does not yet have.
+- **Progression substrate** — capture history over time (goal-progress snapshots, plan adherence, what slipped/carried) so "track my progression" has real trend data, not just current state.
+- **Advisory ingest** — extend the existing versioned-JSON ingest contract with an "advisory" payload type so the LLM can push back adjusted timelines, re-prioritized goals, and new milestones — each with rationale the user reviews before it lands.
+- **Sync review UI** — a place to run the loop: export → (paste to LLM) → ingest decisions → see a diff of what changed and why.
+- **Advisor prompt/protocol doc** — a documented prompt (sibling to the existing ingest prompt) telling the external LLM how to act as a career/engineering advisor and what JSON to emit.
 
 **Key context:**
-- External LLM flow — no API key or cost in v2.0; built-in server-side chat deferred to a future milestone
-- Suggest-then-approve scheduling — no silent auto-commit
-- Builds on existing Task/Routine/Calendar models; adds Goals + Ingest + Planning as new layers
-- Phase 7 (Outlook ICS) is owned by a separate concurrent effort — v2.0 numbering starts at Phase 8
+- HARD CONSTRAINTS (locked since v2.0): no new dependencies; **no server-side LLM**; minimize API/token cost — this milestone EXTENDS the external-LLM ingest pattern, it does not overturn it
+- Reuse Pydantic v2 (`model_json_schema` + versioned payload), SQLAlchemy/Alembic, native React, the daily-brief/guidance services — all already in the codebase
+- North star: maximize the user's time and accelerate their growth as an engineer/career person
+- Phase numbering continues — this milestone starts at Phase 14
+- **v2.1 "Close the Loop" remains open** — Phase 13 (Quick-update capture box, End-of-day rollup) is unfinished and was intentionally not completed before starting v2.2
 
 ## Context
 
@@ -53,15 +54,31 @@ One place to manage your schedule and tasks — reachable from any device, voice
 - Reminders and the daily brief announce on the Google Home speaker alongside Pushover, ad-hoc TTS is triggerable from the web UI, and a secret-guarded webhook triggers the brief (Validated in Phase 6: google-home-tts — NOTIF-03, NOTIF-04, NOTIF-05, NOTIF-06; code + 53 backend tests verified, hardware speaker gate pending human test on Pi deploy)
 - Goals, milestones, and habits are first-class DB entities; the versioned import contract is live; the ingest endpoint validates, commits atomically, and is idempotent (Validated in Phase 8: goals-ingest-backend — GOAL-01/02/03/06, INGEST-01/02/04/06/07; 20 phase tests green, live Pushover+TTS celebration delivery pending human test on Pi)
 - Goals are manageable from the web UI (list, drill-in detail, milestones, archive); tasks and routines link to goals via a shared dropdown; the Ingest page paste/uploads an LLM JSON payload, previews a per-entity dry-run diff, then confirms (Validated in Phase 9: goals-ingest-ui — GOAL-04/05, INGEST-03/05; 18/18 verifier must-haves, golden-path human UAT approved)
+- The backend resolves free-text progress updates to mark done / reschedule / drop by fuzzy-matching today's blocks and tasks with no LLM call, fires a configurable mid-day check-in notification that survives reboots, and accepts an intra-day update payload on the ingest contract (Validated in Phase 12: update-resolution-engine — UPDATE-02/03, NOTIF-07, INGEST-08; 12/12 verifier must-haves, 10 phase tests green)
+- The Sync page exports a complete token-budgeted advisory brief (goals career/learning-first, planned-vs-actual, 7-day calendar counts with no titles per D-05, momentum trend, stalled goals) and a documented advisor prompt in one click, with no server-side LLM dependency (Validated in Phase 15: context-export-advisor-prompt — EXPORT-01..06, PROMPT-01; 8/8 verifier must-haves, 14 backend tests green, live in-browser round-trip confirmed on Pi)
 
 ### Active
 
-**v2.0 — Ingest, Organize, Guide:**
+**v2.2 — LLM Advisory Loop (requirements being defined in REQUIREMENTS.md):**
+- [x] Context export bundle (Markdown + JSON) of goals, planned-vs-actual, history, momentum for an external LLM — Phase 15 (EXPORT-01..06)
+- [ ] Progression substrate — historical progress/adherence snapshots, not just current state
+- [ ] Advisory ingest payload type — LLM-adjusted timelines, re-prioritized goals, new milestones with rationale
+- [ ] Sync review UI — export → ingest → diff of what changed and why
+- [x] Documented advisor prompt/protocol (sibling to the ingest prompt) — Phase 15 (PROMPT-01; [SCHEMA BLOCK] swap deferred to Phase 16)
+
+**v2.1 — Close the Loop (requirements defined in REQUIREMENTS.md):**
+- [x] Mid-day check-in reminder(s) — configurable Pushover/TTS prompt to log progress, deep-links into app — Phase 12 (NOTIF-07)
+- [ ] Quick-update capture box on Today (keyboard-dictation voice path, no new deps)
+- [x] No-LLM update resolution — fuzzy-match mark done / reschedule / drop against today's blocks/tasks — Phase 12 (UPDATE-02/03)
+- [x] Messy-dump escape hatch — intra-day update payload type on the existing external-LLM ingest contract — Phase 12 (INGEST-08)
+- [ ] End-of-day rollup feeding existing rollover logic
+
+**v2.0 — Ingest, Organize, Guide (complete):**
 - [x] Stable versioned import contract (JSON schema) + documented LLM prompt — Phase 8 backend
 - [x] Validating ingest endpoint + UI (paste/upload → preview → confirm → write) — backend (Phase 8) + UI (Phase 9)
 - [x] First-class Goals entity with target dates, linked tasks/routines, progress reporting — backend (Phase 8) + UI (Phase 9)
-- [ ] Day auto-organize: propose time-blocks around calendar events, user approves before commit
-- [ ] Goal-guided guidance: progress + next-best-action surfacing
+- [x] Day auto-organize: propose time-blocks around calendar events, user approves before commit — Phase 10
+- [x] Goal-guided guidance: progress + next-best-action surfacing — Phase 11
 
 **v1.0 (carried over / pending validation):**
 - [ ] Pi OS and service setup (nginx, systemd, Python env)
@@ -111,4 +128,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-17 — Phase 9 complete (goals-ingest-ui): Goals page + drill-in detail, task/routine goal linking, Ingest page (paste/upload → preview → confirm)*
+*Last updated: 2026-06-30 — Phase 15 (Context Export + Advisor Prompt) complete: outbound half of the advisory loop shipped (EXPORT-01..06, PROMPT-01); Milestone v2.2 "LLM Advisory Loop" in progress; v2.1 "Close the Loop" left open mid-Phase-13; v2.0 complete (Phases 8–11)*

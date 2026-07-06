@@ -136,12 +136,12 @@ def test_place_if_fits_else_skip():
     assert 1 in result.unplaced_task_ids
 
 
-def test_fully_booked_day():
+def test_work_hours_covered_does_not_mean_full_day():
     from app.services.planner_service import propose_day_plan
 
     busy = CalendarEvent(
         google_id="b1",
-        title="All-day meeting",
+        title="Workday meeting",
         all_day=False,
         start_dt=datetime(2026, 6, 18, 9, 0, tzinfo=timezone.utc),
         end_dt=datetime(2026, 6, 18, 18, 0, tzinfo=timezone.utc),
@@ -157,8 +157,59 @@ def test_fully_booked_day():
         now=datetime(2026, 6, 18, 8, 0, tzinfo=timezone.utc),
     )
 
-    assert result.fully_booked is True
+    assert result.fully_booked is False
     assert result.blocks == []
+
+
+def test_fully_booked_requires_continuous_coverage_from_8_to_8():
+    from app.services.planner_service import propose_day_plan
+
+    busy = CalendarEvent(
+        google_id="b1",
+        title="Truly full day",
+        all_day=False,
+        start_dt=datetime(2026, 6, 18, 8, 0, tzinfo=timezone.utc),
+        end_dt=datetime(2026, 6, 18, 20, 0, tzinfo=timezone.utc),
+    )
+
+    result = propose_day_plan(
+        tasks=[],
+        events=[busy],
+        target_date=date(2026, 6, 18),
+        work_start=time(9, 0),
+        work_end=time(18, 0),
+        now=datetime(2026, 6, 18, 8, 0, tzinfo=timezone.utc),
+    )
+
+    assert result.fully_booked is True
+
+
+def test_even_a_small_gap_means_the_calendar_is_not_full():
+    from app.services.planner_service import propose_day_plan
+
+    morning = CalendarEvent(
+        google_id="b1",
+        title="Morning commitments",
+        all_day=False,
+        start_dt=datetime(2026, 6, 18, 8, 0, tzinfo=timezone.utc),
+        end_dt=datetime(2026, 6, 18, 13, 0, tzinfo=timezone.utc),
+    )
+    evening = CalendarEvent(
+        google_id="b2",
+        title="Afternoon commitments",
+        all_day=False,
+        start_dt=datetime(2026, 6, 18, 13, 0, 1, tzinfo=timezone.utc),
+        end_dt=datetime(2026, 6, 18, 20, 0, tzinfo=timezone.utc),
+    )
+
+    result = propose_day_plan(
+        tasks=[],
+        events=[morning, evening],
+        target_date=date(2026, 6, 18),
+        now=datetime(2026, 6, 18, 8, 0, tzinfo=timezone.utc),
+    )
+
+    assert result.fully_booked is False
 
 
 def test_past_gaps_excluded():
@@ -193,6 +244,42 @@ def test_propose_is_read_only():
     blocks = client.get(f"/api/v1/plan/blocks?date={d}")
     assert blocks.status_code == 200
     assert blocks.json() == []
+
+
+def test_propose_accepts_a_request_specific_time_window(monkeypatch):
+    from app.schemas.plan import ProposedDayPlan
+
+    captured = {}
+
+    def fake_propose_day_plan(**kwargs):
+        captured.update(kwargs)
+        return ProposedDayPlan(
+            date=kwargs["target_date"],
+            blocks=[],
+            unplaced_task_ids=[],
+            fully_booked=False,
+        )
+
+    monkeypatch.setattr(
+        "app.routers.plan.planner_service.propose_day_plan",
+        fake_propose_day_plan,
+    )
+    d = "2099-01-10"
+    r = client.get(
+        f"/api/v1/plan/propose?date={d}&work_start=13:00&work_end=14:00"
+    )
+    assert r.status_code == 200, r.text
+    assert captured["work_start"] == time(13, 0)
+    assert captured["work_end"] == time(14, 0)
+
+
+def test_propose_rejects_a_reversed_time_window():
+    d = "2099-01-11"
+    r = client.get(
+        f"/api/v1/plan/propose?date={d}&work_start=18:00&work_end=09:00"
+    )
+    assert r.status_code == 422
+    assert r.json()["detail"] == "Planning start time must be before end time."
 
 
 def test_approve_idempotent_409():
@@ -286,3 +373,37 @@ def test_delete_block():
 
     remaining = client.get(f"/api/v1/plan/blocks?date={d}").json()
     assert all(b["id"] != block_id for b in remaining)
+
+
+def test_complete_block_persists_and_completes_linked_task():
+    d = "2099-01-06"
+    task = client.post(
+        "/api/v1/tasks/",
+        json={"title": "Persist plan completion"},
+    ).json()
+    approve_body = {
+        "date": d,
+        "blocks": [
+            {
+                "task_id": task["id"],
+                "title": task["title"],
+                "start_dt": f"{d}T09:00:00Z",
+                "end_dt": f"{d}T10:00:00Z",
+            },
+        ],
+    }
+    created = client.post("/api/v1/plan/approve", json=approve_body).json()
+
+    updated = client.patch(
+        f"/api/v1/plan/blocks/{created[0]['id']}",
+        json={"completed": True},
+    )
+    assert updated.status_code == 200, updated.text
+    assert updated.json()["completed"] is True
+
+    reloaded = client.get(f"/api/v1/plan/blocks?date={d}").json()
+    assert reloaded[0]["completed"] is True
+
+    tasks = client.get("/api/v1/tasks/").json()
+    linked = next(row for row in tasks if row["id"] == task["id"])
+    assert linked["completed"] is True

@@ -125,3 +125,42 @@ def test_unlink_task_from_goal():
     tasks = client.get("/api/v1/tasks/").json()
     found = next(task for task in tasks if task["id"] == t["id"])
     assert found["goal_id"] is None
+
+def test_hierarchical_lists_include_goal_inheritance():
+    goal = client.post(
+        "/api/v1/goals/",
+        json={
+            "title": "Advance optics career",
+            "type": "career",
+            "parent_list_name": "Career",
+            "list_name": "Optics",
+        },
+    ).json()
+    linked = client.post(
+        "/api/v1/tasks/",
+        json={"title": "Calibrate lens", "goal_id": goal["id"]},
+    ).json()
+    direct = client.post(
+        "/api/v1/tasks/",
+        json={
+            "title": "Prototype arm",
+            "parent_list_name": "Career",
+            "list_name": "Robotics",
+        },
+    ).json()
+
+    hierarchy = client.get("/api/v1/tasks/list-hierarchy")
+    assert hierarchy.status_code == 200
+    career = next(group for group in hierarchy.json() if group["name"] == "Career")
+    assert career["children"] == ["Optics", "Robotics"]
+
+    parent_tasks = client.get("/api/v1/tasks/", params={"parent_list_name": "Career"})
+    assert parent_tasks.status_code == 200
+    parent_ids = {task["id"] for task in parent_tasks.json()}
+    assert {linked["id"], direct["id"]}.issubset(parent_ids)
+
+    optics_tasks = client.get(
+        "/api/v1/tasks/",
+        params={"parent_list_name": "Career", "list_name": "Optics"},
+    )
+    assert [task["id"] for task in optics_tasks.json()] == [linked["id"]]

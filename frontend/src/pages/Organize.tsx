@@ -13,9 +13,16 @@ import {
   Trash2,
 } from "lucide-react";
 import { useCalendarEvents } from "../hooks/useCalendarEvents";
+import { useGoals } from "../hooks/useGoals";
 import { usePlan } from "../hooks/usePlan";
 import { useTasks } from "../hooks/useTasks";
 import { useWorkHours } from "../hooks/useWorkHours";
+import {
+  sortOrganizeTasks,
+  type OrganizeTaskSort,
+} from "../lib/organizeTaskSort";
+import { appendCurrentTasksToPlan } from "../lib/organizePlan";
+import { buildTaskFilters, taskMatchesFilter } from "../lib/taskFilters";
 import type { ProposedBlock } from "../types/plan";
 import type { Task } from "../types/task";
 
@@ -82,25 +89,60 @@ export default function Organize() {
   const today = new Date();
   const todayKey = localDateKey(today);
   const { blocks, loading, fetchBlocks, propose, approve, replan } = usePlan(todayKey);
-  const { tasks } = useTasks();
+  const { tasks, refresh: refreshTasks } = useTasks();
+  const { goals } = useGoals();
   const { events } = useCalendarEvents();
-  const { workStart, workEnd } = useWorkHours();
+  const { workStart, workEnd, loading: workHoursLoading } = useWorkHours();
 
   const [phase, setPhase] = useState<Phase>("loading");
   const [draftBlocks, setDraftBlocks] = useState<ProposedBlock[]>([]);
   const [isReplacement, setIsReplacement] = useState(false);
   const [calendarFull, setCalendarFull] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [taskSort, setTaskSort] = useState<OrganizeTaskSort>("priority");
+  const [prioritizedFilterKey, setPrioritizedFilterKey] = useState("");
+  const [scheduleStart, setScheduleStart] = useState("09:00");
+  const [scheduleEnd, setScheduleEnd] = useState("18:00");
+  const [scheduleWindowReady, setScheduleWindowReady] = useState(false);
   const initialized = useRef(false);
+  const planApprovedAt = useRef<Date | null>(null);
+  const manuallyRemovedTaskIds = useRef(new Set<number>());
 
   const incompleteTasks = useMemo(() => tasks.filter((task) => !task.completed), [tasks]);
   const scheduledTaskIds = useMemo(
     () => new Set(draftBlocks.flatMap((block) => (block.task_id == null ? [] : [block.task_id]))),
     [draftBlocks],
   );
-  const queuedTasks = useMemo(
+  const unscheduledTasks = useMemo(
     () => incompleteTasks.filter((task) => !scheduledTaskIds.has(task.id)),
     [incompleteTasks, scheduledTaskIds],
+  );
+  const sortableUnscheduledTasks = useMemo(() => {
+    const goalsById = new Map(goals.map((goal) => [goal.id, goal]));
+    return unscheduledTasks.map((task) => {
+      if (task.parent_list_name || task.list_name || task.goal_id == null) return task;
+      const goal = goalsById.get(task.goal_id);
+      return goal
+        ? { ...task, parent_list_name: goal.parent_list_name, list_name: goal.list_name }
+        : task;
+    });
+  }, [goals, unscheduledTasks]);
+  const taskGroups = useMemo(
+    () => buildTaskFilters(unscheduledTasks, goals),
+    [goals, unscheduledTasks],
+  );
+  const prioritizedTaskIds = useMemo(() => {
+    const selectedGroup = taskGroups.find((group) => group.key === prioritizedFilterKey);
+    if (!selectedGroup) return undefined;
+    return new Set(
+      unscheduledTasks
+        .filter((task) => taskMatchesFilter(task, selectedGroup, goals))
+        .map((task) => task.id),
+    );
+  }, [goals, prioritizedFilterKey, taskGroups, unscheduledTasks]);
+  const queuedTasks = useMemo(
+    () => sortOrganizeTasks(sortableUnscheduledTasks, taskSort, prioritizedTaskIds),
+    [prioritizedTaskIds, sortableUnscheduledTasks, taskSort],
   );
   const timedEvents = useMemo(
     () =>
@@ -132,10 +174,17 @@ export default function Organize() {
     [sortedDrafts, timedEvents],
   );
 
+  const hasValidWindow = scheduleStart < scheduleEnd;
+
   async function loadProposal() {
+    if (!hasValidWindow) {
+      setError("Choose an end time that is later than the start time.");
+      setPhase("editing");
+      return;
+    }
     setError(null);
     setPhase("proposing");
-    const result = await propose(todayKey);
+    const result = await propose(todayKey, scheduleStart, scheduleEnd);
     if (!result) {
       setError("Could not build a plan. You can still add tasks manually.");
       setDraftBlocks([]);
@@ -148,9 +197,20 @@ export default function Organize() {
   }
 
   useEffect(() => {
-    if (loading || initialized.current) return;
+    if (workHoursLoading || scheduleWindowReady) return;
+    setScheduleStart(workStart || "09:00");
+    setScheduleEnd(workEnd || "18:00");
+    setScheduleWindowReady(true);
+  }, [scheduleWindowReady, workEnd, workHoursLoading, workStart]);
+
+  useEffect(() => {
+    if (loading || !scheduleWindowReady || initialized.current) return;
     initialized.current = true;
     if (blocks.length > 0) {
+      planApprovedAt.current = blocks.reduce((latest, block) => {
+        const approvedAt = new Date(block.approved_at);
+        return approvedAt > latest ? approvedAt : latest;
+      }, new Date(blocks[0].approved_at));
       setDraftBlocks(
         blocks.map(({ task_id, title, start_dt, end_dt }) => ({ task_id, title, start_dt, end_dt })),
       );
@@ -160,10 +220,43 @@ export default function Organize() {
       void loadProposal();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading]);
+  }, [loading, scheduleWindowReady]);
+
+  useEffect(() => {
+    if (!initialized.current) return;
+    setDraftBlocks((current) =>
+      appendCurrentTasksToPlan(
+        current,
+        incompleteTasks.filter((task) => !manuallyRemovedTaskIds.current.has(task.id)),
+        scheduleStart,
+        new Date(),
+        planApprovedAt.current,
+        scheduleEnd,
+      ),
+    );
+  }, [incompleteTasks, scheduleEnd, scheduleStart]);
+
+  useEffect(() => {
+    function refreshCurrentTasks() {
+      void refreshTasks();
+    }
+
+    function refreshVisibleTasks() {
+      if (document.visibilityState === "visible") refreshCurrentTasks();
+    }
+
+    window.addEventListener("focus", refreshCurrentTasks);
+    document.addEventListener("visibilitychange", refreshVisibleTasks);
+    return () => {
+      window.removeEventListener("focus", refreshCurrentTasks);
+      document.removeEventListener("visibilitychange", refreshVisibleTasks);
+    };
+    // Refresh only in response to browser lifecycle events.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function nextStartTime(): string {
-    const fallback = workStart || "09:00";
+    const fallback = scheduleStart;
     if (draftBlocks.length === 0) return fallback;
     const latestEnd = draftBlocks.reduce((latest, block) => {
       const end = new Date(block.end_dt);
@@ -174,11 +267,16 @@ export default function Organize() {
   }
 
   function scheduleTask(task: Task) {
+    manuallyRemovedTaskIds.current.delete(task.id);
     setDraftBlocks((current) => [...current, taskBlock(task, nextStartTime())]);
   }
 
   function removeBlock(index: number) {
-    setDraftBlocks((current) => current.filter((_, blockIndex) => blockIndex !== index));
+    setDraftBlocks((current) => {
+      const taskId = current[index]?.task_id;
+      if (taskId != null) manuallyRemovedTaskIds.current.add(taskId);
+      return current.filter((_, blockIndex) => blockIndex !== index);
+    });
   }
 
   function updateBlock(index: number, time: string, duration: number) {
@@ -190,6 +288,7 @@ export default function Organize() {
   }
 
   async function autoArrange() {
+    manuallyRemovedTaskIds.current.clear();
     setIsReplacement(isReplacement || blocks.length > 0);
     await loadProposal();
   }
@@ -204,6 +303,7 @@ export default function Organize() {
         await approve(todayKey, draftBlocks);
       }
       await fetchBlocks();
+      planApprovedAt.current = new Date();
       setPhase("done");
     } catch (saveError) {
       if (saveError instanceof Error && saveError.message === "already_approved") {
@@ -254,18 +354,49 @@ export default function Organize() {
           <h1 className="organize-title">Organize</h1>
           <p className="organize-date">{formatLongDate(today)}</p>
         </div>
-        <div className="organize-header-actions">
-          <button type="button" className="organize-secondary-button" onClick={() => void autoArrange()}>
-            <Sparkles size={16} /> Auto-arrange
-          </button>
-          <button
-            type="button"
-            className="organize-primary-button"
-            onClick={() => void savePlan()}
-            disabled={phase === "saving"}
-          >
-            <Check size={17} /> {phase === "saving" ? "Saving…" : isReplacement ? "Save changes" : "Save plan"}
-          </button>
+        <div className="organize-header-tools">
+          <fieldset className="organize-window">
+            <legend>Arrange between</legend>
+            <label>
+              <span>Start</span>
+              <input
+                type="time"
+                value={scheduleStart}
+                onChange={(event) => setScheduleStart(event.target.value)}
+                onInput={(event) => setScheduleStart(event.currentTarget.value)}
+                aria-label="Auto-arrange start time"
+              />
+            </label>
+            <span className="organize-window-separator">to</span>
+            <label>
+              <span>End</span>
+              <input
+                type="time"
+                value={scheduleEnd}
+                onChange={(event) => setScheduleEnd(event.target.value)}
+                onInput={(event) => setScheduleEnd(event.currentTarget.value)}
+                aria-label="Auto-arrange end time"
+              />
+            </label>
+          </fieldset>
+          <div className="organize-header-actions">
+            <button
+              type="button"
+              className="organize-secondary-button"
+              onClick={() => void autoArrange()}
+              disabled={!hasValidWindow}
+            >
+              <Sparkles size={16} /> Auto-arrange
+            </button>
+            <button
+              type="button"
+              className="organize-primary-button"
+              onClick={() => void savePlan()}
+              disabled={phase === "saving"}
+            >
+              <Check size={17} /> {phase === "saving" ? "Saving…" : isReplacement ? "Save changes" : "Save plan"}
+            </button>
+          </div>
         </div>
       </header>
 
@@ -273,8 +404,11 @@ export default function Organize() {
         <div className="organize-notice" role="status">
           <AlertTriangle size={18} />
           <div>
-            <strong>Your calendar is full, but your plan is still yours.</strong>
-            <span>Add tasks below and choose exactly where they should go—even if they overlap a commitment.</span>
+            <strong>Your day is booked from 8 AM to 8 PM, but it still belongs to you.</strong>
+            <span>
+              Plan your whole life here—not just work. Place anything that matters where it belongs, even if it
+              overlaps a commitment.
+            </span>
           </div>
         </div>
       ) : null}
@@ -288,7 +422,37 @@ export default function Organize() {
               <h2>Tasks</h2>
               <p>{queuedTasks.length} waiting to be placed</p>
             </div>
-            <span className="organize-count">{queuedTasks.length}</span>
+            <div className="organize-task-tools">
+              <label className="organize-sort-control">
+                <span>Sort tasks</span>
+                <select
+                  value={taskSort}
+                  onChange={(event) => setTaskSort(event.target.value as OrganizeTaskSort)}
+                  aria-label="Sort tasks"
+                >
+                  <option value="priority">Priority</option>
+                  <option value="list">List</option>
+                </select>
+              </label>
+              {taskSort === "list" && taskGroups.length > 0 ? (
+                <label className="organize-sort-control">
+                  <span>List first</span>
+                  <select
+                    value={prioritizedFilterKey}
+                    onChange={(event) => setPrioritizedFilterKey(event.target.value)}
+                    aria-label="Prioritize task list"
+                  >
+                    <option value="">All lists</option>
+                    {taskGroups.filter((group) => group.kind !== "goal").map((group) => (
+                      <option key={group.key} value={group.key}>
+                        {group.kind === "list" ? `↳ ${group.label}` : group.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+              <span className="organize-count">{queuedTasks.length}</span>
+            </div>
           </div>
 
           <div className="organize-task-list">
@@ -307,7 +471,9 @@ export default function Organize() {
                         {priorityLabel(task)}
                       </span>
                       <span><Clock3 size={13} /> {task.estimated_minutes || 30} min</span>
-                      {task.list_name ? <span>{task.list_name}</span> : null}
+                      {task.parent_list_name || task.list_name ? (
+                        <span>{[task.parent_list_name, task.list_name].filter(Boolean).join(" › ")}</span>
+                      ) : null}
                     </div>
                   </div>
                   <button
@@ -328,7 +494,7 @@ export default function Organize() {
           <div className="organize-panel-heading organize-schedule-heading">
             <div>
               <h2>Today&apos;s schedule</h2>
-              <p>{workStart || "09:00"} – {workEnd || "18:00"} · {draftBlocks.length} flexible block{draftBlocks.length === 1 ? "" : "s"}</p>
+              <p>{scheduleStart} – {scheduleEnd} · {draftBlocks.length} flexible block{draftBlocks.length === 1 ? "" : "s"}</p>
             </div>
             <CalendarDays size={19} />
           </div>

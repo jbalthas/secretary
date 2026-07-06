@@ -30,5 +30,10 @@ class ScheduledBlockRead(BaseModel):
     end_dt: datetime
     date_key: str
     approved_at: datetime
+    completed: bool
     conflict_with: str | None = None
     model_config = {"from_attributes": True}
+
+
+class ScheduledBlockUpdate(BaseModel):
+    completed: bool

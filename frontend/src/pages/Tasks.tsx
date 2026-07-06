@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useTasks } from "../hooks/useTasks";
 import { useGoals } from "../hooks/useGoals";
+import { useTaskLists } from "../hooks/useTaskLists";
 import TaskCard from "../components/TaskCard";
 import TasksHero from "../components/TasksHero";
 import MomentumRing from "../components/MomentumRing";
 import TaskDrawer from "../components/TaskDrawer";
 import FAB from "../components/FAB";
+import { buildTaskFilters, taskMatchesFilter } from "../lib/taskFilters";
 import type { Task, TaskCreate, Priority } from "../types/task";
 
 type Filter = "pending" | "completed";
@@ -33,25 +35,19 @@ function sortTasks(tasks: Task[], sort: Sort): Task[] {
 export default function Tasks() {
   const { tasks, createTask, patchTask, deleteTask } = useTasks();
   const { goals } = useGoals();
+  const { listGroups, refresh: refreshLists } = useTaskLists();
   const [filter, setFilter] = useState<Filter>("pending");
   const [sort, setSort] = useState<Sort>("due");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [activeList, setActiveList] = useState<string | null>(null);
+  const [activeFilterKey, setActiveFilterKey] = useState<string | null>(null);
 
-  const goalListById = new Map(goals.map((g) => [g.id, g.list_name]));
-  function listsForTask(t: Task): string[] {
-    const lists: string[] = [];
-    if (t.list_name) lists.push(t.list_name);
-    const goalList = t.goal_id != null ? goalListById.get(t.goal_id) : null;
-    if (goalList && goalList !== t.list_name) lists.push(goalList);
-    return lists;
-  }
-
-  const listNames = Array.from(new Set(tasks.flatMap(listsForTask)));
-
-  const listFiltered = activeList
-    ? tasks.filter((t) => listsForTask(t).includes(activeList))
+  const taskFilters = buildTaskFilters(tasks, goals);
+  const activeTaskFilter = taskFilters.find(
+    (taskFilter) => taskFilter.key === activeFilterKey
+  );
+  const listFiltered = activeTaskFilter
+    ? tasks.filter((task) => taskMatchesFilter(task, activeTaskFilter, goals))
     : tasks;
   const filtered = listFiltered.filter((t) =>
     filter === "pending" ? !t.completed : t.completed
@@ -71,6 +67,7 @@ export default function Tasks() {
     } else {
       await createTask(body);
     }
+    await refreshLists();
   }
 
   return (
@@ -91,22 +88,54 @@ export default function Tasks() {
         />
       )}
 
-      {listNames.length > 0 && (
-        <div className="list-chips">
+      {taskFilters.length > 0 && (
+        <div className="list-filter-panel">
           <button
-            className={"list-chip" + (!activeList ? " active" : "")}
-            onClick={() => setActiveList(null)}
+            className={"list-chip" + (!activeFilterKey ? " active" : "")}
+            onClick={() => setActiveFilterKey(null)}
           >All</button>
-          {listNames.map((l) => (
-            <button
-              key={l}
-              className={"list-chip" + (activeList === l ? " active" : "")}
-              onClick={() => setActiveList(l)}
-            >{l}</button>
-          ))}
+          {taskFilters
+            .filter((item) => item.kind === "parent-list")
+            .map((parentFilter) => {
+              const children = taskFilters.filter(
+                (item) => item.kind === "list" && item.parentName === parentFilter.label
+              );
+              return (
+                <div className="list-filter-group" key={parentFilter.key}>
+                  <button
+                    className={"list-chip list-chip-parent" + (activeFilterKey === parentFilter.key ? " active" : "")}
+                    onClick={() => setActiveFilterKey(parentFilter.key)}
+                  >{parentFilter.label}</button>
+                  {children.length > 0 && (
+                    <div className="list-filter-children">
+                      {children.map((child) => (
+                        <button
+                          key={child.key}
+                          className={"list-chip list-chip-child" + (activeFilterKey === child.key ? " active" : "")}
+                          onClick={() => setActiveFilterKey(child.key)}
+                        >{child.label}</button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          {taskFilters.some((item) => item.kind === "goal") && (
+            <div className="list-filter-group list-filter-goals">
+              <span className="list-filter-label">Goals</span>
+              <div className="list-filter-children">
+                {taskFilters.filter((item) => item.kind === "goal").map((goalFilter) => (
+                  <button
+                    key={goalFilter.key}
+                    className={"list-chip list-chip-child" + (activeFilterKey === goalFilter.key ? " active" : "")}
+                    onClick={() => setActiveFilterKey(goalFilter.key)}
+                  >{goalFilter.label}</button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
-
       <div className="filter-sort-row">
         <div className="filter-tabs">
           <button
@@ -175,6 +204,7 @@ export default function Tasks() {
         open={drawerOpen}
         task={editingTask}
         goals={goals}
+        listGroups={listGroups}
         onClose={() => setDrawerOpen(false)}
         onSave={handleSave}
         onDelete={deleteTask}

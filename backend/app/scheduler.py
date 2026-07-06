@@ -100,6 +100,25 @@ def schedule_stall_check(hour: int = 8, minute: int = 5) -> None:
     )
 
 
+def remove_checkin() -> None:
+    try:
+        scheduler.remove_job("mid_day_checkin")
+    except Exception:
+        pass
+
+
+def schedule_checkin(hour: int, minute: int) -> None:
+    from apscheduler.triggers.cron import CronTrigger
+    from app.services.checkin_service import send_checkin_notification
+    scheduler.add_job(
+        send_checkin_notification,
+        CronTrigger(hour=hour, minute=minute, timezone=settings.timezone),
+        id="mid_day_checkin",
+        replace_existing=True,
+        misfire_grace_time=None,
+    )
+
+
 def schedule_calendar_sync() -> None:
     from apscheduler.triggers.interval import IntervalTrigger
     from app.services.sync import sync_calendar
@@ -121,4 +140,33 @@ def schedule_outlook_ics_sync() -> None:
         id="outlook_ics_sync",
         replace_existing=True,
         misfire_grace_time=300,
+    )
+
+
+def schedule_weekly_snapshot() -> None:
+    from apscheduler.triggers.cron import CronTrigger
+    from app.services.snapshot_service import take_progress_snapshot
+    scheduler.add_job(
+        take_progress_snapshot,
+        CronTrigger(
+            day_of_week="sun",
+            hour=23,
+            minute=50,
+            timezone=settings.timezone,
+        ),
+        id="snapshot_progress",
+        replace_existing=True,
+        misfire_grace_time=None,
+    )
+
+
+def schedule_snapshot_cleanup() -> None:
+    from apscheduler.triggers.cron import CronTrigger
+    from app.services.snapshot_service import cleanup_progress_snapshots
+    scheduler.add_job(
+        cleanup_progress_snapshots,
+        CronTrigger(day=1, hour=0, minute=10, timezone=settings.timezone),
+        id="snapshot_cleanup",
+        replace_existing=True,
+        misfire_grace_time=None,
     )

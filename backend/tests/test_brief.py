@@ -15,7 +15,7 @@ Plan 02 must import TTSClient at module top of app/services/brief.py:
 Plan 03 must expose get_tts_enabled() in app/services/tts_settings.py.
 Plan 02 must add build_brief_speech() function to app/services/brief.py.
 """
-from datetime import datetime, timezone, date
+from datetime import datetime, timezone, date, timedelta
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -279,3 +279,98 @@ def test_brief_tts_failure_swallowed():
             pytest.fail(f"send_daily_brief raised unexpectedly: {exc}")
 
     mock_pushover_instance.send.assert_called_once()
+
+
+def test_build_tomorrow_speech_reads_saved_itinerary_in_order():
+    from app.models import Task
+    from app.models.calendar import CalendarEvent
+    from app.models.plan import ScheduledBlock
+    from app.services.brief import build_tomorrow_speech
+
+    SyncSession = _make_sync_session()
+    tomorrow = datetime.now(timezone.utc).date() + timedelta(days=1)
+    midnight = datetime.combine(tomorrow, datetime.min.time(), tzinfo=timezone.utc)
+
+    with SyncSession() as s:
+        s.query(ScheduledBlock).filter_by(date_key=tomorrow.isoformat()).delete()
+        s.query(CalendarEvent).filter_by(google_id="tomorrow-calendar-event").delete()
+        s.query(Task).filter(Task.title.in_(["Work out", "Already scheduled", "Completed task"])).delete(
+            synchronize_session=False
+        )
+        s.add_all([
+            Task(title="Work out", due_date=midnight + timedelta(hours=8), completed=False),
+            Task(title="Already scheduled", due_date=midnight + timedelta(hours=10), completed=False),
+            Task(title="Completed task", due_date=midnight + timedelta(hours=8, minutes=30), completed=True),
+            ScheduledBlock(
+                title="Already scheduled",
+                start_dt=midnight + timedelta(hours=10),
+                end_dt=midnight + timedelta(hours=11),
+                date_key=tomorrow.isoformat(),
+            ),
+            CalendarEvent(
+                google_id="tomorrow-calendar-event",
+                title="Dentist appointment",
+                start_dt=midnight + timedelta(hours=9, minutes=30),
+                end_dt=midnight + timedelta(hours=10),
+                all_day=False,
+                cancelled=False,
+            ),
+        ])
+        s.commit()
+
+    with patch("app.services.brief._Session", SyncSession), patch(
+        "app.services.brief.app_settings.timezone", "UTC"
+    ):
+        speech = build_tomorrow_speech()
+
+    assert speech.startswith("Tomorrow, you have ")
+    assert "at 8 A M, Work out" in speech
+    assert "at 9:30 A M, Dentist appointment" in speech
+    assert speech.count("Already scheduled") == 1
+    assert "Completed task" not in speech
+    assert speech.index("Work out") < speech.index("Dentist appointment")
+    assert speech.index("Dentist appointment") < speech.index("Already scheduled")
+
+
+def test_build_tomorrow_speech_empty():
+    from app.models import Task
+    from app.models.calendar import CalendarEvent
+    from app.models.plan import ScheduledBlock
+    from app.services.brief import build_tomorrow_speech
+
+    SyncSession = _make_sync_session()
+    tomorrow = datetime.now(timezone.utc).date() + timedelta(days=1)
+    day_start = datetime.combine(tomorrow, datetime.min.time(), tzinfo=timezone.utc)
+    day_end = day_start + timedelta(days=1)
+
+    with SyncSession() as s:
+        s.query(ScheduledBlock).filter_by(date_key=tomorrow.isoformat()).delete()
+        s.query(Task).filter(
+            (Task.due_date >= day_start) & (Task.due_date < day_end)
+        ).delete(synchronize_session=False)
+        s.query(CalendarEvent).filter(
+            (CalendarEvent.start_date == tomorrow.isoformat())
+            | ((CalendarEvent.start_dt >= day_start) & (CalendarEvent.start_dt < day_end))
+        ).delete(synchronize_session=False)
+        s.commit()
+
+    with patch("app.services.brief._Session", SyncSession), patch(
+        "app.services.brief.app_settings.timezone", "UTC"
+    ):
+        speech = build_tomorrow_speech()
+
+    assert speech == "You have nothing planned for tomorrow."
+
+
+def test_send_tomorrow_brief_casts_without_pushover():
+    from app.services.brief import send_tomorrow_brief
+
+    with patch("app.services.brief.build_tomorrow_speech", return_value="Tomorrow speech."), patch(
+        "app.services.tts_settings.get_tts_enabled", return_value=True
+    ), patch("app.services.brief.TTSClient") as MockTTS, patch(
+        "app.services.brief.PushoverClient"
+    ) as MockPushover:
+        send_tomorrow_brief()
+
+    MockTTS.return_value.speak.assert_called_once_with("Tomorrow speech.")
+    MockPushover.assert_not_called()

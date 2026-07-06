@@ -99,12 +99,12 @@ function titleCase(value: string): string {
 }
 
 export function resolveCategory(task: Task, goals: Goal[]): string {
-  const candidates = [task.list_name];
+  const candidates = [task.list_name, task.parent_list_name];
 
   if (task.goal_id != null) {
     const goal = goals.find((g) => g.id === task.goal_id);
     if (goal) {
-      candidates.push(goal.list_name);
+      candidates.push(goal.list_name, goal.parent_list_name);
     }
   }
 

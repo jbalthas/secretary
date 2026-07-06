@@ -22,6 +22,8 @@ from app.models.calendar import CalendarEvent
 from app.schemas.plan import ProposedBlock, ProposedDayPlan
 
 PRIORITY_ORDER = {"high": 0, "medium": 1, "low": 2}
+FULL_DAY_START = time(8, 0)
+FULL_DAY_END = time(20, 0)
 
 
 def _find_gaps(
@@ -136,7 +138,19 @@ def propose_day_plan(
     )
 
     gaps = _find_gaps(events, work_start, work_end, target_date, now, local_tz)
-    fully_booked = len(gaps) == 0
+
+    # "Fully booked" describes the person's day, not merely the narrower
+    # window used for automatic task placement. Only use that label when
+    # calendar commitments continuously cover 8 AM through 8 PM.
+    full_day_gaps = _find_gaps(
+        events,
+        FULL_DAY_START,
+        FULL_DAY_END,
+        target_date,
+        now=None,
+        local_tz=local_tz,
+    )
+    fully_booked = len(full_day_gaps) == 0
 
     if fully_booked:
         return ProposedDayPlan(

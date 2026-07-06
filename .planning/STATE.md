@@ -1,25 +1,27 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.0
-milestone_name: Phases — Ingest, Organize, Guide
-status: executing
-last_updated: "2026-06-18T15:28:54.210Z"
-last_activity: 2026-06-18
+milestone: v2.1
+milestone_name: Phases — Close the Loop
+status: verifying
+last_updated: "2026-07-06T01:30:10.235Z"
+last_activity: 2026-07-06
 progress:
-  total_phases: 11
-  completed_phases: 11
-  total_plans: 42
-  completed_plans: 42
+  total_phases: 9
+  completed_phases: 8
+  total_plans: 34
+  completed_plans: 33
 ---
 
 # Project State
 
 ## Current Position
 
-Phase: 11
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-06-18
+Phase: 16 (advisory-ingest-sync-review-ui) — EXECUTING
+Plan: 5 of 5
+Status: Phase complete — ready for verification
+Last activity: 2026-07-06
+
+> **v2.1 carry-over:** Phase 13 (update-loop-ui) left at plan 4 of 4 — Quick-update capture box + End-of-day rollup unfinished. Intentionally deferred at v2.2 start; resume separately if/when wanted.
 
 ---
 
@@ -27,7 +29,7 @@ Last activity: 2026-06-18
 
 **Core value:** One place to manage your schedule and tasks — reachable from any device, voice-controllable via Google Home, and proactive enough to push reminders before you have to think about them.
 
-**Current focus:** Phase 11 — goal-guided-guidance
+**Current focus:** Phase 16 — advisory-ingest-sync-review-ui
 
 ---
 
@@ -35,10 +37,29 @@ Last activity: 2026-06-18
 
 | Phase | Name | Requirements | Status |
 |-------|------|--------------|--------|
-| 8 | Goals + Ingest Backend | GOAL-01, GOAL-02, GOAL-03, GOAL-06, INGEST-01, INGEST-02, INGEST-04, INGEST-06, INGEST-07 | Not started |
-| 9 | Goals + Ingest UI | GOAL-04, GOAL-05, INGEST-03, INGEST-05 | Not started |
+| 8 | Goals + Ingest Backend | GOAL-01, GOAL-02, GOAL-03, GOAL-06, INGEST-01, INGEST-02, INGEST-04, INGEST-06, INGEST-07 | Complete |
+| 9 | Goals + Ingest UI | GOAL-04, GOAL-05, INGEST-03, INGEST-05 | Complete |
 | 10 | Day Auto-Organize | PLAN-01, PLAN-02 | Complete |
-| 11 | Goal-Guided Guidance | GUIDE-01, GUIDE-02, GUIDE-03 | Not started |
+| 11 | Goal-Guided Guidance | GUIDE-01, GUIDE-02, GUIDE-03 | Complete |
+
+---
+
+## v2.1 Phase Map
+
+| Phase | Name | Requirements | Status |
+|-------|------|--------------|--------|
+| 12 | Update Resolution Engine | UPDATE-02, UPDATE-03, NOTIF-07, INGEST-08 | Complete |
+| 13 | Update Loop UI | UPDATE-01, UPDATE-03, UPDATE-04, NOTIF-08 | In Progress (plan 4/4 pending) |
+
+---
+
+## v2.2 Phase Map
+
+| Phase | Name | Requirements | Status |
+|-------|------|--------------|--------|
+| 14 | Progression Substrate | PROG-01, PROG-02 | Not started |
+| 15 | Context Export + Advisor Prompt | EXPORT-01, EXPORT-02, EXPORT-03, EXPORT-04, EXPORT-05, EXPORT-06, PROMPT-01 | Not started |
+| 16 | Advisory Ingest + Sync Review UI | ADVISE-01, ADVISE-02, ADVISE-03, ADVISE-04, ADVISE-05, ADVISE-06, ADVISE-07, SYNC-01, SYNC-02 | Not started |
 
 ---
 
@@ -48,8 +69,23 @@ Last activity: 2026-06-18
 
 - Phase 7 added: Outlook Calendar ICS feed integration (separate concurrent effort, do not modify)
 - Phases 8–11 added: v2.0 Ingest, Organize, Guide (2026-06-15)
+- Phases 12–13 added: v2.1 Close the Loop (2026-06-22)
+- Phases 14–16 added: v2.2 LLM Advisory Loop (2026-06-29)
 
-### Decisions Made
+### v2.2 Key Architectural Decisions (from research)
+
+- **No new dependencies** — zero new Python packages or npm packages; stdlib + existing Pydantic v2 + existing React patterns cover all 18 requirements
+- **Migration chain** — Alembic HEAD is 0016; Phase 14 adds 0017 (goal_progress_snapshots + UNIQUE index + retention cleanup job); Phase 16 adds 0018 (advisory_rationale TEXT NULL on goals + advisory_log table); write both migrations before `alembic upgrade head`
+- **Sync/async boundary** — snapshot_service.py MUST be sync (create_engine + sessionmaker, same brief.py pattern); export_service.py is async (FastAPI route only); advisory ingest functions are async (extend existing ingest_service.py)
+- **payload_type discriminator** — `payload_type: Literal["standard"] = "standard"` added to IngestPayload (default preserves backward compat); `AdvisoryPayload` has `payload_type: Literal["advisory"]` as required field; no schema_version bump for advisory
+- **Advisory scope** — advisory payload writes ONLY to Goal.target_date, Goal.priority_rank, Milestone.target_date, Milestone.done (forward-only), Milestone.title; goal creation/status/title/type and all task fields are blocked by schema omission + extra="forbid"
+- **advisory_id idempotency** — AdvisoryLog table (migration 0018) mirrors UpdateLog pattern; advisory payload carries advisory_id; confirm checks AdvisoryLog before applying
+- **session.flush() guard** — _apply_advisory() must call await session.flush() after goal upserts, then build goal_key_to_id map; extract as shared _flush_and_build_goal_map() helper reused by both apply_import and _apply_advisory
+- **rationale required** — rationale: str (not Optional) on every GoalAdjustment and MilestoneAdjustment; validation rejects advisory payloads where any item omits rationale
+- **PROMPT-01 placeholder** — advisorPrompt.ts delivered in Phase 15 with placeholder schema block; schema block regenerated from AdvisoryPayload.model_json_schema() at end of Phase 16; plan-phase 15 must call this out
+- **No server-side LLM** — CI guard: grep -r "anthropic\|openai\|litellm" backend/app/ must return zero; this is a locked hard constraint, not a preference
+
+### Decisions Made (prior milestones — preserved)
 
 - APScheduler 3.x (not 4.x alpha) — SQLAlchemyJobStore for persistence, AsyncIOScheduler for FastAPI event loop compatibility
 - Single uvicorn worker only — multiple workers cause duplicate APScheduler fires
@@ -106,6 +142,37 @@ Last activity: 2026-06-18
 - [Phase 10]: [10-04] fully_booked has two causes (packed vs. past work-hours end); Organize empty-state copy branches on isAfterWorkHours(workEnd) — frontend-only, no schema change
 - [Phase 11]: [11-01] completed_at nullable no server_default; stall_threshold_days coalesces None->7 on read; Wave 0 test stubs use deferred imports
 - [Phase 11-goal-guided-guidance]: [11-02] get_stalled_goals() is public API for tests; send_stall_nudge() returns False on rate-limit; brief goal queries inside existing _Session block
+- [v2.1 roadmap]: UPDATE-03 spans Phases 12+13 — Phase 12 owns the backend ambiguity signal (return status + candidates), Phase 13 owns the frontend confirmation UI; requirement assigned to Phase 13 (observable user behavior)
+- [v2.1 roadmap]: Check-in Pushover notification includes a deep-link URL (app relative path /today?update=1); no new dependency — URL string built in Python
+- [v2.1 roadmap]: INGEST-08 extends existing ingest Pydantic schema with a schema_version Literal bump or new payload_type discriminator; server only validates JSON, no LLM parsing
+- [v2.1 roadmap]: No new Alembic migration needed for NOTIF-07/08 if check-in time stored in existing app_settings table (new nullable columns); migration needed if new columns added — continue chain from 0011+
+- [Phase 12-01]: [12-01] Wave 0 test strategy: 10 RED tests in test_updates.py, deferred imports prevent collection errors, schedule_checkin stub in scheduler.py, check-in lifespan block logs failures (NOTIF-07 guard)
+- [Phase 12-03]: [12-03] checkin_service.py uses module-alias import (import app.services.pushover as _pushover) not from-import, so unittest.mock.patch on app.services.pushover.PushoverClient intercepts the runtime reference
+- [Phase 12-02]: [12-02] Strip intent/stop words from query before rapidfuzz matching — WRatio on full text dilutes score with 'done', 'with', etc.
+- [Phase 12-02]: [12-02] Tie-break: if multiple candidates score >= CONFIDENT_THRESHOLD, return ambiguous — prevents wrong pick on near-duplicate titles like 'Team sync A' vs 'Team sync B'
+- [Phase 12-04]: drop reuses completed=True (no separate drop flag/column) — Phase 13 slipped-vs-done rollup must treat completed=True as ambiguous
+- [Phase 12-04]: GET /tasks/{task_id} added to tasks router — test verification required it, omitted from plan
+- [Phase 13]: isAfterWorkHours uses >= boundary for exact-minute match; deriveRollup treats completed=true as done per UI-SPEC (Phase 12-04 ambiguity noted in code)
+- [Phase 13]: confirmed_id/confirmed_type/confirmed_action added to UpdateRequest (optional); confirmed_id bypasses fuzzy match for UPDATE-03 confirm flow
+- [Phase 13]: [13-02] reschedule=tomorrow via timedelta(days=1) from utc now; delta-preserving for blocks; due_date for tasks
+- [Phase 13]: [13-02] check_in_enabled nullable Boolean; None coalesces to True; GET check-in-time returns 'enabled' field (plans 03/04 wire the toggle)
+- [Phase 13-update-loop-ui]: useUpdate hook is stateless — Today.tsx owns all update-flow state (text, phase, candidates, candStatus, updError)
+- [Phase 13-update-loop-ui]: CandidateCard uses local Set<number> for skipped candidates — avoids lifting skip state to Today.tsx
+- [Phase 15]: [15-01] Wave 0 RED scaffold — deferred export_service import inside test body + triple _Session patch (export_service/brief/guidance_service) to one test Session; 8 tests; test_no_llm_imports locks the no-server-side-LLM constraint
+- [Phase 15]: [15-01] export bundle contract: build_export_bundle() -> {markdown, session_id, generated_at}; markdown starts "# Advisor Brief"; _velocity_label thresholds: +10 accelerating, -5 stalling, <2 entries no_data
+- [Phase 15]: [15-01] advisorPrompt.ts ships literal [SCHEMA BLOCK]; Phase 16 one-line-replaces with AdvisoryPayload.model_json_schema() — do NOT hand-write schema or create AdvisoryPayload in Phase 15
+- [Phase 15]: [15-02] export bundle is SYNC (brief.py create_engine+sessionmaker boilerplate); GET /api/v1/export/bundle returns BundleResponse{markdown,session_id,generated_at}, markdown starts "# Advisor Brief"; all ORM access inside one `with _Session()` block (lazy=selectin); 8/8 export tests green
+- [Phase 15]: [15-02] calendar load renders all 7 days (today..+6) with explicit 0 counts, COUNT only never titles (D-05); career/learning ordered first; token-budget truncation (>30000 est tokens) re-renders compact but never drops a whole goal (D-06/D-07)
+- [Phase 15]: [15-03] /advisor Sync page wired to live POST /snapshot + GET /bundle (both already existed from 15-02, contract matched — no backend work); useExport mirrors useIngest, fetchBundle returns markdown for one-click fetch-then-copy; Bot icon, Sync added as 6th bottom-nav tab before Settings (first nav addition; /ingest stays out of nav); paused at Task 3 human-verify checkpoint
+- [Phase 16-01]: AdvisoryPayload.generated_at required per locked interfaces spec (test payload adds it to the advisorPrompt.ts example dict, which omits it in its illustrative prose)
+- [Phase 16-01]: ADVISE-03 forbidden-ops gate proven at schema level via extra=forbid + field omission (no status/title/type on GoalAdjustment, no id on TaskCreation) — no service-layer blocking logic needed
+- [Phase 16-01]: Pre-existing unrelated failure in test_calendar.py::test_callback_stores_credentials (404 on /auth/google/callback) confirmed present before 16-01 changes; logged to deferred-items.md, not fixed (out of scope)
+- [Phase 16-03]: No .github/workflows/ existed prior to 16-03 — created ci.yml fresh with backend job (LLM-import grep guard + pytest), rather than assuming an existing workflow to extend
+- [Phase 16-03]: Reused _uid(prefix) unique-ID pattern from test_advisory_service.py (16-02) in test_advisory_routes.py to avoid cross-test DB collisions; confirmed shared session-scoped test DB pollution/ordering flakiness (test_brief.py, test_plan.py) is pre-existing and unrelated to 16-03 files, logged to deferred-items.md
+- [Phase 16-04]: Manual renderHook harness (react-dom/client createRoot + react-dom/test-utils act, no React Testing Library) for useAdvisory.test.ts — RTL is not an existing dependency and CLAUDE.md forbids adding new ones
+- [Phase 16-04]: Milestone row identity uses the backend's diff external_key shape exactly (`${goal_external_key}/${title}`); new_tasks row identity uses the backend's PREVIEW-only synthetic key (`advisory-PREVIEW-{index}`) since new tasks have no stable key pre-confirm — both prevent preview/confirm-time filter drift
+- [Phase 16-04]: AdvisoryResult.created/updated use the key "tasks" (not "new_tasks") per advisory_service.apply_advisory — success summary counts read res.created.tasks/res.updated.tasks accordingly
+- [Phase 16-05]: advisorPrompt.ts [SCHEMA BLOCK] replaced with real AdvisoryPayload.model_json_schema() output via new backend/scripts/regen_advisor_schema.py; milestone rename now documented as new_title (matched by goal_external_key+title); prompt echo instruction requires both session_id AND generated_at for the self-contained 16-04 staleness check
 
 ### Open Questions (Live Verification Required)
 
@@ -114,6 +181,7 @@ Last activity: 2026-06-18
 - Does pychromecast work with specific Google Home/Nest device? (Phase 6 fallback: Home Assistant)
 - Stall threshold: 7 vs 14 days — make it a user setting, not hardcoded (decide in Phase 11)
 - `user_timezone` as explicit DB setting vs. relying on Pi system tz (decide in Phase 10)
+- Current Alembic HEAD: verify latest migration number before writing Phase 12 migrations (known: 0011+ from task-lists quick task)
 
 ### Blockers
 
@@ -129,6 +197,11 @@ None
 | 260617-bvj | Fix task→goal unlink: send goal_id explicitly (null) from TaskDrawer; widen TaskCreate type; backend regression test | 2026-06-17 | a3f65fa | [260617-bvj-fix-task-to-goal-unlink-in-taskdrawer-se](./quick/260617-bvj-fix-task-to-goal-unlink-in-taskdrawer-se/) |
 | 260617-ldm | Add per-task estimated_minutes (Duration) field: backend TaskCreate schema + frontend types + TaskDrawer Collapsible input; planner block sizing without re-ingest | 2026-06-17 | 361915a | [260617-ldm-add-per-task-estimated-minutes-duration-](./quick/260617-ldm-add-per-task-estimated-minutes-duration-/) |
 | 260618-dbv | Add task lists (list_name nullable string): migration 0011, model, schemas, GET /tasks/lists, list_name filter on GET /tasks/, TaskDrawer autocomplete input, Tasks page chip row filter | 2026-06-18 | 5d6bbd5 | [260618-dbv-add-task-lists-a-simple-list-name-string](./quick/260618-dbv-add-task-lists-a-simple-list-name-string/) |
+| 260618-mlt | Let Organize prioritize a specifically selected task list | 2026-06-18 | pending | [260618-mlt-let-organize-prioritize-a-specifically-s](./quick/260618-mlt-let-organize-prioritize-a-specifically-s/) |
+| 260619-hier | Add hierarchical umbrella lists across tasks, goals, ingest, filters, and Organize | 2026-06-19 | pending | [260619-hier-hierarchical-umbrella-lists](./quick/260619-hier-hierarchical-umbrella-lists/) |
+| 260619-u0n | Include tomorrow's due tasks in the Google Home briefing | 2026-06-20 | eddb8b2 | [260619-u0n-include-tomorrow-s-due-tasks-in-the-goog](./quick/260619-u0n-include-tomorrow-s-due-tasks-in-the-goog/) |
+| 260624-kmx | Redesign Today page into a Now view: hero next-best task card, momentum strip, timeline rail with now-marker | 2026-06-24 | b30c1db | [260624-kmx-redesign-today-page-into-a-now-view-hero](./quick/260624-kmx-redesign-today-page-into-a-now-view-hero/) |
+| 260630-j83 | Redesign Tasks page into card-based layout: category-colored cards, Focus-now hero, momentum ring, completed-state polish; responsive laptop/desktop (centered, horizontal hero banner, 3-col grid) | 2026-06-30 | 4c143b4 | [260630-j83-redesign-tasks-page-ui-into-card-based-l](./quick/260630-j83-redesign-tasks-page-ui-into-card-based-l/) |
 
 ### Todos
 
@@ -138,5 +211,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-06-18T14:48:15.194Z
-Next action: Run `/gsd:plan-phase 8` to break Phase 8 (Goals + Ingest Backend) into executable plans
+Last session: 2026-07-06T01:30:10.231Z
+Next action: Run /gsd:plan-phase 15 — context captured (15-CONTEXT.md). Advisory scope: approval MAY create new tasks (ADVISE-08, create-only)

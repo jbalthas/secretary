@@ -10,6 +10,7 @@ export interface Task {
   recurrence_cron?: string;
   estimated_minutes?: number | null;
   list_name?: string | null;
+  parent_list_name?: string | null;
   completed: boolean;
   goal_id?: number | null;
   created_at: string;
@@ -25,6 +26,7 @@ export interface TaskCreate {
   recurrence_cron?: string;
   estimated_minutes?: number | null;
   list_name?: string | null;
+  parent_list_name?: string | null;
   goal_id?: number | null;
 }
 

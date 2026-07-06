@@ -5,7 +5,7 @@ const API = "/api/v1/plan";
 
 export function usePlan(dateKey: string) {
   const [blocks, setBlocks] = useState<ScheduledBlock[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   async function fetchBlocks() {
     setLoading(true);
@@ -17,8 +17,15 @@ export function usePlan(dateKey: string) {
     }
   }
 
-  async function propose(date: string): Promise<ProposedDayPlan | null> {
-    const res = await fetch(`${API}/propose?date=${date}`);
+  async function propose(
+    date: string,
+    workStart?: string,
+    workEnd?: string,
+  ): Promise<ProposedDayPlan | null> {
+    const params = new URLSearchParams({ date });
+    if (workStart) params.set("work_start", workStart);
+    if (workEnd) params.set("work_end", workEnd);
+    const res = await fetch(`${API}/propose?${params.toString()}`);
     return res.ok ? await res.json() : null;
   }
 
@@ -42,7 +49,18 @@ export function usePlan(dateKey: string) {
   }
 
   async function deleteBlock(id: number) {
-    await fetch(`${API}/blocks/${id}`, { method: "DELETE" });
+    const res = await fetch(`${API}/blocks/${id}`, { method: "DELETE" });
+    if (!res.ok) throw new Error("Could not delete plan block");
+    await fetchBlocks();
+  }
+
+  async function patchBlock(id: number, completed: boolean) {
+    const res = await fetch(`${API}/blocks/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ completed }),
+    });
+    if (!res.ok) throw new Error("Could not update plan block");
     await fetchBlocks();
   }
 
@@ -51,5 +69,5 @@ export function usePlan(dateKey: string) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateKey]);
 
-  return { blocks, loading, fetchBlocks, propose, approve, replan, deleteBlock };
+  return { blocks, loading, fetchBlocks, propose, approve, replan, deleteBlock, patchBlock };
 }
