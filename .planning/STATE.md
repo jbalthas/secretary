@@ -2,8 +2,8 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Phases — Close the Loop
-status: executing
-last_updated: "2026-07-06T01:25:48.849Z"
+status: verifying
+last_updated: "2026-07-06T01:30:10.235Z"
 last_activity: 2026-07-06
 progress:
   total_phases: 9
@@ -18,7 +18,7 @@ progress:
 
 Phase: 16 (advisory-ingest-sync-review-ui) — EXECUTING
 Plan: 5 of 5
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-07-06
 
 > **v2.1 carry-over:** Phase 13 (update-loop-ui) left at plan 4 of 4 — Quick-update capture box + End-of-day rollup unfinished. Intentionally deferred at v2.2 start; resume separately if/when wanted.
@@ -172,6 +172,7 @@ Last activity: 2026-07-06
 - [Phase 16-04]: Manual renderHook harness (react-dom/client createRoot + react-dom/test-utils act, no React Testing Library) for useAdvisory.test.ts — RTL is not an existing dependency and CLAUDE.md forbids adding new ones
 - [Phase 16-04]: Milestone row identity uses the backend's diff external_key shape exactly (`${goal_external_key}/${title}`); new_tasks row identity uses the backend's PREVIEW-only synthetic key (`advisory-PREVIEW-{index}`) since new tasks have no stable key pre-confirm — both prevent preview/confirm-time filter drift
 - [Phase 16-04]: AdvisoryResult.created/updated use the key "tasks" (not "new_tasks") per advisory_service.apply_advisory — success summary counts read res.created.tasks/res.updated.tasks accordingly
+- [Phase 16-05]: advisorPrompt.ts [SCHEMA BLOCK] replaced with real AdvisoryPayload.model_json_schema() output via new backend/scripts/regen_advisor_schema.py; milestone rename now documented as new_title (matched by goal_external_key+title); prompt echo instruction requires both session_id AND generated_at for the self-contained 16-04 staleness check
 
 ### Open Questions (Live Verification Required)
 
@@ -210,5 +211,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-07-06T01:25:48.845Z
+Last session: 2026-07-06T01:30:10.231Z
 Next action: Run /gsd:plan-phase 15 — context captured (15-CONTEXT.md). Advisory scope: approval MAY create new tasks (ADVISE-08, create-only)
