@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Phases — Close the Loop
 status: executing
-last_updated: "2026-07-06T01:19:48.556Z"
+last_updated: "2026-07-06T01:25:48.849Z"
 last_activity: 2026-07-06
 progress:
   total_phases: 9
@@ -17,7 +17,7 @@ progress:
 ## Current Position
 
 Phase: 16 (advisory-ingest-sync-review-ui) — EXECUTING
-Plan: 4 of 5
+Plan: 5 of 5
 Status: Ready to execute
 Last activity: 2026-07-06
 
@@ -169,6 +169,9 @@ Last activity: 2026-07-06
 - [Phase 16-01]: Pre-existing unrelated failure in test_calendar.py::test_callback_stores_credentials (404 on /auth/google/callback) confirmed present before 16-01 changes; logged to deferred-items.md, not fixed (out of scope)
 - [Phase 16-03]: No .github/workflows/ existed prior to 16-03 — created ci.yml fresh with backend job (LLM-import grep guard + pytest), rather than assuming an existing workflow to extend
 - [Phase 16-03]: Reused _uid(prefix) unique-ID pattern from test_advisory_service.py (16-02) in test_advisory_routes.py to avoid cross-test DB collisions; confirmed shared session-scoped test DB pollution/ordering flakiness (test_brief.py, test_plan.py) is pre-existing and unrelated to 16-03 files, logged to deferred-items.md
+- [Phase 16-04]: Manual renderHook harness (react-dom/client createRoot + react-dom/test-utils act, no React Testing Library) for useAdvisory.test.ts — RTL is not an existing dependency and CLAUDE.md forbids adding new ones
+- [Phase 16-04]: Milestone row identity uses the backend's diff external_key shape exactly (`${goal_external_key}/${title}`); new_tasks row identity uses the backend's PREVIEW-only synthetic key (`advisory-PREVIEW-{index}`) since new tasks have no stable key pre-confirm — both prevent preview/confirm-time filter drift
+- [Phase 16-04]: AdvisoryResult.created/updated use the key "tasks" (not "new_tasks") per advisory_service.apply_advisory — success summary counts read res.created.tasks/res.updated.tasks accordingly
 
 ### Open Questions (Live Verification Required)
 
@@ -207,5 +210,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-07-06T01:19:48.552Z
+Last session: 2026-07-06T01:25:48.845Z
 Next action: Run /gsd:plan-phase 15 — context captured (15-CONTEXT.md). Advisory scope: approval MAY create new tasks (ADVISE-08, create-only)

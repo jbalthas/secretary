@@ -127,13 +127,13 @@
 - [x] **ADVISE-04**: User can preview an advisory payload as a per-item diff (entity, field, old → new value, rationale) with no DB writes
 - [x] **ADVISE-05**: User can confirm and have the accepted advisory changes applied in a single atomic transaction, idempotent on a stable `advisory_id` (AdvisoryLog), stamping `last_advisory_at`
 - [x] **ADVISE-06**: A top-level free-text `notes` field from the advisor is surfaced prominently before confirm and is never written to goal/milestone entities
-- [ ] **ADVISE-07**: User can accept/reject individual diff rows and confirm only the accepted subset
+- [x] **ADVISE-07**: User can accept/reject individual diff rows and confirm only the accepted subset
 - [x] **ADVISE-08**: An advisory payload can create *new* tasks (`title` required; optional `description`, `due_date`, `priority`, `estimated_minutes`), each linked to a goal by `external_key` and carrying a REQUIRED `rationale`. Created tasks surface as add-rows in the diff (ADVISE-04), are applied via the shared `apply_import` task-creation path (no fork) in the goals → milestones → tasks order, and are idempotent on a stable advisory-derived `external_key` so re-confirming the same `advisory_id` creates no duplicates
 
 ### Sync Review UI (SYNC)
 
-- [ ] **SYNC-01**: A dedicated `/advisor` page runs the full loop without navigating away — copy advisor prompt, copy export bundle, paste the LLM's JSON response, preview the diff, confirm — reusing the existing ingest UI patterns (`useIngest`, DiffGroup, error-list)
-- [ ] **SYNC-02**: The Sync page shows "last advisor sync: N days ago" and warns (non-blocking) when a pasted payload's `session_id` is stale (>7 days old)
+- [x] **SYNC-01**: A dedicated `/advisor` page runs the full loop without navigating away — copy advisor prompt, copy export bundle, paste the LLM's JSON response, preview the diff, confirm — reusing the existing ingest UI patterns (`useIngest`, DiffGroup, error-list)
+- [x] **SYNC-02**: The Sync page shows "last advisor sync: N days ago" and warns (non-blocking) when a pasted payload's `session_id` is stale (>7 days old)
 
 ### Advisor Prompt (PROMPT)
 
@@ -244,7 +244,7 @@
 | ADVISE-04 | Phase 16 — Advisory Ingest + Sync Review UI | Complete |
 | ADVISE-05 | Phase 16 — Advisory Ingest + Sync Review UI | Complete |
 | ADVISE-06 | Phase 16 — Advisory Ingest + Sync Review UI | Complete |
-| ADVISE-07 | Phase 16 — Advisory Ingest + Sync Review UI | Pending |
+| ADVISE-07 | Phase 16 — Advisory Ingest + Sync Review UI | Complete |
 | ADVISE-08 | Phase 16 — Advisory Ingest + Sync Review UI | Complete |
-| SYNC-01 | Phase 16 — Advisory Ingest + Sync Review UI | Pending |
-| SYNC-02 | Phase 16 — Advisory Ingest + Sync Review UI | Pending |
+| SYNC-01 | Phase 16 — Advisory Ingest + Sync Review UI | Complete |
+| SYNC-02 | Phase 16 — Advisory Ingest + Sync Review UI | Complete |
