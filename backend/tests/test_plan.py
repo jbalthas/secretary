@@ -407,3 +407,57 @@ def test_complete_block_persists_and_completes_linked_task():
     tasks = client.get("/api/v1/tasks/").json()
     linked = next(row for row in tasks if row["id"] == task["id"])
     assert linked["completed"] is True
+
+
+def test_patch_block_parent_task_id():
+    d = "2099-01-07"
+    task = client.post("/api/v1/tasks/", json={"title": "Sam's Club run"}).json()
+    approve_body = {
+        "date": d,
+        "blocks": [
+            {
+                "task_id": None,
+                "title": "Buy chicken",
+                "start_dt": f"{d}T09:00:00Z",
+                "end_dt": f"{d}T10:00:00Z",
+            },
+        ],
+    }
+    created = client.post("/api/v1/plan/approve", json=approve_body).json()
+    block_id = created[0]["id"]
+
+    r1 = client.patch(f"/api/v1/plan/blocks/{block_id}", json={"parent_task_id": task["id"]})
+    assert r1.status_code == 200, r1.text
+    assert r1.json()["parent_task_id"] == task["id"]
+
+    r2 = client.patch(f"/api/v1/plan/blocks/{block_id}", json={"parent_task_id": None})
+    assert r2.status_code == 200, r2.text
+    assert r2.json()["parent_task_id"] is None
+
+    reloaded = client.get(f"/api/v1/plan/blocks?date={d}").json()
+    assert reloaded[0]["parent_task_id"] is None
+
+
+def test_patch_block_parent_task_id_rejects_nested_parent():
+    d = "2099-01-08"
+    grandparent = client.post("/api/v1/tasks/", json={"title": "Grandparent task"}).json()
+    parent = client.post(
+        "/api/v1/tasks/",
+        json={"title": "Nested parent", "parent_task_id": grandparent["id"]},
+    ).json()
+    approve_body = {
+        "date": d,
+        "blocks": [
+            {
+                "task_id": None,
+                "title": "Some block",
+                "start_dt": f"{d}T09:00:00Z",
+                "end_dt": f"{d}T10:00:00Z",
+            },
+        ],
+    }
+    created = client.post("/api/v1/plan/approve", json=approve_body).json()
+    block_id = created[0]["id"]
+
+    r = client.patch(f"/api/v1/plan/blocks/{block_id}", json={"parent_task_id": parent["id"]})
+    assert r.status_code == 422
