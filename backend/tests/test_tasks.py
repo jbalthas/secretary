@@ -164,3 +164,54 @@ def test_hierarchical_lists_include_goal_inheritance():
         params={"parent_list_name": "Career", "list_name": "Optics"},
     )
     assert [task["id"] for task in optics_tasks.json()] == [linked["id"]]
+
+
+def test_nest_under_child_rejected():
+    grandparent = client.post("/api/v1/tasks/", json={"title": "Grandparent"}).json()
+    parent = client.post(
+        "/api/v1/tasks/", json={"title": "Parent", "parent_task_id": grandparent["id"]}
+    ).json()
+    candidate = client.post("/api/v1/tasks/", json={"title": "Candidate"}).json()
+
+    r = client.patch(f"/api/v1/tasks/{candidate['id']}", json={"parent_task_id": parent["id"]})
+    assert r.status_code == 422
+
+
+def test_nest_task_with_children_rejected():
+    parent_a = client.post("/api/v1/tasks/", json={"title": "Parent A"}).json()
+    client.post("/api/v1/tasks/", json={"title": "Child", "parent_task_id": parent_a["id"]})
+    parent_b = client.post("/api/v1/tasks/", json={"title": "Parent B"}).json()
+
+    r = client.patch(f"/api/v1/tasks/{parent_a['id']}", json={"parent_task_id": parent_b["id"]})
+    assert r.status_code == 422
+
+
+def test_no_completion_propagation():
+    parent = client.post("/api/v1/tasks/", json={"title": "Parent task"}).json()
+    child = client.post(
+        "/api/v1/tasks/", json={"title": "Child task", "parent_task_id": parent["id"]}
+    ).json()
+
+    r1 = client.patch(f"/api/v1/tasks/{parent['id']}", json={"completed": True})
+    assert r1.status_code == 200
+    child_check = client.get(f"/api/v1/tasks/{child['id']}").json()
+    assert child_check["completed"] is False
+
+    r2 = client.patch(f"/api/v1/tasks/{child['id']}", json={"completed": True})
+    assert r2.status_code == 200
+    assert r2.json()["completed"] is True
+    parent_check = client.get(f"/api/v1/tasks/{parent['id']}").json()
+    assert parent_check["completed"] is True
+
+
+def test_delete_parent_clears_children():
+    parent = client.post("/api/v1/tasks/", json={"title": "Parent to delete"}).json()
+    child = client.post(
+        "/api/v1/tasks/", json={"title": "Child of deleted", "parent_task_id": parent["id"]}
+    ).json()
+
+    r = client.delete(f"/api/v1/tasks/{parent['id']}")
+    assert r.status_code == 204
+
+    child_check = client.get(f"/api/v1/tasks/{child['id']}").json()
+    assert child_check["parent_task_id"] is None
