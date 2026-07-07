@@ -14,6 +14,7 @@ class TaskCreate(BaseModel):
     goal_id: int | None = None
     list_name: str | None = None
     parent_list_name: str | None = None
+    parent_task_id: int | None = None
 
 
 class TaskUpdate(TaskCreate):

@@ -1,14 +1,16 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, union, or_, and_
+from sqlalchemy import select, union, or_, and_, update as sa_update
 
 from app.db import get_session
 from app.models import Task
 from app.models.goal import Goal
+from app.models.plan import ScheduledBlock
 from app.schemas.task import TaskCreate, TaskUpdate, TaskRead
 from app.schemas.task_list import TaskListGroupRead
 from app.config import settings
 from app.scheduler import upsert_reminder, remove_reminder
+from app.services.task_hierarchy import get_valid_parent_task, assert_task_has_no_children
 
 router = APIRouter(prefix=f"{settings.api_prefix}/tasks", tags=["tasks"])
 
@@ -104,6 +106,8 @@ async def list_tasks(
 
 @router.post("/", response_model=TaskRead, status_code=201)
 async def create_task(body: TaskCreate, session: AsyncSession = Depends(get_session)):
+    if body.parent_task_id is not None:
+        await get_valid_parent_task(session, body.parent_task_id)
     task = Task(**body.model_dump())
     session.add(task)
     await session.commit()
@@ -126,8 +130,15 @@ async def update_task(task_id: int, body: TaskUpdate, session: AsyncSession = De
     task = await session.get(Task, task_id)
     if not task:
         raise HTTPException(404)
+    update_data = body.model_dump(exclude_unset=True)
+    if "parent_task_id" in update_data and update_data["parent_task_id"] is not None:
+        new_parent_id = update_data["parent_task_id"]
+        if new_parent_id == task_id:
+            raise HTTPException(422, detail="A task cannot be its own subtask.")
+        await get_valid_parent_task(session, new_parent_id)
+        await assert_task_has_no_children(session, task_id)
     was_completed = task.completed
-    for k, v in body.model_dump(exclude_unset=True).items():
+    for k, v in update_data.items():
         setattr(task, k, v)
     if task.completed and not was_completed:
         task.completed_at = datetime.now(timezone.utc)
@@ -145,6 +156,12 @@ async def delete_task(task_id: int, session: AsyncSession = Depends(get_session)
     task = await session.get(Task, task_id)
     if not task:
         raise HTTPException(404)
+    await session.execute(
+        sa_update(Task).where(Task.parent_task_id == task_id).values(parent_task_id=None)
+    )
+    await session.execute(
+        sa_update(ScheduledBlock).where(ScheduledBlock.parent_task_id == task_id).values(parent_task_id=None)
+    )
     await session.delete(task)
     await session.commit()
     remove_reminder(task_id)
