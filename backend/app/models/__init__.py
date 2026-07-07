@@ -1,6 +1,6 @@
 import enum
 from datetime import datetime, timezone, date
-from sqlalchemy import String, Boolean, DateTime, Date, Text, Enum as SAEnum, ForeignKey, Integer
+from sqlalchemy import String, Boolean, DateTime, Date, Text, Enum as SAEnum, ForeignKey, Integer, LargeBinary
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db import Base
 
@@ -74,6 +74,19 @@ class AdvisoryLog(Base):
     result_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+
+
+class GroupPhoto(Base):
+    __tablename__ = "group_photos"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    group_key: Mapped[str] = mapped_column(String(200), unique=True, nullable=False, index=True)
+    content_type: Mapped[str] = mapped_column(String(100), nullable=False)
+    data: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
     )
 
 
