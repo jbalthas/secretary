@@ -37,6 +37,9 @@ class Task(Base):
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     list_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
     parent_list_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    parent_task_id: Mapped[int | None] = mapped_column(
+        ForeignKey("tasks.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     goal: Mapped["Goal | None"] = relationship("Goal", back_populates="tasks", lazy="selectin")
 
 

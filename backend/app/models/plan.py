@@ -14,6 +14,9 @@ class ScheduledBlock(Base):
     task_id: Mapped[int | None] = mapped_column(
         ForeignKey("tasks.id", ondelete="SET NULL"), nullable=True
     )
+    parent_task_id: Mapped[int | None] = mapped_column(
+        ForeignKey("tasks.id", ondelete="SET NULL"), nullable=True
+    )
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     start_dt: Mapped[datetime] = mapped_column(UtcDateTime, nullable=False)
     end_dt: Mapped[datetime] = mapped_column(UtcDateTime, nullable=False)
