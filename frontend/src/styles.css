@@ -1518,7 +1518,9 @@ body {
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: center;
+  background: var(--surface);
 }
 .group-tile-placeholder {
   position: absolute;
