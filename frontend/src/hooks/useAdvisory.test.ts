@@ -115,4 +115,43 @@ describe("useAdvisory", () => {
     expect(confirmResult).toBeNull();
     expect(result.current.errors).toEqual(["advisory_id: unknown external_key"]);
   });
+
+  it("surfaces string detail on 422 for preview", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 422,
+        json: async () => ({ detail: "unknown goal external_key: xyz" }),
+      })
+    );
+
+    const { result } = renderHook(() => useAdvisory());
+    await act(async () => {
+      await result.current.preview({});
+    });
+
+    expect(result.current.previewResult).toBeNull();
+    expect(result.current.errors).toEqual(["unknown goal external_key: xyz"]);
+  });
+
+  it("surfaces string detail on 422 for confirm", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 422,
+        json: async () => ({ detail: "unknown goal external_key: xyz" }),
+      })
+    );
+
+    const { result } = renderHook(() => useAdvisory());
+    let confirmResult: AdvisoryResult | null = null;
+    await act(async () => {
+      confirmResult = await result.current.confirm({ advisory_id: "abc123", payload: {} });
+    });
+
+    expect(confirmResult).toBeNull();
+    expect(result.current.errors).toEqual(["unknown goal external_key: xyz"]);
+  });
 });
