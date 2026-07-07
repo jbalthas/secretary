@@ -17,7 +17,7 @@ export function groupTasksByParent(tasks: Task[]): TaskGroups {
   return { parents, childrenByParentId };
 }
 
-export function subtaskProgress(children: Task[]): { done: number; total: number } {
+export function subtaskProgress(children: Array<{ completed: boolean }>): { done: number; total: number } {
   return { done: children.filter((c) => c.completed).length, total: children.length };
 }
 
