@@ -219,6 +219,7 @@ def test_bundle_contains_goal_section(export_session):
     assert "Write the launch post" in md
     assert "Tidy the changelog" in md
     assert "overdue" in md.lower()
+    assert "ship-v2" in md
 
 
 # ---------------------------------------------------------------------------
