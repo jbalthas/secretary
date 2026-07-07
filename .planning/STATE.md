@@ -19,7 +19,7 @@ progress:
 Phase: 16
 Plan: Not started
 Status: Phase complete — ready for verification
-Last activity: 2026-07-06
+Last activity: 2026-07-07 - Completed quick task 260707-cu1: Fix advisory 422 string-detail error parsing and add external_key to export brief
 
 > **v2.1 carry-over:** Phase 13 (update-loop-ui) left at plan 4 of 4 — Quick-update capture box + End-of-day rollup unfinished. Intentionally deferred at v2.2 start; resume separately if/when wanted.
 
