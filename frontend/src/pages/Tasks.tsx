@@ -290,6 +290,7 @@ export default function Tasks() {
         open={drawerOpen}
         task={editingTask}
         goals={goals}
+        tasks={tasks}
         listGroups={listGroups}
         onClose={() => setDrawerOpen(false)}
         onSave={handleSave}

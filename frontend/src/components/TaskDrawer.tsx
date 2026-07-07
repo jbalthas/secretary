@@ -4,11 +4,13 @@ import type { Task, TaskCreate, Priority } from "../types/task";
 import type { Goal } from "../types/goal";
 import type { TaskListGroup } from "../types/taskList";
 import GoalSelect from "./GoalSelect";
+import SubtaskSelect from "./SubtaskSelect";
 
 interface Props {
   open: boolean;
   task: Task | null;
   goals: Goal[];
+  tasks: Task[];
   listGroups: TaskListGroup[];
   onClose: () => void;
   onSave: (body: TaskCreate, id?: number) => Promise<void>;
@@ -65,10 +67,11 @@ function Collapsible({ label, children }: CollapsibleProps) {
   );
 }
 
-export default function TaskDrawer({ open, task, goals, listGroups, onClose, onSave, onDelete }: Props) {
+export default function TaskDrawer({ open, task, goals, tasks, listGroups, onClose, onSave, onDelete }: Props) {
   const [title, setTitle] = useState("");
   const [priority, setPriority] = useState<Priority>("medium");
   const [goalId, setGoalId] = useState<number | null>(null);
+  const [parentTaskId, setParentTaskId] = useState<number | null>(null);
   const [parentListName, setParentListName] = useState("");
   const [listName, setListName] = useState("");
   const [dueDate, setDueDate] = useState("");
@@ -86,6 +89,7 @@ export default function TaskDrawer({ open, task, goals, listGroups, onClose, onS
       setTitle(task?.title ?? "");
       setPriority(task?.priority ?? "medium");
       setGoalId(task?.goal_id ?? null);
+      setParentTaskId(task?.parent_task_id ?? null);
       setParentListName(task?.parent_list_name ?? "");
       setListName(task?.list_name ?? "");
       setDueDate(isoToDateInput(task?.due_date));
@@ -114,6 +118,7 @@ export default function TaskDrawer({ open, task, goals, listGroups, onClose, onS
       priority,
       due_date: combineDatetime(dueDate, dueTime),
       goal_id: goalId,
+      parent_task_id: parentTaskId,
       list_name: listName || null,
       parent_list_name: parentListName || null,
       description: description || undefined,
@@ -179,6 +184,16 @@ export default function TaskDrawer({ open, task, goals, listGroups, onClose, onS
           <div className="drawer-field">
             <label>Goal</label>
             <GoalSelect goals={goals} value={goalId} onChange={setGoalId} />
+          </div>
+
+          <div className="drawer-field">
+            <label>Subtask of</label>
+            <SubtaskSelect
+              tasks={tasks}
+              currentTaskId={task?.id ?? null}
+              value={parentTaskId}
+              onChange={setParentTaskId}
+            />
           </div>
 
           <div className="drawer-field">

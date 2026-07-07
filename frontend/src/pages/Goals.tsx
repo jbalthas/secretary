@@ -247,6 +247,7 @@ export default function Goals() {
           open={taskDrawerOpen}
           task={editingTask}
           goals={goals}
+          tasks={tasks}
           listGroups={listGroups}
           onClose={() => setTaskDrawerOpen(false)}
           onSave={handleTaskSave}
