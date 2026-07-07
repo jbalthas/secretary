@@ -1,7 +1,7 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.1
-milestone_name: Phases — Close the Loop
+milestone: v2.2
+milestone_name: LLM Advisory Loop
 status: verifying
 last_updated: "2026-07-06T01:36:35.684Z"
 last_activity: 2026-07-06
@@ -71,6 +71,7 @@ Last activity: 2026-07-07 - Completed quick task 260707-cu1: Fix advisory 422 st
 - Phases 8–11 added: v2.0 Ingest, Organize, Guide (2026-06-15)
 - Phases 12–13 added: v2.1 Close the Loop (2026-06-22)
 - Phases 14–16 added: v2.2 LLM Advisory Loop (2026-06-29)
+- Phase 17 added: Task Subtask Hierarchy Drag Drop (2026-07-07)
 
 ### v2.2 Key Architectural Decisions (from research)
 

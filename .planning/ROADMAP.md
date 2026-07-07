@@ -343,6 +343,16 @@ Plans:
 **Plans:** 5/5 plans complete
 **UI hint**: yes
 
+### Phase 17: Task Subtask Hierarchy Drag Drop
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 16
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 17 to break down)
+
 ---
 
 ## Progress
