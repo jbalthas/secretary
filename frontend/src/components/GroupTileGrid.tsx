@@ -71,6 +71,7 @@ export default function GroupTileGrid({ tasks, goals, onSelect }: GroupTileGridP
                 type="file"
                 accept="image/*"
                 style={{ display: "none" }}
+                onClick={(e) => e.stopPropagation()}
                 onChange={(e) => handleFileChange(filter.key, e)}
               />
             </div>
