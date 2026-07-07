@@ -2,24 +2,24 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Phases — Close the Loop
-status: verifying
-last_updated: "2026-07-07T15:09:37.478Z"
-last_activity: "2026-07-07 - Completed quick task 260707-cu1: Fix advisory 422 string-detail error parsing and add external_key to export brief"
+status: executing
+last_updated: "2026-07-07T20:40:49.036Z"
+last_activity: 2026-07-07
 progress:
-  total_phases: 13
-  completed_phases: 11
-  total_plans: 44
-  completed_plans: 43
+  total_phases: 9
+  completed_phases: 8
+  total_plans: 34
+  completed_plans: 33
 ---
 
 # Project State
 
 ## Current Position
 
-Phase: 16
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-07-07 - Completed quick task 260707-dx6: Add photo-based grouping to Tasks page (group_photos table/endpoints, GroupTileGrid, grid/drill view modes)
+Phase: 17 (task-subtask-hierarchy-drag-drop) — EXECUTING
+Plan: 4 of 5
+Status: Ready to execute
+Last activity: 2026-07-07
 
 > **v2.1 carry-over:** Phase 13 (update-loop-ui) left at plan 4 of 4 — Quick-update capture box + End-of-day rollup unfinished. Intentionally deferred at v2.2 start; resume separately if/when wanted.
 
@@ -29,7 +29,7 @@ Last activity: 2026-07-07 - Completed quick task 260707-dx6: Add photo-based gro
 
 **Core value:** One place to manage your schedule and tasks — reachable from any device, voice-controllable via Google Home, and proactive enough to push reminders before you have to think about them.
 
-**Current focus:** Phase 16 — advisory-ingest-sync-review-ui
+**Current focus:** Phase 17 — task-subtask-hierarchy-drag-drop
 
 ---
 
@@ -214,5 +214,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-07-07T15:16:15.000Z
+Last session: 2026-07-07T15:29:42.552Z
 Next action: Run /gsd:plan-phase 15 — context captured (15-CONTEXT.md). Advisory scope: approval MAY create new tasks (ADVISE-08, create-only)
