@@ -141,6 +141,20 @@
 
 ---
 
+## Milestone v2.3 Requirements — Task Subtask Hierarchy & Drag-Drop
+
+> Single-phase milestone, added ad hoc after v2.2 shipped (2026-07-07): any task or planned Organize block can be dragged onto a task to become its subtask (one level deep). Hard constraints (locked since v2.0): no server-side LLM. Exception (D-12, locked in 17-CONTEXT.md): this phase adds one new frontend-only dependency, `@dnd-kit/core` + `@dnd-kit/sortable` + `@dnd-kit/utilities` — the "no new dependencies" constraint was scoped to the external-LLM ingest/advisory loop, not this unrelated UI feature. Phase numbering continues (Phase 17). REQ-IDs use a new category: HIER.
+
+### Task Subtask Hierarchy (HIER)
+
+- [ ] **HIER-01**: User can drag a task or planned Organize block onto the center of another task's row (Today timeline) or card (Tasks page) to nest it as that task's subtask; dragging a nested item into empty space clears its parent (un-nests it). Nesting is capped at one level — a child cannot itself have children — enforced at the API layer with a clear 422 error on rejection.
+- [ ] **HIER-02**: Nesting is visible and editable on both the Today timeline and the Tasks list page — a parent row/card groups its nested children directly beneath it, indented, expanded by default.
+- [ ] **HIER-03**: A parent row/card displays a live subtask completion progress badge (e.g. "2/3"); completing a parent never auto-completes its children and vice versa; children retain their own due date/priority/time, untouched by nesting.
+- [ ] **HIER-04**: User can set or clear a task's parent from the task edit drawer via a "Subtask of" dropdown, without needing to drag; the dropdown excludes the task itself and any task that already has a parent.
+- [ ] **HIER-05**: A ScheduledBlock (planned Organize block) can be nested under a Task the same way a task can; the parent of any nested item is always a Task, never a Block; calendar events (synced from Google) are never draggable or nestable.
+
+---
+
 ## Future / Backlog (post-v2.0)
 
 > Items below were deferred from v1.0 or flagged P3 during v2.0 research; not in the current milestone.
@@ -248,3 +262,8 @@
 | ADVISE-08 | Phase 16 — Advisory Ingest + Sync Review UI | Complete |
 | SYNC-01 | Phase 16 — Advisory Ingest + Sync Review UI | Complete |
 | SYNC-02 | Phase 16 — Advisory Ingest + Sync Review UI | Complete |
+| HIER-01 | Phase 17 — Task Subtask Hierarchy Drag Drop | Pending |
+| HIER-02 | Phase 17 — Task Subtask Hierarchy Drag Drop | Pending |
+| HIER-03 | Phase 17 — Task Subtask Hierarchy Drag Drop | Pending |
+| HIER-04 | Phase 17 — Task Subtask Hierarchy Drag Drop | Pending |
+| HIER-05 | Phase 17 — Task Subtask Hierarchy Drag Drop | Pending |

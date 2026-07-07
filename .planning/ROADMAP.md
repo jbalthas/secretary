@@ -2,7 +2,7 @@
 
 ## Overview
 
-16 phases | 70 requirements | Infrastructure → Task UI → Reminders → Calendar Sync → Routines/Brief → Google Home TTS → Goals+Ingest Backend → Goals+Ingest UI → Day Organize → Guidance → v2.1 Update Engine → v2.1 Update Loop UI → v2.2 Progression Substrate → v2.2 Context Export + Advisor Prompt → v2.2 Advisory Ingest + Sync Review UI
+17 phases | 75 requirements | Infrastructure → Task UI → Reminders → Calendar Sync → Routines/Brief → Google Home TTS → Goals+Ingest Backend → Goals+Ingest UI → Day Organize → Guidance → v2.1 Update Engine → v2.1 Update Loop UI → v2.2 Progression Substrate → v2.2 Context Export + Advisor Prompt → v2.2 Advisory Ingest + Sync Review UI → v2.3 Task Subtask Hierarchy & Drag-Drop
 
 ---
 
@@ -343,15 +343,31 @@ Plans:
 **Plans:** 5/5 plans complete
 **UI hint**: yes
 
-### Phase 17: Task Subtask Hierarchy Drag Drop
+## v2.3 Phases — Task Subtask Hierarchy & Drag-Drop
 
-**Goal:** [To be planned]
-**Requirements**: TBD
-**Depends on:** Phase 16
-**Plans:** 0 plans
+> Single-phase milestone, added ad hoc after v2.2 shipped (2026-07-07). Requirements: HIER-01..05 (5 total). Dependency exception (D-12, locked in 17-CONTEXT.md): this phase adds one new frontend-only dependency, @dnd-kit/core + @dnd-kit/sortable + @dnd-kit/utilities. The project's "no new dependencies" hard constraint (locked since v2.0) was scoped to the external-LLM ingest/advisory loop only — it does not block a UI library for this unrelated feature. No backend dependencies are added; "no server-side LLM" remains untouched. Migration HEAD entering this milestone: 0019 → new migration 0020.
+
+---
+
+### Phase 17: Task Subtask Hierarchy Drag Drop
+**Goal:** Any task or planned Organize block can be dragged onto a task to become its subtask — nested one level deep, shown indented with a live progress badge, editable via drag on both the Today timeline and the Tasks page, or via a manual "Subtask of" dropdown — without disturbing children's own time/priority/due-date fields or auto-completing anything.
+**Depends on:** Phase 16 (existing Task/ScheduledBlock models; migration HEAD 0019)
+**Requirements:** HIER-01, HIER-02, HIER-03, HIER-04, HIER-05
+**Success Criteria** (what must be TRUE):
+1. Dragging a task or planned block onto the center of another task's row/card on the Today timeline or Tasks page nests it as that task's subtask; the nest is rejected with a clear error if the target already has a parent, or if the dragged task already has children (one level only, no grandchildren).
+2. Dragging a nested item into empty space (Today timeline) or open grid space (Tasks page) clears its parent, returning it to a standalone top-level item.
+3. A parent row/card displays a subtask progress badge (e.g. "2/3"); completing a parent never auto-completes its children and vice versa; children keep their own due date/priority/time untouched by nesting.
+4. The task edit drawer has a "Subtask of" dropdown to set/clear a parent without dragging, excluding the task itself and any task that already has a parent.
+5. A ScheduledBlock (Organize-planned block) can be nested under a Task the same way the parent is always a Task, never a Block or a calendar event; calendar events are never draggable or nestable.
+**Plans:** 5 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 17 to break down)
+- [ ] 17-01-PLAN.md — Backend: migration 0020 (parent_task_id on Task + ScheduledBlock) + shared nesting-validation service + router updates (Wave 1)
+- [ ] 17-02-PLAN.md — Frontend foundation: @dnd-kit install + type contracts + taskHierarchy/dragIntent pure-logic libs (Wave 1)
+- [ ] 17-03-PLAN.md — CSS: nesting/drag visual tokens per 17-UI-SPEC.md, for both Today timeline and Tasks page (Wave 1)
+- [ ] 17-04-PLAN.md — Today timeline hierarchy UI + drag-drop wiring + checkpoint (Wave 2)
+- [ ] 17-05-PLAN.md — Tasks page nesting UI + TaskDrawer "Subtask of" field + checkpoint (Wave 2)
+**UI hint**: yes
 
 ---
 
@@ -375,3 +391,4 @@ Plans:
 | 14. Progression Substrate | 0/? | Not started | - |
 | 15. Context Export + Advisor Prompt | 0/? | Not started | - |
 | 16. Advisory Ingest + Sync Review UI | 0/? | Not started | - |
+| 17. Task Subtask Hierarchy Drag Drop | 0/5 | Not started | - |
