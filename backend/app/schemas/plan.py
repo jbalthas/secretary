@@ -31,9 +31,11 @@ class ScheduledBlockRead(BaseModel):
     date_key: str
     approved_at: datetime
     completed: bool
+    parent_task_id: int | None = None
     conflict_with: str | None = None
     model_config = {"from_attributes": True}
 
 
 class ScheduledBlockUpdate(BaseModel):
-    completed: bool
+    completed: bool | None = None
+    parent_task_id: int | None = None

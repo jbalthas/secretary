@@ -18,6 +18,7 @@ from app.schemas.plan import (
 )
 from app.scheduler import remove_reminder, upsert_reminder
 from app.services import planner_service
+from app.services.task_hierarchy import get_valid_parent_task
 
 router = APIRouter(prefix=f"{settings.api_prefix}/plan", tags=["plan"])
 
@@ -180,13 +181,22 @@ async def update_block(
     if block is None:
         raise HTTPException(404)
 
-    block.completed = body.completed
+    update_data = body.model_dump(exclude_unset=True)
     task = await session.get(Task, block.task_id) if block.task_id is not None else None
-    if task is not None:
-        was_completed = task.completed
-        task.completed = body.completed
-        if body.completed and not was_completed:
-            task.completed_at = datetime.now(timezone.utc)
+
+    if "completed" in update_data and update_data["completed"] is not None:
+        block.completed = update_data["completed"]
+        if task is not None:
+            was_completed = task.completed
+            task.completed = update_data["completed"]
+            if update_data["completed"] and not was_completed:
+                task.completed_at = datetime.now(timezone.utc)
+
+    if "parent_task_id" in update_data:
+        new_parent_id = update_data["parent_task_id"]
+        if new_parent_id is not None:
+            await get_valid_parent_task(session, new_parent_id)
+        block.parent_task_id = new_parent_id
 
     await session.commit()
     await session.refresh(block)
