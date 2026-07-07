@@ -50,13 +50,13 @@ No REQ-IDs exist yet for this phase (added directly to STATE.md roadmap on 2026-
 
 ## Summary
 
-This phase adds a single self-referencing parent/child relationship to `Task` (and a separate, Task-only-parent `parent_task_id` on `ScheduledBlock`), plus a new frontend drag-and-drop dependency to let the user visually nest tasks under one another. The backend change is small and low-risk: one Alembic migration (0019) adding two nullable FK columns with `ondelete="SET NULL"`, following the exact pattern already used for `Task.goal_id` (migration 0007) and `ScheduledBlock.task_id` (migration 0009). No ORM `relationship()` is needed — the codebase has an established precedent (`parent_list_name`/`list_name` grouping) for computing parent/child structure **client-side** from the already-fetched flat list, and that pattern should be reused for `parent_task_id` grouping rather than adding `lazy="selectin"` self-referential relationships, which would add complexity with no benefit at this scale.
+This phase adds a single self-referencing parent/child relationship to `Task` (and a separate, Task-only-parent `parent_task_id` on `ScheduledBlock`), plus a new frontend drag-and-drop dependency to let the user visually nest tasks under one another. The backend change is small and low-risk: one Alembic migration (0020, since a concurrent quick task has already claimed 0019 — see note below) adding two nullable FK columns with `ondelete="SET NULL"`, following the exact pattern already used for `Task.goal_id` (migration 0007) and `ScheduledBlock.task_id` (migration 0009). No ORM `relationship()` is needed — the codebase has an established precedent (`parent_list_name`/`list_name` grouping) for computing parent/child structure **client-side** from the already-fetched flat list, and that pattern should be reused for `parent_task_id` grouping rather than adding `lazy="selectin"` self-referential relationships, which would add complexity with no benefit at this scale.
 
 The frontend change is larger. Two UI surfaces need nesting UI: the Today timeline (`TodayTimeline.tsx`/`AgendaItem.tsx`, a linear row-based list) and the Tasks page (`Tasks.tsx`/`TaskCard.tsx`, a **card grid**, not a list) — these are structurally different layouts and the drag-and-drop/indentation treatment cannot be copy-pasted between them. A new DnD library must be added per D-12. The two realistic candidates are the legacy-but-mature `@dnd-kit/core` + `@dnd-kit/sortable` (v6.3.1 / v10.0.0, stable since Dec 2024, works with React 19 via an unbounded peer range and wide community confirmation) versus the brand-new `@dnd-kit/react` (v0.5.0, published one day before this research, explicitly targets React 18/19, but pre-1.0 and represents an entirely different, dependency-heavier API with far less community precedent for exactly this "drop-on-center-to-nest vs drop-in-gap-to-reorder" pattern). Given this project's stated preference for boring, stable choices (`APScheduler 3.x not 4.x`, `nginx not Caddy`, etc.), **`@dnd-kit/core` + `@dnd-kit/sortable` + `@dnd-kit/utilities`** is the prescriptive recommendation.
 
 Neither dnd-kit package has a built-in "drop on center = nest, drop in gap = reorder" behavior — this must be built as custom collision detection using pointer-position-within-target-rect math (a well-documented pattern, e.g. Notion/Linear-style block nesting), not something dnd-kit gives you out of the box in either version.
 
-**Primary recommendation:** Add `@dnd-kit/core@^6.3.1`, `@dnd-kit/sortable@^10.0.0`, `@dnd-kit/utilities@^3.2.2` to `frontend/package.json`. Add `Task.parent_task_id` (nullable FK, `ondelete=SET NULL`) and `ScheduledBlock.parent_task_id` (nullable FK to `tasks.id`, `ondelete=SET NULL`) via Alembic migration `0019`. Do not add ORM relationships — group parent/child client-side, reusing the existing `parent_list_name` grouping pattern (`lib/taskFilters.ts`) as the template. Enforce one-level-nesting and "parent is always a Task" at the router/service layer, not the database layer.
+**Primary recommendation:** Add `@dnd-kit/core@^6.3.1`, `@dnd-kit/sortable@^10.0.0`, `@dnd-kit/utilities@^3.2.2` to `frontend/package.json`. Add `Task.parent_task_id` (nullable FK, `ondelete=SET NULL`) and `ScheduledBlock.parent_task_id` (nullable FK to `tasks.id`, `ondelete=SET NULL`) via Alembic migration `0020` (0019 is already claimed by an in-flight quick task — verify HEAD again at execution time). Do not add ORM relationships — group parent/child client-side, reusing the existing `parent_list_name` grouping pattern (`lib/taskFilters.ts`) as the template. Enforce one-level-nesting and "parent is always a Task" at the router/service layer, not the database layer.
 
 ## Standard Stack
 
@@ -97,7 +97,7 @@ npm install @dnd-kit/core@^6.3.1 @dnd-kit/sortable@^10.0.0 @dnd-kit/utilities@^3
 ### Recommended Project Structure (delta only)
 ```
 backend/
-├── migrations/versions/0019_add_parent_task_id.py   # new — Task.parent_task_id + ScheduledBlock.parent_task_id
+├── migrations/versions/0020_add_parent_task_id.py   # new — Task.parent_task_id + ScheduledBlock.parent_task_id
 ├── app/models/__init__.py                            # Task gains parent_task_id column (no relationship)
 ├── app/models/plan.py                                 # ScheduledBlock gains parent_task_id column
 ├── app/schemas/task.py                                # TaskCreate/TaskUpdate/TaskRead gain parent_task_id
@@ -220,20 +220,20 @@ function resolveDropIntent(pointerY: number, rect: DOMRect): "nest" | "before" |
 
 ## Code Examples
 
-### Alembic migration 0019 (follows 0007/0009 pattern exactly)
+### Alembic migration 0020 (follows 0007/0009 pattern exactly)
 ```python
 # Source: pattern matches backend/migrations/versions/0007_task_goal_fk.py and 0009_create_scheduled_blocks.py
 """add parent_task_id to tasks and scheduled_blocks
 
-Revision ID: 0019
-Revises: 0018
+Revision ID: 0020
+Revises: 0019
 Create Date: 2026-07-07 00:00:00.000000
 """
 from alembic import op
 import sqlalchemy as sa
 
-revision = "0019"
-down_revision = "0018"
+revision = "0020"
+down_revision = "0019"
 branch_labels = None
 depends_on = None
 
@@ -321,6 +321,11 @@ function TodayTimelineDnd({ items, onNest, onReorder, onClear }: Props) {
    - What we know: D-01 forbids grandchildren. Two ways to enforce it: reject the action (422 error, user must manually un-nest the intermediate task first) or auto-flatten (silently clear the deeper level's parent when a conflicting nest is attempted).
    - What's unclear: which behavior CONTEXT.md's decisions imply — D-01 only states the invariant, not the enforcement mechanism.
    - Recommendation: Reject with a clear 422 message (Pattern 2 above) — simpler, more predictable, matches the project's boundary-validation convention, and avoids surprising data loss (silently un-nesting someone's existing children).
+
+4. **Migration HEAD has moved past 0018 in the uncommitted working tree — re-verify at execution time.**
+   - What we know: At research time (2026-07-07), the working tree has an *uncommitted/staged* concurrent quick task (`260707-dx6-add-photo-based-grouping-to-tasks-page-u`) that already added `backend/migrations/versions/0019_add_group_photos.py` (a `GroupPhoto` table, unrelated to this phase). This means `0019` is already taken.
+   - What's unclear: whether that quick task will be committed before this phase executes, and whether any other concurrent work claims further migration numbers in the meantime.
+   - Recommendation: This research uses **0020** as the next migration number (see Code Examples), but the planner/executor MUST re-run `ls backend/migrations/versions/` (or equivalent) immediately before writing the migration file to confirm the actual current HEAD, exactly as CONTEXT.md's own discretion note instructs ("check current HEAD before writing"). Do not trust the "0020" number blindly if significant time has passed or other work has merged.
 
 ## Environment Availability
 
