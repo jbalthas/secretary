@@ -64,10 +64,20 @@ export function usePlan(dateKey: string) {
     await fetchBlocks();
   }
 
+  async function patchBlockParent(id: number, parentTaskId: number | null) {
+    const res = await fetch(`${API}/blocks/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ parent_task_id: parentTaskId }),
+    });
+    if (!res.ok) throw new Error("Could not update plan block parent");
+    await fetchBlocks();
+  }
+
   useEffect(() => {
     fetchBlocks();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateKey]);
 
-  return { blocks, loading, fetchBlocks, propose, approve, replan, deleteBlock, patchBlock };
+  return { blocks, loading, fetchBlocks, propose, approve, replan, deleteBlock, patchBlock, patchBlockParent };
 }

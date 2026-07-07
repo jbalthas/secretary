@@ -80,7 +80,7 @@ export default function Today() {
   const { tasks, patchTask, refresh } = useTasks();
   const { events, patchEvent } = useCalendarEvents();
   const todayKey = localDateKey(new Date());
-  const { blocks, patchBlock, fetchBlocks } = usePlan(todayKey);
+  const { blocks, patchBlock, patchBlockParent, fetchBlocks } = usePlan(todayKey);
   const { task: nextBest } = useNextBestTask();
   const { workEnd } = useWorkHours();
   const { submit, confirm } = useUpdate();
@@ -155,6 +155,14 @@ export default function Today() {
       await patchEvent(item.googleId, completed);
     } else if (item.taskId != null) {
       await patchTask(item.taskId, { completed });
+    }
+  }
+
+  async function handleSetParent(item: AgendaItemType, parentTaskId: number | null) {
+    if (item.isBlock && item.blockId != null) {
+      await patchBlockParent(item.blockId, parentTaskId);
+    } else if (item.taskId != null) {
+      await patchTask(item.taskId, { parent_task_id: parentTaskId });
     }
   }
 
@@ -239,7 +247,12 @@ export default function Today() {
             <h2>Your day</h2>
             <span>{todayGroup?.items.length ?? 0} items</span>
           </div>
-          <TodayTimeline items={todayGroup?.items ?? []} nowHHMM={nowHHMM} onToggle={handleToggle} />
+          <TodayTimeline
+            items={todayGroup?.items ?? []}
+            nowHHMM={nowHHMM}
+            onToggle={handleToggle}
+            onSetParent={handleSetParent}
+          />
         </section>
 
         <section className="today-section today-section--week">
