@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ArrowLeft } from "lucide-react";
+import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { useTasks } from "../hooks/useTasks";
 import { useGoals } from "../hooks/useGoals";
 import { useTaskLists } from "../hooks/useTaskLists";
@@ -10,6 +11,7 @@ import TaskDrawer from "../components/TaskDrawer";
 import FAB from "../components/FAB";
 import GroupTileGrid from "../components/GroupTileGrid";
 import { buildTaskFilters, taskMatchesFilter } from "../lib/taskFilters";
+import { groupTasksByParent } from "../lib/taskHierarchy";
 import type { Task, TaskCreate, Priority } from "../types/task";
 
 type Filter = "pending" | "completed";
@@ -45,6 +47,8 @@ export default function Tasks() {
   const [activeFilterKey, setActiveFilterKey] = useState<string | null>(null);
   const [mode, setMode] = useState<"grid" | "drill">("grid");
   const [unsorted, setUnsorted] = useState(false);
+  const [dragError, setDragError] = useState<string | null>(null);
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
 
   const taskFilters = buildTaskFilters(tasks, goals);
   const activeTaskFilter = taskFilters.find(
@@ -59,13 +63,16 @@ export default function Tasks() {
     filter === "pending" ? !t.completed : t.completed
   );
   const sorted = sortTasks(filtered, sort);
+  const { parents, childrenByParentId } = groupTasksByParent(sorted);
 
   // Momentum ring covers the active-chip set across both tabs (listFiltered), not just the visible tab.
   const momentumTotal = listFiltered.length;
   const momentumDone = listFiltered.filter((t) => t.completed).length;
 
-  // Hero surfaces the top of the already-sorted pending set; hidden in Completed view / when empty.
-  const heroTask = filter === "pending" && sorted.length > 0 ? sorted[0] : null;
+  // Hero surfaces the top of the post-grouping parent set; hidden in Completed view / when empty.
+  // Derived from `parents` (not `sorted[0]`) so a nested child never renders twice — once as hero,
+  // once nested under its own parent's card.
+  const heroTask = filter === "pending" && parents.length > 0 ? parents[0] : null;
 
   async function handleSave(body: TaskCreate, id?: number) {
     if (id !== undefined) {
@@ -74,6 +81,30 @@ export default function Tasks() {
       await createTask(body);
     }
     await refreshLists();
+  }
+
+  async function handleDragEnd(event: DragEndEvent) {
+    setDragError(null);
+    const draggedId = Number(event.active.id);
+    if (!event.over) {
+      const dragged = tasks.find((t) => t.id === draggedId);
+      if (dragged?.parent_task_id != null) {
+        try {
+          await patchTask(dragged.id, { parent_task_id: null });
+        } catch {
+          setDragError("Couldn't un-nest task — try again");
+        }
+      }
+      return;
+    }
+    const targetId = Number(event.over.id);
+    if (targetId !== draggedId) {
+      try {
+        await patchTask(draggedId, { parent_task_id: targetId });
+      } catch {
+        setDragError("Couldn't nest task — try again");
+      }
+    }
   }
 
   function backToGrid() {
@@ -226,20 +257,24 @@ export default function Tasks() {
               )}
             </div>
           ) : (
-            <div className="tasks-card-grid">
-              {sorted.map((task) => (
-                <TaskCard
-                  key={task.id}
-                  task={task}
-                  goals={goals}
-                  onEdit={(t) => {
-                    setEditingTask(t);
-                    setDrawerOpen(true);
-                  }}
-                  onToggle={(id, completed) => patchTask(id, { completed })}
-                />
-              ))}
-            </div>
+            <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+              {dragError && <div className="tasks-card-error">{dragError}</div>}
+              <div className="tasks-card-grid">
+                {parents.map((task) => (
+                  <TaskCard
+                    key={task.id}
+                    task={task}
+                    goals={goals}
+                    childTasks={childrenByParentId.get(task.id)}
+                    onEdit={(t) => {
+                      setEditingTask(t);
+                      setDrawerOpen(true);
+                    }}
+                    onToggle={(id, completed) => patchTask(id, { completed })}
+                  />
+                ))}
+              </div>
+            </DndContext>
           )}
         </>
       )}
