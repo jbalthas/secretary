@@ -9,7 +9,9 @@ REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 sudo apt-get install -y nginx
 
 # Substitute __TS_HOSTNAME__ and install nginx site
-sudo sed "s/__TS_HOSTNAME__/$TS_HOST/g" "$REPO_DIR/deploy/nginx-secretary.conf" \
+sudo sed \
+    -e "s/__TS_HOSTNAME__/$TS_HOST/g" \
+    -e "s|__REPO_DIR__|$REPO_DIR|g" "$REPO_DIR/deploy/nginx-secretary.conf" \
     | sudo tee /etc/nginx/sites-available/secretary >/dev/null
 
 # Enable site and remove default
