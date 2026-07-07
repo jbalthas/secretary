@@ -22,4 +22,5 @@ export interface ScheduledBlock {
   approved_at: string;
   completed: boolean;
   conflict_with: string | null;
+  parent_task_id: number | null;
 }

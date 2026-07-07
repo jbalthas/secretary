@@ -11,6 +11,7 @@ export interface Task {
   estimated_minutes?: number | null;
   list_name?: string | null;
   parent_list_name?: string | null;
+  parent_task_id?: number | null;
   completed: boolean;
   goal_id?: number | null;
   created_at: string;
@@ -27,6 +28,7 @@ export interface TaskCreate {
   estimated_minutes?: number | null;
   list_name?: string | null;
   parent_list_name?: string | null;
+  parent_task_id?: number | null;
   goal_id?: number | null;
 }
 
@@ -42,6 +44,7 @@ export interface AgendaItem {
   isBlock?: boolean;
   conflict_with?: string | null;
   blockId?: number;
+  parentTaskId?: number | null;
 }
 
 export interface CalendarEvent {

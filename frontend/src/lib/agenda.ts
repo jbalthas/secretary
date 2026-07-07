@@ -35,6 +35,7 @@ function buildDayItems(
       isEvent: false,
       completed: t.completed,
       taskId: t.id,
+      parentTaskId: t.parent_task_id ?? null,
     };
     if (isAllDay) {
       allDayItems.push(item);
@@ -89,6 +90,7 @@ function buildDayItems(
       taskId: b.task_id ?? undefined,
       blockId: b.id,
       conflict_with: b.conflict_with,
+      parentTaskId: b.parent_task_id ?? null,
     });
   }
 

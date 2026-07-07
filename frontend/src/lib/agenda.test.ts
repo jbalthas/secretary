@@ -42,6 +42,7 @@ function makeBlock(overrides: Partial<ScheduledBlock>): ScheduledBlock {
     approved_at: `${TODAY}T08:00:00Z`,
     completed: false,
     conflict_with: null,
+    parent_task_id: null,
     ...overrides,
   };
 }
