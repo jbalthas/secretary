@@ -202,6 +202,7 @@ None
 | 260619-u0n | Include tomorrow's due tasks in the Google Home briefing | 2026-06-20 | eddb8b2 | [260619-u0n-include-tomorrow-s-due-tasks-in-the-goog](./quick/260619-u0n-include-tomorrow-s-due-tasks-in-the-goog/) |
 | 260624-kmx | Redesign Today page into a Now view: hero next-best task card, momentum strip, timeline rail with now-marker | 2026-06-24 | b30c1db | [260624-kmx-redesign-today-page-into-a-now-view-hero](./quick/260624-kmx-redesign-today-page-into-a-now-view-hero/) |
 | 260630-j83 | Redesign Tasks page into card-based layout: category-colored cards, Focus-now hero, momentum ring, completed-state polish; responsive laptop/desktop (centered, horizontal hero banner, 3-col grid) | 2026-06-30 | 4c143b4 | [260630-j83-redesign-tasks-page-ui-into-card-based-l](./quick/260630-j83-redesign-tasks-page-ui-into-card-based-l/) |
+| 260707-cu1 | Fix advisory 422 string-detail crash in parse422 (useAdvisory.ts) + render goal.external_key in exported Advisor Brief | 2026-07-07 | 5fa0411 | [260707-cu1-fix-advisory-422-string-detail-error-par](./quick/260707-cu1-fix-advisory-422-string-detail-error-par/) |
 
 ### Todos
 
@@ -211,5 +212,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-07-06T01:30:10.231Z
+Last session: 2026-07-07T09:19:47.000Z
 Next action: Run /gsd:plan-phase 15 — context captured (15-CONTEXT.md). Advisory scope: approval MAY create new tasks (ADVISE-08, create-only)
