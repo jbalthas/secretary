@@ -46,6 +46,8 @@ def _render_goal_section(goal, session, today, *, compact=False) -> str:
     progress = _compute_progress_sync(goal.id, session)
 
     lines = [f"### {goal.title} ({goal.type.value})"]
+    if goal.external_key:
+        lines.append(f"- external_key: {goal.external_key}")
     target = goal.target_date.isoformat() if goal.target_date else "no target date"
     if days_remaining is not None:
         lines.append(f"- target: {target} ({days_remaining} days remaining)")
