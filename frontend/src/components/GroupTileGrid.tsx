@@ -19,7 +19,7 @@ function isUnsorted(task: Task): boolean {
 }
 
 export default function GroupTileGrid({ tasks, goals, onSelect }: GroupTileGridProps) {
-  const { hasPhoto, imageUrl, upload } = useGroupPhotos();
+  const { hasPhoto, imageUrl, upload, uploadError } = useGroupPhotos();
   const fileInputs = useRef<Map<string, HTMLInputElement>>(new Map());
 
   const tiles = buildTaskFilters(tasks, goals).filter(
@@ -40,48 +40,51 @@ export default function GroupTileGrid({ tasks, goals, onSelect }: GroupTileGridP
   }
 
   return (
-    <div className="group-tile-grid">
-      {tiles.map((filter) => {
-        const visual = categoryVisual(filter.label.toLowerCase());
-        const photo = hasPhoto(filter.key);
-        return (
-          <div className="group-tile" key={filter.key} onClick={() => onSelect(filter.key)}>
-            {photo ? (
-              <img className="group-tile-img" src={imageUrl(filter.key)} alt={filter.label} />
-            ) : (
-              <div className="group-tile-placeholder" style={{ background: visual.gradient }}>
-                <visual.Icon size={32} />
-              </div>
-            )}
-            <div className="group-tile-label">{filter.label}</div>
-            <button
-              type="button"
-              className="group-tile-camera"
-              onClick={(e) => triggerUpload(filter.key, e)}
-              aria-label={`Set photo for ${filter.label}`}
-            >
-              <Camera size={16} />
-            </button>
-            <input
-              ref={(el) => {
-                if (el) fileInputs.current.set(filter.key, el);
-              }}
-              type="file"
-              accept="image/*"
-              style={{ display: "none" }}
-              onChange={(e) => handleFileChange(filter.key, e)}
-            />
+    <>
+      {uploadError && <p className="form-error" role="alert">{uploadError}</p>}
+      <div className="group-tile-grid">
+        {tiles.map((filter) => {
+          const visual = categoryVisual(filter.label.toLowerCase());
+          const photo = hasPhoto(filter.key);
+          return (
+            <div className="group-tile" key={filter.key} onClick={() => onSelect(filter.key)}>
+              {photo ? (
+                <img className="group-tile-img" src={imageUrl(filter.key)} alt={filter.label} />
+              ) : (
+                <div className="group-tile-placeholder" style={{ background: visual.gradient }}>
+                  <visual.Icon size={32} />
+                </div>
+              )}
+              <div className="group-tile-label">{filter.label}</div>
+              <button
+                type="button"
+                className="group-tile-camera"
+                onClick={(e) => triggerUpload(filter.key, e)}
+                aria-label={`Set photo for ${filter.label}`}
+              >
+                <Camera size={16} />
+              </button>
+              <input
+                ref={(el) => {
+                  if (el) fileInputs.current.set(filter.key, el);
+                }}
+                type="file"
+                accept="image/*"
+                style={{ display: "none" }}
+                onChange={(e) => handleFileChange(filter.key, e)}
+              />
+            </div>
+          );
+        })}
+        {showUnsorted && (
+          <div className="group-tile" onClick={() => onSelect(UNSORTED_KEY)}>
+            <div className="group-tile-placeholder" style={{ background: "linear-gradient(135deg, #64748b, #334155)" }}>
+              <Inbox size={32} />
+            </div>
+            <div className="group-tile-label">Unsorted</div>
           </div>
-        );
-      })}
-      {showUnsorted && (
-        <div className="group-tile" onClick={() => onSelect(UNSORTED_KEY)}>
-          <div className="group-tile-placeholder" style={{ background: "linear-gradient(135deg, #64748b, #334155)" }}>
-            <Inbox size={32} />
-          </div>
-          <div className="group-tile-label">Unsorted</div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </>
   );
 }

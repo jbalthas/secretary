@@ -3,6 +3,7 @@ import type { GroupPhotoMeta } from "../types/groupPhoto";
 
 export function useGroupPhotos() {
   const [photos, setPhotos] = useState<Map<string, string>>(new Map());
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     const response = await fetch("/api/v1/group-photos");
@@ -17,11 +18,19 @@ export function useGroupPhotos() {
 
   const upload = useCallback(
     async (groupKey: string, file: File) => {
-      const form = new FormData();
-      form.append("group_key", groupKey);
-      form.append("file", file);
-      await fetch("/api/v1/group-photos", { method: "POST", body: form });
-      await refresh();
+      setUploadError(null);
+      try {
+        const form = new FormData();
+        form.append("group_key", groupKey);
+        form.append("file", file);
+        const response = await fetch("/api/v1/group-photos", { method: "POST", body: form });
+        if (!response.ok) {
+          throw new Error(`Photo upload failed (${response.status}).`);
+        }
+        await refresh();
+      } catch (error) {
+        setUploadError(error instanceof Error ? error.message : "Photo upload failed.");
+      }
     },
     [refresh]
   );
@@ -36,5 +45,5 @@ export function useGroupPhotos() {
     [photos]
   );
 
-  return { photos, hasPhoto, imageUrl, upload, refresh };
+  return { photos, hasPhoto, imageUrl, upload, uploadError, refresh };
 }
