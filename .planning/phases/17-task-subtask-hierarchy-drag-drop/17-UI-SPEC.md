@@ -1,7 +1,7 @@
 ---
 phase: 17
 slug: task-subtask-hierarchy-drag-drop
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-07-07
@@ -143,11 +143,11 @@ No shadcn registries are used by this phase. The only new dependency is `@dnd-ki
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS — error-state copy, field labels, and accessibility copy verified consistent with Plans 17-04/17-05's implementation (exact strings grep-checked in each plan's acceptance criteria)
+- [x] Dimension 2 Visuals: PASS — indentation, badge, drag-handle, collapse-toggle treatments verified consistent with Plan 17-03's CSS and Plans 17-04/17-05's component wiring
+- [x] Dimension 3 Color: PASS — nest-target highlight, insertion-line, neutral progress-badge colors verified consistent with Plan 17-03's CSS values
+- [x] Dimension 4 Typography: PASS — no new font sizes/weights introduced beyond the declared 2-weight contract; verified against Plan 17-03/17-04/17-05
+- [x] Dimension 5 Spacing: PASS — 24px indent, 44px touch targets, 4/8/16px gaps verified consistent with Plan 17-03's CSS values
+- [x] Dimension 6 Registry Safety: PASS — no shadcn registries used; @dnd-kit is a plain npm package, not a component registry (not applicable)
 
-**Approval:** pending
+**Approval:** approved — content verified internally consistent with what Plans 17-03/17-04/17-05 implement.
