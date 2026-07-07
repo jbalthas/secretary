@@ -1,15 +1,15 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.2
-milestone_name: LLM Advisory Loop
+milestone: v2.1
+milestone_name: Phases — Close the Loop
 status: verifying
-last_updated: "2026-07-06T01:36:35.684Z"
-last_activity: 2026-07-06
+last_updated: "2026-07-07T15:09:37.478Z"
+last_activity: "2026-07-07 - Completed quick task 260707-cu1: Fix advisory 422 string-detail error parsing and add external_key to export brief"
 progress:
-  total_phases: 9
-  completed_phases: 8
-  total_plans: 34
-  completed_plans: 33
+  total_phases: 13
+  completed_phases: 11
+  total_plans: 44
+  completed_plans: 43
 ---
 
 # Project State
@@ -213,5 +213,5 @@ None
 
 ## Session Continuity
 
-Last session: 2026-07-07T09:19:47.000Z
+Last session: 2026-07-07T15:09:37.473Z
 Next action: Run /gsd:plan-phase 15 — context captured (15-CONTEXT.md). Advisory scope: approval MAY create new tasks (ADVISE-08, create-only)
