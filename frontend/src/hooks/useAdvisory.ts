@@ -9,10 +9,14 @@ interface ValidationError {
   msg: string;
 }
 
-function parse422(detail: ValidationError[]): string[] {
-  return detail.map(
-    (e) => `${e.loc.filter((p) => p !== "body").join(".")}: ${e.msg}`
-  );
+function parse422(detail: unknown): string[] {
+  if (typeof detail === "string") return [detail];
+  if (Array.isArray(detail)) {
+    return (detail as ValidationError[]).map(
+      (e) => `${e.loc.filter((p) => p !== "body").join(".")}: ${e.msg}`
+    );
+  }
+  return [];
 }
 
 export function useAdvisory() {
