@@ -391,4 +391,4 @@ Plans:
 | 14. Progression Substrate | 0/? | Not started | - |
 | 15. Context Export + Advisor Prompt | 0/? | Not started | - |
 | 16. Advisory Ingest + Sync Review UI | 0/? | Not started | - |
-| 17. Task Subtask Hierarchy Drag Drop | 5/5 | Complete   | 2026-07-08 |
+| 17. Task Subtask Hierarchy Drag Drop | 5/5 | Complete    | 2026-07-08 |
