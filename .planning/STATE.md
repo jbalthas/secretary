@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Phases — Close the Loop
-status: executing
-last_updated: "2026-07-07T20:40:49.036Z"
-last_activity: 2026-07-07
+status: verifying
+last_updated: "2026-07-08T13:40:06.330Z"
+last_activity: 2026-07-08
 progress:
   total_phases: 9
   completed_phases: 8
@@ -17,9 +17,9 @@ progress:
 ## Current Position
 
 Phase: 17 (task-subtask-hierarchy-drag-drop) — EXECUTING
-Plan: 4 of 5
-Status: Ready to execute
-Last activity: 2026-07-07
+Plan: 5 of 5
+Status: Phase complete — ready for verification
+Last activity: 2026-07-08
 
 > **v2.1 carry-over:** Phase 13 (update-loop-ui) left at plan 4 of 4 — Quick-update capture box + End-of-day rollup unfinished. Intentionally deferred at v2.2 start; resume separately if/when wanted.
 

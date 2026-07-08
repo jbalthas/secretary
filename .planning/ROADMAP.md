@@ -359,14 +359,14 @@ Plans:
 3. A parent row/card displays a subtask progress badge (e.g. "2/3"); completing a parent never auto-completes its children and vice versa; children keep their own due date/priority/time untouched by nesting.
 4. The task edit drawer has a "Subtask of" dropdown to set/clear a parent without dragging, excluding the task itself and any task that already has a parent.
 5. A ScheduledBlock (Organize-planned block) can be nested under a Task the same way the parent is always a Task, never a Block or a calendar event; calendar events are never draggable or nestable.
-**Plans:** 3/5 plans executed
+**Plans:** 5/5 plans complete
 
 Plans:
 - [x] 17-01-PLAN.md — Backend: migration 0020 (parent_task_id on Task + ScheduledBlock) + shared nesting-validation service + router updates (Wave 1)
 - [x] 17-02-PLAN.md — Frontend foundation: @dnd-kit install + type contracts + taskHierarchy/dragIntent pure-logic libs (Wave 1)
 - [x] 17-03-PLAN.md — CSS: nesting/drag visual tokens per 17-UI-SPEC.md, for both Today timeline and Tasks page (Wave 1)
-- [ ] 17-04-PLAN.md — Today timeline hierarchy UI + drag-drop wiring + checkpoint (Wave 2)
-- [ ] 17-05-PLAN.md — Tasks page nesting UI + TaskDrawer "Subtask of" field + checkpoint (Wave 2)
+- [x] 17-04-PLAN.md — Today timeline hierarchy UI + drag-drop wiring + checkpoint (Wave 2)
+- [x] 17-05-PLAN.md — Tasks page nesting UI + TaskDrawer "Subtask of" field + checkpoint (Wave 2)
 **UI hint**: yes
 
 ---
@@ -391,4 +391,4 @@ Plans:
 | 14. Progression Substrate | 0/? | Not started | - |
 | 15. Context Export + Advisor Prompt | 0/? | Not started | - |
 | 16. Advisory Ingest + Sync Review UI | 0/? | Not started | - |
-| 17. Task Subtask Hierarchy Drag Drop | 3/5 | In Progress|  |
+| 17. Task Subtask Hierarchy Drag Drop | 5/5 | Complete   | 2026-07-08 |
