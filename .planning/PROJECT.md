@@ -57,8 +57,12 @@ One place to manage your schedule and tasks — reachable from any device, voice
 - The backend resolves free-text progress updates to mark done / reschedule / drop by fuzzy-matching today's blocks and tasks with no LLM call, fires a configurable mid-day check-in notification that survives reboots, and accepts an intra-day update payload on the ingest contract (Validated in Phase 12: update-resolution-engine — UPDATE-02/03, NOTIF-07, INGEST-08; 12/12 verifier must-haves, 10 phase tests green)
 - The Sync page exports a complete token-budgeted advisory brief (goals career/learning-first, planned-vs-actual, 7-day calendar counts with no titles per D-05, momentum trend, stalled goals) and a documented advisor prompt in one click, with no server-side LLM dependency (Validated in Phase 15: context-export-advisor-prompt — EXPORT-01..06, PROMPT-01; 8/8 verifier must-haves, 14 backend tests green, live in-browser round-trip confirmed on Pi)
 - User can paste an LLM advisory JSON response into the Sync page, preview a per-item field-level diff with always-visible rationale, accept/reject individual rows, and confirm the accepted subset atomically and idempotently — closing the full advisory loop with no server-side LLM (Validated in Phase 16: advisory-ingest-sync-review-ui — ADVISE-01..08, SYNC-01/02; 20/20 verifier must-haves, 194/199 backend tests green — remainder are a documented pre-existing test-infra fixture issue unrelated to this phase)
+- Any task or planned Organize block can be dragged onto a task to become its one-level-deep subtask — nested/un-nested via drag on both the Today timeline and Tasks page, or via a manual "Subtask of" dropdown — with a live progress badge and no auto-completion or field disturbance (Validated in Phase 17: task-subtask-hierarchy-drag-drop — HIER-01..05; 5/5 verifier must-haves, human-verified drag gestures on a live device)
 
 ### Active
+
+**v2.3 — Task Subtask Hierarchy & Drag-Drop (complete):**
+- [x] One-level task/subtask nesting via drag-drop on Today timeline and Tasks page, or manual "Subtask of" dropdown — Phase 17 (HIER-01..05)
 
 **v2.2 — LLM Advisory Loop (complete):**
 - [x] Context export bundle (Markdown + JSON) of goals, planned-vs-actual, history, momentum for an external LLM — Phase 15 (EXPORT-01..06)
@@ -129,4 +133,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-07-06 — Phase 16 (Advisory Ingest + Sync Review UI) complete: inbound half of the advisory loop shipped (ADVISE-01..08, SYNC-01/02); Milestone v2.2 "LLM Advisory Loop" COMPLETE (Phases 14–16); v2.1 "Close the Loop" left open mid-Phase-13; v2.0 complete (Phases 8–11)*
+*Last updated: 2026-07-08 — Phase 17 (Task Subtask Hierarchy & Drag-Drop) complete: one-level task/subtask nesting via drag-drop on Today timeline and Tasks page, plus a manual "Subtask of" dropdown (HIER-01..05); Milestone v2.3 COMPLETE (Phase 17, single-phase); v2.1 "Close the Loop" left open mid-Phase-13; v2.2 complete (Phases 14–16); v2.0 complete (Phases 8–11)*
