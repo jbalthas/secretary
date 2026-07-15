@@ -1806,6 +1806,7 @@ img, svg { max-width: 100%; }
 .weather-focus__top { display: flex; justify-content: space-between; align-items: flex-start; gap: 22px; }
 .weather-focus__greeting { margin: 0; max-width: 560px; font: 500 clamp(30px,4vw,48px)/1.05 Georgia, serif; color: #fff6e7; letter-spacing: -.025em; }
 .weather-focus__message { margin: 9px 0 0; color: rgba(255,255,255,.78); font-size: 15px; }
+.weather-focus__clock { margin: 4px 0 0; color: rgba(255,255,255,.78); font-size: 14px; letter-spacing: normal; }
 .weather-focus__weather {
   display: grid; grid-template-columns: auto auto; gap: 0 10px; align-items: center;
   min-width: 190px; padding: 14px 16px; border: 1px solid rgba(255,255,255,.22);
