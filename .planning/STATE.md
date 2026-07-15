@@ -19,7 +19,7 @@ progress:
 Phase: 17
 Plan: Not started
 Status: Phase complete — ready for verification
-Last activity: 2026-07-08
+Last activity: 2026-07-15 - Completed quick task 260715-k5j: Fix greeting to switch between Good morning/afternoon/evening
 
 > **v2.1 carry-over:** Phase 13 (update-loop-ui) left at plan 4 of 4 — Quick-update capture box + End-of-day rollup unfinished. Intentionally deferred at v2.2 start; resume separately if/when wanted.
 
@@ -205,6 +205,7 @@ None
 | 260630-j83 | Redesign Tasks page into card-based layout: category-colored cards, Focus-now hero, momentum ring, completed-state polish; responsive laptop/desktop (centered, horizontal hero banner, 3-col grid) | 2026-06-30 | 4c143b4 | [260630-j83-redesign-tasks-page-ui-into-card-based-l](./quick/260630-j83-redesign-tasks-page-ui-into-card-based-l/) |
 | 260707-cu1 | Fix advisory 422 string-detail crash in parse422 (useAdvisory.ts) + render goal.external_key in exported Advisor Brief | 2026-07-07 | 5fa0411 | [260707-cu1-fix-advisory-422-string-detail-error-par](./quick/260707-cu1-fix-advisory-422-string-detail-error-par/) |
 | 260707-dx6 | Add photo-based grouping to Tasks page: group_photos backend table + endpoints, useGroupPhotos hook, GroupTileGrid component, grid/drill view-mode split on Tasks.tsx | 2026-07-07 | 566b3b3 | [260707-dx6-add-photo-based-grouping-to-tasks-page-u](./quick/260707-dx6-add-photo-based-grouping-to-tasks-page-u/) |
+| 260715-k5j | Fix greeting to switch between Good morning/afternoon/evening: greetingForHour + formatClock helpers in timeUtils.ts, live 30s-updating greeting + clock in WeatherFocusHero | 2026-07-15 | bfedc68 | [260715-k5j-fix-greeting-to-switch-between-good-morn](./quick/260715-k5j-fix-greeting-to-switch-between-good-morn/) |
 
 ### Todos
 
