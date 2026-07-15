@@ -42,7 +42,11 @@ def test_callback_stores_credentials(fake_credentials_json):
         mock_flow.credentials.to_json.return_value = fake_credentials_json
         mock_build_flow.return_value = mock_flow
 
-        r = client.get("/auth/google/callback", params={"code": "fake-code", "state": "fake-state"})
+        r = client.get(
+            "/auth/google/callback",
+            params={"code": "fake-code", "state": "fake-state"},
+            follow_redirects=False,
+        )
 
     # After callback, CalendarSync row should have credentials_json set
     assert r.status_code in (200, 302, 307)

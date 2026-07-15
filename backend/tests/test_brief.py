@@ -68,13 +68,17 @@ def test_build_brief_body_empty_returns_placeholder():
     SyncSession = _make_sync_session()
 
     with patch("app.services.brief._Session", SyncSession):
-        # Clear all tasks and events for a clean state
+        # Clear all tasks, events, and goals for a clean state (build_brief_body
+        # also reports active goals, so leftover goals from other test modules
+        # would break the "nothing scheduled" placeholder assertion)
         from app.models import Task  # noqa: PLC0415
         from app.models.calendar import CalendarEvent  # noqa: PLC0415
+        from app.models.goal import Goal  # noqa: PLC0415
 
         with SyncSession() as s:
             s.query(Task).delete()
             s.query(CalendarEvent).delete()
+            s.query(Goal).delete()
             s.commit()
 
         body = build_brief_body()
@@ -172,10 +176,12 @@ def test_build_brief_speech_empty():
     with patch("app.services.brief._Session", SyncSession):
         from app.models import Task  # noqa: PLC0415
         from app.models.calendar import CalendarEvent  # noqa: PLC0415
+        from app.models.goal import Goal  # noqa: PLC0415
 
         with SyncSession() as s:
             s.query(Task).delete()
             s.query(CalendarEvent).delete()
+            s.query(Goal).delete()
             s.commit()
 
         result = build_brief_speech()

@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 from app.main import app
 from app import db as app_db
 from app.models.goal import Goal, GoalType, GoalStatus
+from tests.conftest import run_async
 
 client = TestClient(app, raise_server_exceptions=False)
 
@@ -55,10 +56,8 @@ def test_schema_endpoint():
 
 
 def test_preview_ok():
-    import asyncio
-
     gkey = _uid("preview-ok-goal")
-    asyncio.get_event_loop_policy().get_event_loop().run_until_complete(_seed_goal(gkey))
+    run_async(_seed_goal(gkey))
 
     async def _count_goals():
         from sqlalchemy import select
@@ -66,7 +65,7 @@ def test_preview_ok():
             result = await session.execute(select(Goal))
             return len(result.scalars().all())
 
-    count_before = asyncio.get_event_loop_policy().get_event_loop().run_until_complete(_count_goals())
+    count_before = run_async(_count_goals())
 
     payload = _payload(goal_adjustments=[{
         "external_key": gkey,
@@ -79,7 +78,7 @@ def test_preview_ok():
     assert len(body["goals"]) == 1
     assert body["goals"][0]["fields"]
 
-    count_after = asyncio.get_event_loop_policy().get_event_loop().run_until_complete(_count_goals())
+    count_after = run_async(_count_goals())
     assert count_before == count_after
 
 
@@ -104,11 +103,9 @@ def test_preview_unknown_goal_422():
 
 
 def test_confirm_ok():
-    import asyncio
-
     gkey = _uid("confirm-ok-goal")
     adv_id = _uid("confirm-ok-id")
-    asyncio.get_event_loop_policy().get_event_loop().run_until_complete(_seed_goal(gkey))
+    run_async(_seed_goal(gkey))
 
     payload = {
         "advisory_id": adv_id,
@@ -130,11 +127,9 @@ def test_confirm_ok():
 
 
 def test_confirm_idempotent():
-    import asyncio
-
     gkey = _uid("confirm-idem-goal")
     adv_id = _uid("confirm-idem-id")
-    asyncio.get_event_loop_policy().get_event_loop().run_until_complete(_seed_goal(gkey))
+    run_async(_seed_goal(gkey))
 
     payload = {
         "advisory_id": adv_id,
@@ -159,11 +154,9 @@ def test_confirm_idempotent():
 
 
 def test_last_sync_endpoint():
-    import asyncio
-
     gkey = _uid("lastsync-goal")
     adv_id = _uid("lastsync-id")
-    asyncio.get_event_loop_policy().get_event_loop().run_until_complete(_seed_goal(gkey))
+    run_async(_seed_goal(gkey))
 
     payload = {
         "advisory_id": adv_id,

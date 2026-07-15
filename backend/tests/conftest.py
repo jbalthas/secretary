@@ -7,6 +7,26 @@ from app import db as app_db
 
 TEST_DB_URL = "sqlite+aiosqlite:///./test_secretary.db"
 
+# Dedicated event loop for running async DB helpers from plain (non-async)
+# test functions. pytest-asyncio creates and tears down its own per-test
+# event loop for `async def test_...` functions, which resets asyncio's
+# global loop policy state (`_local._loop = None` while `_local._set_called`
+# stays True). Any later call to `asyncio.get_event_loop_policy().get_event_loop()`
+# then hits the "no current event loop" branch and raises RuntimeError instead
+# of auto-creating a loop. Owning our own loop here sidesteps the global
+# policy entirely, so it stays valid for the whole test session regardless of
+# what pytest-asyncio does to the policy.
+_test_loop = asyncio.new_event_loop()
+
+
+def run_async(coro):
+    """Run a coroutine on the shared test event loop.
+
+    Use this from plain sync test functions instead of
+    `asyncio.get_event_loop_policy().get_event_loop().run_until_complete(...)`.
+    """
+    return _test_loop.run_until_complete(coro)
+
 
 @pytest.fixture(scope="session", autouse=True)
 def create_test_db():
@@ -16,7 +36,7 @@ def create_test_db():
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
 
-    asyncio.get_event_loop_policy().get_event_loop().run_until_complete(_setup())
+    run_async(_setup())
 
     original_engine = app_db.engine
     original_session = app_db.SessionLocal
@@ -34,7 +54,8 @@ def create_test_db():
             await conn.run_sync(Base.metadata.drop_all)
         await engine.dispose()
 
-    asyncio.get_event_loop_policy().get_event_loop().run_until_complete(_teardown())
+    run_async(_teardown())
+    _test_loop.close()
 
 
 @pytest.fixture

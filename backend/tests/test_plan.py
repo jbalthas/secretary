@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 from app.main import app
 from app.models import Task, Priority
 from app.models.calendar import CalendarEvent
+from tests.conftest import run_async
 
 client = TestClient(app)
 
@@ -348,8 +349,7 @@ def test_staleness_detection():
             ))
             await s.commit()
 
-    import asyncio
-    asyncio.get_event_loop_policy().get_event_loop().run_until_complete(_insert())
+    run_async(_insert())
 
     blocks = client.get(f"/api/v1/plan/blocks?date={d}").json()
     assert blocks[0]["conflict_with"] == "Surprise Meeting"
