@@ -167,6 +167,9 @@ export default function AgendaItem({ item, onToggle, onSetParent, childItems, er
             )}
           </button>
         )}
+        {item.overdue && (
+          <span className="overdue-badge" aria-label="Overdue">Overdue</span>
+        )}
         {!item.isEvent && item.priority && (
           <span
             className={`priority-badge priority-${item.priority}`}

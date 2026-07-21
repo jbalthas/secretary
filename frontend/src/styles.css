@@ -53,6 +53,17 @@ body {
   color: #ef4444;
 }
 
+.overdue-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 500;
+  flex-shrink: 0;
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
 .priority-medium {
   background: rgba(245, 158, 11, 0.15);
   color: #f59e0b;
