@@ -1,4 +1,4 @@
-from datetime import datetime, timezone, timedelta
+from datetime import date, datetime, time, timezone, timedelta
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,6 +14,45 @@ router = APIRouter(prefix=f"{settings.api_prefix}/events", tags=["events"])
 
 class EventDoneUpdate(BaseModel):
     done: bool
+
+
+@router.get("/range", response_model=list[CalendarEventOut])
+async def events_range(
+    start: str | None = None,
+    days: int = 7,
+    session: AsyncSession = Depends(get_session),
+):
+    if start is None:
+        start_date = datetime.now(timezone.utc).date()
+    else:
+        try:
+            start_date = date.fromisoformat(start)
+        except ValueError:
+            raise HTTPException(422, "start must be YYYY-MM-DD")
+
+    days = max(1, min(days, 31))
+
+    win_start = start_date - timedelta(days=1)
+    win_end = start_date + timedelta(days=days + 1)
+
+    lo = datetime.combine(win_start, time.min, tzinfo=timezone.utc)
+    hi = datetime.combine(win_end, time.min, tzinfo=timezone.utc)
+
+    stmt = select(CalendarEvent).where(
+        CalendarEvent.cancelled == False,
+        or_(
+            and_(
+                CalendarEvent.start_date >= win_start.isoformat(),
+                CalendarEvent.start_date < win_end.isoformat(),
+            ),
+            and_(
+                CalendarEvent.start_dt >= lo,
+                CalendarEvent.start_dt < hi,
+            ),
+        ),
+    )
+    result = await session.execute(stmt)
+    return result.scalars().all()
 
 
 @router.get("/today", response_model=list[CalendarEventOut])

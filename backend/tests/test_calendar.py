@@ -154,3 +154,118 @@ def test_events_today():
         assert "google_id" in item
         assert "title" in item
         assert "all_day" in item
+
+
+# ---------------------------------------------------------------------------
+# events/range endpoint (quick-260721-boy)
+# ---------------------------------------------------------------------------
+
+def _seed_events(rows):
+    from app import db as app_db
+    from tests.conftest import run_async
+
+    async def _go():
+        async with app_db.SessionLocal() as s:
+            for r in rows:
+                await s.merge(r)
+            await s.commit()
+    run_async(_go())
+
+
+def _delete_events(google_ids):
+    from app import db as app_db
+    from tests.conftest import run_async
+    from app.models.calendar import CalendarEvent
+
+    async def _go():
+        async with app_db.SessionLocal() as s:
+            for gid in google_ids:
+                event = await s.get(CalendarEvent, gid)
+                if event is not None:
+                    await s.delete(event)
+            await s.commit()
+    run_async(_go())
+
+
+def test_events_range_includes_future_events():
+    """/events/range returns future in-window all-day and timed events."""
+    from datetime import date, datetime, timedelta, timezone
+    from app.models.calendar import CalendarEvent
+
+    today = date.today()
+    allday_id = "range-test-allday-1"
+    timed_id = "range-test-timed-1"
+    google_ids = [allday_id, timed_id]
+
+    _seed_events([
+        CalendarEvent(
+            google_id=allday_id,
+            title="Range all-day future",
+            all_day=True,
+            start_date=(today + timedelta(days=3)).isoformat(),
+            start_dt=None,
+            end_dt=None,
+            cancelled=False,
+        ),
+        CalendarEvent(
+            google_id=timed_id,
+            title="Range timed future",
+            all_day=False,
+            start_date=None,
+            start_dt=datetime.combine(
+                today + timedelta(days=5), datetime.min.time(), tzinfo=timezone.utc
+            ).replace(hour=14),
+            end_dt=None,
+            cancelled=False,
+        ),
+    ])
+
+    try:
+        r = client.get(f"/api/v1/events/range?start={today.isoformat()}&days=7")
+        assert r.status_code == 200
+        ids = {item["google_id"] for item in r.json()}
+        assert allday_id in ids
+        assert timed_id in ids
+    finally:
+        _delete_events(google_ids)
+
+
+def test_events_range_excludes_out_of_window_and_cancelled():
+    """/events/range excludes events outside the window and cancelled events inside it."""
+    from datetime import date, datetime, timedelta, timezone
+    from app.models.calendar import CalendarEvent
+
+    today = date.today()
+    far_id = "range-test-far-1"
+    cancelled_id = "range-test-cancelled-1"
+    google_ids = [far_id, cancelled_id]
+
+    _seed_events([
+        CalendarEvent(
+            google_id=far_id,
+            title="Range far future",
+            all_day=True,
+            start_date=(today + timedelta(days=30)).isoformat(),
+            start_dt=None,
+            end_dt=None,
+            cancelled=False,
+        ),
+        CalendarEvent(
+            google_id=cancelled_id,
+            title="Range cancelled in-window",
+            all_day=True,
+            start_date=(today + timedelta(days=2)).isoformat(),
+            start_dt=None,
+            end_dt=None,
+            cancelled=True,
+        ),
+    ])
+
+    try:
+        r = client.get(f"/api/v1/events/range?start={today.isoformat()}&days=7")
+        assert r.status_code == 200
+        ids = {item["google_id"] for item in r.json()}
+        assert far_id not in ids
+        assert cancelled_id not in ids
+    finally:
+        _delete_events(google_ids)
