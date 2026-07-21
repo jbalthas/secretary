@@ -19,7 +19,7 @@ progress:
 Phase: 17
 Plan: Not started
 Status: Phase complete — ready for verification
-Last activity: 2026-07-15 - Completed quick task 260715-k5j: Fix greeting to switch between Good morning/afternoon/evening
+Last activity: 2026-07-21 - Completed quick task 260721-b4p: Carry unfinished overdue tasks forward into the Today group
 
 > **v2.1 carry-over:** Phase 13 (update-loop-ui) left at plan 4 of 4 — Quick-update capture box + End-of-day rollup unfinished. Intentionally deferred at v2.2 start; resume separately if/when wanted.
 
@@ -206,6 +206,7 @@ None
 | 260707-cu1 | Fix advisory 422 string-detail crash in parse422 (useAdvisory.ts) + render goal.external_key in exported Advisor Brief | 2026-07-07 | 5fa0411 | [260707-cu1-fix-advisory-422-string-detail-error-par](./quick/260707-cu1-fix-advisory-422-string-detail-error-par/) |
 | 260707-dx6 | Add photo-based grouping to Tasks page: group_photos backend table + endpoints, useGroupPhotos hook, GroupTileGrid component, grid/drill view-mode split on Tasks.tsx | 2026-07-07 | 566b3b3 | [260707-dx6-add-photo-based-grouping-to-tasks-page-u](./quick/260707-dx6-add-photo-based-grouping-to-tasks-page-u/) |
 | 260715-k5j | Fix greeting to switch between Good morning/afternoon/evening: greetingForHour + formatClock helpers in timeUtils.ts, live 30s-updating greeting + clock in WeatherFocusHero | 2026-07-15 | bfedc68 | [260715-k5j-fix-greeting-to-switch-between-good-morn](./quick/260715-k5j-fix-greeting-to-switch-between-good-morn/) |
+| 260721-b4p | Carry unfinished overdue tasks forward into the Today group: overdue?: boolean on AgendaItem, buildDayItems carryOverdue param, Overdue badge in AgendaItem.tsx + styles.css | 2026-07-21 | 6ac1fbd | [260721-b4p-carry-unfinished-overdue-tasks-forward-i](./quick/260721-b4p-carry-unfinished-overdue-tasks-forward-i/) |
 
 ### Todos
 
