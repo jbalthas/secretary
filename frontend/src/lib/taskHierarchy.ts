@@ -27,14 +27,30 @@ export interface AgendaGroups {
 }
 
 export function groupAgendaItemsByParent(items: AgendaItem[]): AgendaGroups {
-  const childrenByTaskId = new Map<number, AgendaItem[]>();
+  const presentTaskIds = new Set<number>();
   for (const item of items) {
-    if (item.parentTaskId == null) continue;
-    const list = childrenByTaskId.get(item.parentTaskId) ?? [];
-    list.push(item);
-    childrenByTaskId.set(item.parentTaskId, list);
+    if (item.taskId != null) presentTaskIds.add(item.taskId);
   }
-  const topLevel = items.filter((item) => item.parentTaskId == null);
+
+  const childrenByTaskId = new Map<number, AgendaItem[]>();
+  const topLevel: AgendaItem[] = [];
+  for (const item of items) {
+    // An item's parent must actually be present in this item list to be
+    // nested under it — otherwise (e.g. the parent isn't due today/this
+    // week, or was carried-forward while the parent wasn't) it would be
+    // filed into childrenByTaskId with no top-level row to hang off of and
+    // silently disappear from the timeline. Orphans are promoted to
+    // top-level instead, preserving their original position (so an
+    // overdue-carried orphan still sorts above all-day items).
+    const parentPresent = item.parentTaskId != null && presentTaskIds.has(item.parentTaskId);
+    if (parentPresent) {
+      const list = childrenByTaskId.get(item.parentTaskId!) ?? [];
+      list.push(item);
+      childrenByTaskId.set(item.parentTaskId!, list);
+    } else {
+      topLevel.push(item);
+    }
+  }
   return { topLevel, childrenByTaskId };
 }
 

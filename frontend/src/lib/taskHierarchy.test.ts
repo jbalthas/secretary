@@ -6,6 +6,7 @@ import {
   moveInOrder,
   applyManualOrder,
 } from "./taskHierarchy";
+import { buildAgenda } from "./agenda";
 import type { Task, AgendaItem } from "../types/task";
 
 describe("groupTasksByParent", () => {
@@ -75,6 +76,66 @@ describe("groupAgendaItemsByParent", () => {
     expect(topLevel).toContainEqual(eventItem);
     for (const children of childrenByTaskId.values()) {
       expect(children).not.toContainEqual(eventItem);
+    }
+  });
+
+  it("promotes an orphaned child (parent absent from items) to topLevel, not childrenByTaskId", () => {
+    const orphan = { id: "task-2", taskId: 2, parentTaskId: 99 } as AgendaItem;
+
+    const { topLevel, childrenByTaskId } = groupAgendaItemsByParent([orphan]);
+
+    expect(topLevel).toContainEqual(orphan);
+    for (const children of childrenByTaskId.values()) {
+      expect(children).not.toContainEqual(orphan);
+    }
+  });
+
+  it("still nests a child under its parent when the parent is present in items", () => {
+    const parentItem = { id: "task-1", taskId: 1, parentTaskId: null } as AgendaItem;
+    const childItem = { id: "task-2", taskId: 2, parentTaskId: 1 } as AgendaItem;
+
+    const { topLevel, childrenByTaskId } = groupAgendaItemsByParent([
+      parentItem,
+      childItem,
+    ]);
+
+    expect(childrenByTaskId.get(1)).toEqual([childItem]);
+    expect(topLevel).not.toContainEqual(childItem);
+    expect(topLevel).toContainEqual(parentItem);
+  });
+
+  it("keeps a promoted overdue orphan sorted above all-day items (real-data scenario)", () => {
+    const now = new Date("2026-07-21T08:00:00Z");
+    // Mirrors the real DB scenario: task 4 "Bike Maintenance" overdue,
+    // parent_task_id 3, but task 3 has no due_date so it never appears in
+    // today's agenda items — task 4 must not be silently dropped.
+    const child = {
+      id: 4,
+      title: "Bike Maintenance",
+      priority: "medium",
+      completed: false,
+      due_date: "2026-07-08T10:00:00Z",
+      parent_task_id: 3,
+      created_at: "2026-07-08T00:00:00Z",
+      updated_at: "2026-07-08T00:00:00Z",
+    } as Task;
+    const allDay = {
+      id: 5,
+      title: "All day today",
+      priority: "medium",
+      completed: false,
+      due_date: "2026-07-21T00:00:00Z",
+      parent_task_id: null,
+      created_at: "2026-07-21T00:00:00Z",
+      updated_at: "2026-07-21T00:00:00Z",
+    } as Task;
+
+    const items = buildAgenda([child, allDay], [], now);
+    const { topLevel, childrenByTaskId } = groupAgendaItemsByParent(items);
+
+    expect(topLevel.map((i) => i.taskId)).toEqual([4, 5]);
+    for (const children of childrenByTaskId.values()) {
+      expect(children.some((i) => i.taskId === 4)).toBe(false);
     }
   });
 });
