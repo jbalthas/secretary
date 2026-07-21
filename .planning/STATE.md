@@ -19,7 +19,7 @@ progress:
 Phase: 17
 Plan: Not started
 Status: Phase complete — ready for verification
-Last activity: 2026-07-21 - Completed quick task 260721-b6t: Tasks-only paste LLM output quick-add flow at /ingest/tasks (golden path browser-verified). Prior: 260721-b4p Carry unfinished overdue tasks forward into Today view
+Last activity: 2026-07-21 - Completed quick task 260721-boy: Fixed "Later this week" showing no calendar events by adding GET /events/range endpoint + opt-in useCalendarEvents(days) window (golden path browser-verified). Prior: 260721-b6t Tasks-only paste LLM output quick-add flow at /ingest/tasks
 
 > **v2.1 carry-over:** Phase 13 (update-loop-ui) left at plan 4 of 4 — Quick-update capture box + End-of-day rollup unfinished. Intentionally deferred at v2.2 start; resume separately if/when wanted.
 
@@ -208,6 +208,7 @@ None
 | 260715-k5j | Fix greeting to switch between Good morning/afternoon/evening: greetingForHour + formatClock helpers in timeUtils.ts, live 30s-updating greeting + clock in WeatherFocusHero | 2026-07-15 | bfedc68 | [260715-k5j-fix-greeting-to-switch-between-good-morn](./quick/260715-k5j-fix-greeting-to-switch-between-good-morn/) |
 | 260721-b4p | Carry unfinished overdue tasks forward into the Today group: overdue?: boolean on AgendaItem, buildDayItems carryOverdue param, Overdue badge in AgendaItem.tsx + styles.css; plus orphan-promotion fix in groupAgendaItemsByParent (carried subtask whose parent isn't in today's items was silently dropped). Golden path browser-verified. | 2026-07-21 | 3f02983 | [260721-b4p-carry-unfinished-overdue-tasks-forward-i](./quick/260721-b4p-carry-unfinished-overdue-tasks-forward-i/) |
 | 260721-b6t | Tasks-only "paste LLM output" quick-add flow at /ingest/tasks: tasksPrompt.ts (short prompt + tolerant normalizeTasksInput + slugKey), QuickAddTasks.tsx reusing useIngest(), entry points on Goals + Tasks grid headers. Golden path browser-verified (fenced array → 2 creates → confirm → /tasks; re-paste as {tasks:[…]} → 2 updates, no dupes; prose paste → friendly parse error; no console errors). | 2026-07-21 | af8075c | [260721-b6t-tasks-only-paste-llm-output-quick-add-fl](./quick/260721-b6t-tasks-only-paste-llm-output-quick-add-fl/) |
+| 260721-boy | Fixed "Later this week" on /today showing no calendar events: added GET /api/v1/events/range endpoint (padded window, backend/app/routers/events.py) + opt-in useCalendarEvents(days) hook so Today.tsx calls useCalendarEvents(7) while Organize.tsx stays on the untouched /today path. Golden path browser-verified. | 2026-07-21 | fbc4428 | [260721-boy-fix-later-this-week-section-missing-futu](./quick/260721-boy-fix-later-this-week-section-missing-futu/) |
 
 ### Todos
 
