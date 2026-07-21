@@ -78,7 +78,7 @@ function localDateKey(d: Date): string {
 
 export default function Today() {
   const { tasks, patchTask, refresh } = useTasks();
-  const { events, patchEvent } = useCalendarEvents();
+  const { events, patchEvent } = useCalendarEvents(7);
   const todayKey = localDateKey(new Date());
   const { blocks, patchBlock, patchBlockParent, fetchBlocks } = usePlan(todayKey);
   const { task: nextBest } = useNextBestTask();

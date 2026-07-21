@@ -1,14 +1,21 @@
 import { useEffect, useState } from "react";
 import type { CalendarEvent } from "../types/task";
 
-const API = "/api/v1/events/today";
+function localTodayKey(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
 
-export function useCalendarEvents() {
+export function useCalendarEvents(days: number = 1) {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
 
   async function refresh() {
     try {
-      const res = await fetch(API);
+      const url =
+        days <= 1
+          ? "/api/v1/events/today"
+          : `/api/v1/events/range?start=${localTodayKey()}&days=${days}`;
+      const res = await fetch(url);
       if (res.ok) {
         setEvents(await res.json());
       } else {
@@ -30,7 +37,8 @@ export function useCalendarEvents() {
 
   useEffect(() => {
     refresh();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [days]);
 
   return { events, refresh, patchEvent };
 }
