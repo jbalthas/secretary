@@ -45,6 +45,7 @@ export interface AgendaItem {
   conflict_with?: string | null;
   blockId?: number;
   parentTaskId?: number | null;
+  overdue?: boolean;
 }
 
 export interface CalendarEvent {

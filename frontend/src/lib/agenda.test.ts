@@ -128,9 +128,24 @@ describe("buildAgenda", () => {
   });
 
   it("excludes tasks not due today", () => {
-    const yesterday = makeTask({ id: 6, title: "Yesterday task", due_date: "2026-06-11T10:00:00Z" });
+    const yesterday = makeTask({ id: 6, title: "Yesterday task", due_date: "2026-06-11T10:00:00Z", completed: true });
     const result = buildAgenda([yesterday], [], NOW);
     expect(result.every((i) => i.title !== "Yesterday task")).toBe(true);
+  });
+
+  it("carries an incomplete overdue task into today's agenda with overdue === true", () => {
+    const overdue = makeTask({ id: 46, title: "Overdue task", due_date: "2026-06-10T10:00:00Z", completed: false });
+    const result = buildAgenda([overdue], [], NOW);
+    const item = result.find((i) => i.title === "Overdue task");
+    expect(item).toBeDefined();
+    expect(item?.overdue).toBe(true);
+  });
+
+  it("a task due today has overdue falsy", () => {
+    const task = makeTask({ id: 47, title: "Today task", due_date: `${TODAY}T10:00:00Z` });
+    const result = buildAgenda([task], [], NOW);
+    const item = result.find((i) => i.title === "Today task");
+    expect(item?.overdue).toBeFalsy();
   });
 
   it("maps task to AgendaItem with correct fields", () => {
@@ -252,11 +267,50 @@ describe("buildWeekAgenda", () => {
   it("excludes items outside the 7-day window", () => {
     // TODAY+7 = 2026-06-19 — outside
     const tooFar = makeTask({ id: 30, title: "Too far ahead", due_date: "2026-06-19T10:00:00Z" });
-    // yesterday = 2026-06-11 — outside
-    const yesterday = makeTask({ id: 31, title: "Yesterday", due_date: "2026-06-11T10:00:00Z" });
+    // yesterday = 2026-06-11 — completed, so not carried forward either
+    const yesterday = makeTask({ id: 31, title: "Yesterday", due_date: "2026-06-11T10:00:00Z", completed: true });
     const result = buildWeekAgenda([tooFar, yesterday], [], NOW);
     const allItems = result.flatMap((g) => g.items);
     expect(allItems.every((i) => i.title !== "Too far ahead")).toBe(true);
     expect(allItems.every((i) => i.title !== "Yesterday")).toBe(true);
+  });
+
+  it("carries an incomplete overdue task into the Today group with overdue === true", () => {
+    const overdue = makeTask({ id: 40, title: "Overdue task", due_date: "2026-06-10T10:00:00Z", completed: false });
+    const result = buildWeekAgenda([overdue], [], NOW);
+    const item = result[0].items.find((i) => i.title === "Overdue task");
+    expect(item).toBeDefined();
+    expect(item?.overdue).toBe(true);
+  });
+
+  it("does not carry a completed past-due task forward", () => {
+    const overdue = makeTask({ id: 41, title: "Done overdue", due_date: "2026-06-10T10:00:00Z", completed: true });
+    const result = buildWeekAgenda([overdue], [], NOW);
+    const allItems = result.flatMap((g) => g.items);
+    expect(allItems.every((i) => i.title !== "Done overdue")).toBe(true);
+  });
+
+  it("does not carry the overdue task into Tomorrow or any other day group", () => {
+    const overdue = makeTask({ id: 42, title: "Overdue task", due_date: "2026-06-10T10:00:00Z", completed: false });
+    const result = buildWeekAgenda([overdue], [], NOW);
+    for (let i = 1; i < 7; i++) {
+      expect(result[i].items.every((item) => item.title !== "Overdue task")).toBe(true);
+    }
+  });
+
+  it("places the carried overdue item before an all-day task in Today", () => {
+    const overdue = makeTask({ id: 43, title: "Overdue task", due_date: "2026-06-10T10:00:00Z", completed: false });
+    const allDay = makeTask({ id: 44, title: "All day today", due_date: `${TODAY}T00:00:00Z` });
+    const result = buildWeekAgenda([overdue, allDay], [], NOW);
+    expect(result[0].items[0].title).toBe("Overdue task");
+    expect(result[0].items[1].title).toBe("All day today");
+  });
+
+  it("carried overdue item has time === null and taskId set", () => {
+    const overdue = makeTask({ id: 45, title: "Overdue task", due_date: "2026-06-10T10:00:00Z", completed: false });
+    const result = buildWeekAgenda([overdue], [], NOW);
+    const item = result[0].items.find((i) => i.title === "Overdue task");
+    expect(item?.time).toBeNull();
+    expect(item?.taskId).toBe(45);
   });
 });

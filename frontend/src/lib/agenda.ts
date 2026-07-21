@@ -15,14 +15,34 @@ function buildDayItems(
   tasks: Task[],
   events: CalendarEvent[],
   dateKey: string,
-  blocks?: ScheduledBlock[]
+  blocks?: ScheduledBlock[],
+  carryOverdue: boolean = false
 ): AgendaItem[] {
   const allDayItems: AgendaItem[] = [];
+  const overdueItems: AgendaItem[] = [];
   const timedItems: AgendaItem[] = [];
 
   const dayTasks = tasks.filter(
     (t) => t.due_date && t.due_date.slice(0, 10) === dateKey
   );
+
+  const overdueTasks = carryOverdue
+    ? tasks.filter((t) => t.due_date && t.due_date.slice(0, 10) < dateKey && !t.completed)
+    : [];
+
+  for (const t of overdueTasks) {
+    overdueItems.push({
+      id: `task-${t.id}`,
+      title: t.title,
+      time: null,
+      priority: t.priority,
+      isEvent: false,
+      completed: t.completed,
+      taskId: t.id,
+      parentTaskId: t.parent_task_id ?? null,
+      overdue: true,
+    });
+  }
 
   for (const t of dayTasks) {
     const isAllDay = t.due_date!.includes("T00:00:00");
@@ -98,7 +118,7 @@ function buildDayItems(
     (a.time ?? "").localeCompare(b.time ?? "")
   );
 
-  return [...allDayItems, ...timed];
+  return [...overdueItems, ...allDayItems, ...timed];
 }
 
 const weekdayDateFmt = new Intl.DateTimeFormat("en-US", {
@@ -121,7 +141,7 @@ export function buildAgenda(
   now: Date = new Date(),
   blocks?: ScheduledBlock[]
 ): AgendaItem[] {
-  return buildDayItems(tasks, events, toDateKey(now), blocks);
+  return buildDayItems(tasks, events, toDateKey(now), blocks, true);
 }
 
 export function buildWeekAgenda(
@@ -136,7 +156,7 @@ export function buildWeekAgenda(
     day.setDate(now.getDate() + offset);
     const dateKey = toDateKey(day);
     const label = dayLabel(offset, day.getFullYear(), day.getMonth(), day.getDate());
-    groups.push({ dateKey, label, items: buildDayItems(tasks, events, dateKey, blocks) });
+    groups.push({ dateKey, label, items: buildDayItems(tasks, events, dateKey, blocks, offset === 0) });
   }
   return groups;
 }
