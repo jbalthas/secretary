@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft, Upload } from "lucide-react";
 import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { useTasks } from "../hooks/useTasks";
 import { useGoals } from "../hooks/useGoals";
@@ -37,6 +38,7 @@ function sortTasks(tasks: Task[], sort: Sort): Task[] {
 }
 
 export default function Tasks() {
+  const navigate = useNavigate();
   const { tasks, createTask, patchTask, deleteTask } = useTasks();
   const { goals } = useGoals();
   const { listGroups, refresh: refreshLists } = useTaskLists();
@@ -119,6 +121,15 @@ export default function Tasks() {
         <>
           <div className="tasks-header">
             <h1 className="page-title">Tasks</h1>
+            <button
+              type="button"
+              className="btn-text-accent"
+              onClick={() => navigate("/ingest/tasks")}
+              style={{ display: "flex", alignItems: "center", gap: "4px" }}
+            >
+              <Upload size={16} />
+              Import
+            </button>
             <MomentumRing done={momentumDone} total={momentumTotal} />
           </div>
 

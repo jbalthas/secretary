@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Upload, ChevronLeft } from "lucide-react";
+import { Upload, ChevronLeft, ListTodo } from "lucide-react";
 import { useGoals } from "../hooks/useGoals";
 import { useTasks } from "../hooks/useTasks";
 import { useTaskLists } from "../hooks/useTaskLists";
@@ -294,6 +294,15 @@ export default function Goals() {
         >
           <Upload size={16} />
           Import
+        </button>
+        <button
+          type="button"
+          className="btn-text-accent"
+          onClick={() => navigate("/ingest/tasks")}
+          style={{ display: "flex", alignItems: "center", gap: "4px" }}
+        >
+          <ListTodo size={16} />
+          Tasks
         </button>
       </div>
 

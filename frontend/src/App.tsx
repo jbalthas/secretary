@@ -4,6 +4,7 @@ import Today from "./pages/Today";
 import Tasks from "./pages/Tasks";
 import Goals from "./pages/Goals";
 import Ingest from "./pages/Ingest";
+import QuickAddTasks from "./pages/QuickAddTasks";
 import Advisor from "./pages/Advisor";
 import Organize from "./pages/Organize";
 import Settings from "./pages/Settings";
@@ -21,6 +22,7 @@ export default function App() {
             <Route path="/tasks" element={<Tasks />} />
             <Route path="/goals" element={<Goals />} />
             <Route path="/ingest" element={<Ingest />} />
+            <Route path="/ingest/tasks" element={<QuickAddTasks />} />
             <Route path="/advisor" element={<Advisor />} />
             <Route path="/organize" element={<Organize />} />
             <Route path="/settings" element={<Settings />} />
